@@ -42,6 +42,11 @@ medidas com `inputmode="decimal"` aceitando vírgula; tema claro e escuro de alt
 câmera **só** com `<input type="file" accept="image/*">` dentro de `<label>` — nunca
 `.click()` programático.
 
+## Plano e estado atual
+
+**Leia `docs/plano.md` no início de cada sessão**: fases, o que já está feito, o que já existe
+pronto para a próxima fase e os critérios de aceite. Atualize-o ao terminar cada fase.
+
 ## Comandos
 
 | Comando               | O que faz                                                         |
