@@ -3,6 +3,7 @@ import { deltaDoCampo, numeroAmbiguo, numeroInvalido, valorPcm } from '../domini
 import { formatarDelta, formatarNumero } from '../dominio/numeros.ts';
 import type { CampoTemplate } from '../dominio/templates/registro.ts';
 import type { ItemPcm } from '../dominio/tipos.ts';
+import { irAoProximoCampo } from './foco.ts';
 
 interface Props {
   campo: CampoTemplate;
@@ -13,32 +14,69 @@ interface Props {
   onConferencia: (marca: Conferencia) => void;
 }
 
+const unidadeVisivel = (campo: CampoTemplate) =>
+  campo.unidade && campo.unidade !== 'un' ? campo.unidade : null;
+
 function textoPcm(campo: CampoTemplate, item: ItemPcm): string | null {
   const v = valorPcm(campo, item);
   if (v === null) return null;
   const s = typeof v === 'number' ? formatarNumero(v) : v;
-  return campo.unidade && campo.unidade !== 'un' && typeof v === 'number'
-    ? `${s} ${campo.unidade}`
-    : s;
+  const unidade = unidadeVisivel(campo);
+  return unidade && typeof v === 'number' ? `${s} ${unidade}` : s;
 }
 
-/** Um campo da ficha: valor do PCM ao lado, Δ, e ✓/✗ manual. Grava a cada toque/tecla. */
+/**
+ * Um campo da ficha: valor do PCM ao lado, Δ, e ✓/✗ manual. Grava a cada toque/tecla.
+ * ✓/✗ só aparece quando há valor do PCM para conferir (ou se já foi marcado). Campo sem PCM
+ * tem "Não tem" (a peça não existe aqui): conta como feito, sem precisar digitar.
+ */
 export function CampoMedicao({ campo, item, valor, conferencia, onValor, onConferencia }: Props) {
   const idInput = `c-${item.id}-${campo.id}`;
+  const idRotulo = `${idInput}-rotulo`;
   const pcm = textoPcm(campo, item);
+  const unidade = unidadeVisivel(campo);
   const delta = deltaDoCampo(campo, item, valor);
   const invalido = numeroInvalido(campo, valor);
   const ambiguo = numeroAmbiguo(campo, valor);
+  const comPcm = pcm !== null || conferencia === 'confere' || conferencia === 'diverge';
+  const conferir = comPcm ? (
+    <BotoesConferencia
+      conferencia={conferencia}
+      onConferencia={onConferencia}
+      rotulo={campo.rotulo}
+    />
+  ) : (
+    campo.tipo !== 'opcoes' && (
+      <button
+        type="button"
+        class="nao-tem"
+        aria-pressed={conferencia === 'naoTem'}
+        aria-label={`${campo.rotulo}: não tem`}
+        onClick={() => onConferencia('naoTem')}
+      >
+        Não tem
+      </button>
+    )
+  );
+  const rotulo = (
+    <>
+      {campo.rotulo}
+      {unidade && <span class="unidade"> ({unidade})</span>}
+    </>
+  );
 
   return (
     <div class="campo-med" data-conferencia={conferencia}>
       <div class="campo-med-topo">
-        <label class="campo-med-rotulo" for={idInput}>
-          {campo.rotulo}
-          {campo.unidade && campo.unidade !== 'un' && (
-            <span class="unidade"> ({campo.unidade})</span>
-          )}
-        </label>
+        {campo.tipo === 'opcoes' ? (
+          <span class="campo-med-rotulo" id={idRotulo}>
+            {rotulo}
+          </span>
+        ) : (
+          <label class="campo-med-rotulo" for={idInput} id={idRotulo}>
+            {rotulo}
+          </label>
+        )}
         {pcm !== null && (
           <span class="campo-med-pcm">
             <span class="rotulo-pcm">PCM</span> {pcm}
@@ -47,22 +85,22 @@ export function CampoMedicao({ campo, item, valor, conferencia, onValor, onConfe
       </div>
 
       {campo.tipo === 'opcoes' ? (
-        <div class="opcoes" role="group" aria-labelledby={idInput}>
-          <span id={idInput} hidden>
-            {campo.rotulo}
-          </span>
-          {campo.opcoes?.map((o) => (
-            <button
-              key={o}
-              type="button"
-              class="opcao"
-              aria-pressed={valor === o}
-              onClick={() => onValor(valor === o ? '' : o)}
-            >
-              {o}
-            </button>
-          ))}
-        </div>
+        <>
+          <div class="opcoes" role="group" aria-labelledby={idRotulo}>
+            {campo.opcoes?.map((o) => (
+              <button
+                key={o}
+                type="button"
+                class="opcao"
+                aria-pressed={valor === o}
+                onClick={() => onValor(valor === o ? '' : o)}
+              >
+                {o}
+              </button>
+            ))}
+          </div>
+          {conferir && <div class="campo-med-conferir">{conferir}</div>}
+        </>
       ) : (
         <div class="campo-med-linha">
           <input
@@ -72,25 +110,16 @@ export function CampoMedicao({ campo, item, valor, conferencia, onValor, onConfe
             inputMode={campo.tipo === 'numero' ? 'decimal' : 'text'}
             autoComplete="off"
             autoCapitalize={campo.tipo === 'texto' ? 'characters' : 'off'}
+            spellcheck={false}
             enterKeyHint="next"
             value={valor ?? ''}
-            aria-invalid={invalido}
+            aria-invalid={invalido || ambiguo}
             onInput={(e) => onValor(e.currentTarget.value)}
+            onKeyDown={irAoProximoCampo}
+            data-campo-ficha
           />
-          <BotoesConferencia
-            conferencia={conferencia}
-            onConferencia={onConferencia}
-            rotulo={campo.rotulo}
-          />
+          {conferir}
         </div>
-      )}
-
-      {campo.tipo === 'opcoes' && (
-        <BotoesConferencia
-          conferencia={conferencia}
-          onConferencia={onConferencia}
-          rotulo={campo.rotulo}
-        />
       )}
 
       <p class="campo-med-info" aria-live="polite">
@@ -104,7 +133,7 @@ export function CampoMedicao({ campo, item, valor, conferencia, onValor, onConfe
         {!invalido && !ambiguo && delta !== null && (
           <span class={delta === 0 ? 'delta delta--zero' : 'delta'}>
             Δ {formatarDelta(delta)}
-            {campo.unidade && campo.unidade !== 'un' ? ` ${campo.unidade}` : ''}
+            {unidade ? ` ${unidade}` : ''}
           </span>
         )}
         {campo.dica && <span class="dica">{campo.dica}</span>}

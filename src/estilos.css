@@ -19,6 +19,8 @@
   --foco: #d97706;
   --trilho: #e2e8f0;
   --toque: 48px;
+  /* Barra fixa do topo; o cabeçalho do item gruda logo abaixo dela. */
+  --altura-topo: calc(60px + env(safe-area-inset-top));
   --raio: 10px;
   --espaco: 16px;
   font-family:
@@ -72,6 +74,11 @@
   box-sizing: border-box;
 }
 
+html {
+  /* Campo focado não fica escondido sob a barra do topo nem sob o cabeçalho do item. */
+  scroll-padding-top: calc(var(--altura-topo) + 88px);
+}
+
 body {
   margin: 0;
   background: var(--fundo);
@@ -102,8 +109,8 @@ button {
   display: flex;
   align-items: center;
   gap: 8px;
-  min-height: 56px;
-  padding: max(6px, env(safe-area-inset-top)) var(--espaco) 6px;
+  height: var(--altura-topo);
+  padding: env(safe-area-inset-top) var(--espaco) 0;
   background: var(--superficie);
   border-bottom: 2px solid var(--borda);
 }
@@ -611,7 +618,7 @@ input[type='search']::-webkit-search-cancel-button {
 .itens {
   display: grid;
   gap: 12px;
-  margin: 0;
+  margin: 0 0 var(--espaco);
   padding: 0;
   list-style: none;
 }
@@ -648,7 +655,361 @@ input[type='search']::-webkit-search-cancel-button {
   vertical-align: 1px;
 }
 
-.nota-fase {
-  margin: var(--espaco) 0;
+/*
+ * Topo do cartão: nome do item e quantos campos já foram feitos (ou "✗ Diverge").
+ * Gruda sob a barra enquanto o cartão está na tela — o técnico sempre sabe em que item está.
+ */
+.item > .item-topo {
+  position: sticky;
+  top: var(--altura-topo);
+  z-index: 5;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin: calc(-1 * var(--espaco)) calc(-1 * var(--espaco)) 0;
+  padding: 12px var(--espaco) 8px;
+  background: var(--superficie);
+  border-bottom: 2px solid var(--trilho);
+  border-radius: var(--raio) var(--raio) 0 0;
+}
+
+.item-nome {
+  display: -webkit-box;
+  min-width: 0;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.item-nome:focus {
+  outline: none;
+}
+
+.item-estado {
+  flex: none;
+  padding: 2px 8px;
+  border: 2px solid var(--borda);
+  border-radius: 999px;
+  color: var(--texto-suave);
+  font-size: 0.85rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.item-estado--ok {
+  border-color: var(--ok);
+  color: var(--ok);
+}
+
+.item-estado--diverge {
+  border-color: var(--erro);
+  background: var(--erro);
+  color: var(--superficie);
+}
+
+.item-estado--aviso {
+  border-color: var(--aviso-texto);
+  background: var(--aviso-fundo);
+  color: var(--aviso-texto);
+}
+
+.eq-aviso {
+  padding: 0 6px;
+  border-radius: 4px;
+  background: var(--aviso-fundo);
+  color: var(--aviso-texto);
+  font-weight: 700;
+}
+
+/* "Ir para item…": índice compacto, fechado por padrão. */
+.indice {
+  margin: 0 0 var(--espaco);
+  background: var(--superficie);
+  border: 2px solid var(--borda);
+  border-radius: var(--raio);
+}
+
+.indice-resumo {
+  display: flex;
+  align-items: center;
+  min-height: var(--toque);
+  padding: 0 var(--espaco);
+  color: var(--primaria);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.indice-lista {
+  margin: 0;
+  padding: 0 8px 8px;
+  list-style: none;
+}
+
+.indice-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: var(--toque);
+  padding: 4px 8px;
+  border: 0;
+  border-top: 1px solid var(--trilho);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.indice-nome {
+  min-width: 0;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.item--diverge {
+  border-color: var(--erro);
+  border-width: 3px;
+}
+
+.item-pcm {
+  overflow-wrap: anywhere;
+}
+
+.ficha-progresso {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin-top: 8px !important;
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+}
+
+/* ---- Campo de medição ------------------------------------------------------- */
+
+.campos {
+  margin-top: 12px;
+}
+
+.campo-med {
+  padding: 12px 0;
+  border-top: 1px solid var(--borda);
+}
+
+.campo-med-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2px 12px;
+  margin-bottom: 6px;
+}
+
+.campo-med-rotulo {
+  display: block;
+  font-weight: 700;
+}
+
+.unidade {
+  color: var(--texto-suave);
+  font-weight: 600;
+}
+
+/* Valor do PCM: perto do campo e com o mesmo peso do que se digita. */
+.campo-med-pcm {
+  margin-left: auto;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.campo-med-linha {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.campo-med-input {
+  flex: 1;
+  min-width: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.campo-med-input[aria-invalid='true'] {
+  border-color: var(--erro);
+  border-width: 3px;
+}
+
+.conferir {
+  display: flex;
+  flex: none;
+  gap: 8px;
+}
+
+.conferir-botao {
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border: 2px solid var(--borda);
+  border-radius: var(--raio);
+  background: transparent;
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.conferir-botao--ok {
+  color: var(--ok);
+}
+
+.conferir-botao--erro {
+  color: var(--erro);
+}
+
+.conferir-botao--ok[aria-pressed='true'] {
+  border-color: var(--ok);
+  background: var(--ok);
+  color: var(--superficie);
+}
+
+.conferir-botao--erro[aria-pressed='true'] {
+  border-color: var(--erro);
+  background: var(--erro);
+  color: var(--superficie);
+}
+
+.nao-tem {
+  flex: none;
+  width: 112px;
+  height: 52px;
+  border: 2px solid var(--borda);
+  border-radius: var(--raio);
+  background: transparent;
+  color: var(--texto-suave);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.nao-tem[aria-pressed='true'] {
+  border-color: var(--texto);
+  background: var(--texto);
+  color: var(--superficie);
+}
+
+.campo-med-conferir {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.opcoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.opcao {
+  flex: 1 1 auto;
+  min-height: var(--toque);
+  padding: 0 12px;
+  border: 2px solid var(--borda);
+  border-radius: var(--raio);
+  background: transparent;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.opcao[aria-pressed='true'] {
+  border-color: var(--primaria);
+  background: var(--primaria);
+  color: var(--primaria-texto);
+}
+
+.opcao[aria-pressed='true']::before {
+  content: '● ';
+}
+
+.campo-med-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 6px 0 0;
+  font-size: 0.9rem;
+}
+
+.campo-med-info:empty {
+  margin: 0;
+}
+
+.delta {
+  padding: 0 6px;
+  border: 2px solid var(--texto);
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.delta--zero {
+  border-color: var(--ok);
+  color: var(--ok);
+}
+
+.dica {
+  color: var(--texto-suave);
+}
+
+.campo-texto {
+  display: block;
+  min-height: 72px;
+  padding: 10px 14px;
+  line-height: 1.35;
+  resize: vertical;
+}
+
+.obs-rotulo {
+  margin: 12px 0 6px;
+}
+
+.obs-eq .campo-med-rotulo {
+  margin-bottom: 6px;
+}
+
+.botao--largo {
+  width: 100%;
+}
+
+.item-proximo {
+  margin-top: 12px;
+}
+
+.fim-ficha {
+  display: grid;
+  gap: 12px;
+  margin-top: var(--espaco);
+}
+
+.fim-ficha .suave {
+  margin: 0;
   text-align: center;
+}
+
+.botao--proximo {
+  flex-direction: column;
+  min-height: 64px;
+  padding: 6px 16px;
+  line-height: 1.2;
+}
+
+.botao-sub {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

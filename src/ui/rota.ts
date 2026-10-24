@@ -24,11 +24,23 @@ export function irPara(hash: string): void {
 // Histórico: lembra de onde viemos para "voltar" sem empilhar entradas novas.
 let hashAnterior: string | null = null;
 let hashAtual = typeof location === 'undefined' ? '' : location.hash;
+let substituindo = false;
 if (typeof window !== 'undefined') {
   window.addEventListener('hashchange', () => {
-    hashAnterior = hashAtual;
+    if (!substituindo) hashAnterior = hashAtual;
+    substituindo = false;
     hashAtual = location.hash;
   });
+}
+
+/**
+ * Troca a tela atual por outra no mesmo nível (ficha → próxima ficha) sem empilhar histórico:
+ * "voltar" continua indo para onde iria antes (a lista).
+ */
+export function substituirPor(hash: string): void {
+  if (location.hash === hash) return;
+  substituindo = true;
+  location.replace(hash);
 }
 const mesmaRota = (a: string, b: string) =>
   JSON.stringify(lerRota(a)) === JSON.stringify(lerRota(b));

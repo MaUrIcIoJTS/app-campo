@@ -1,23 +1,5 @@
-import { expect, test, type Page } from '@playwright/test';
-
-const FIXTURE = 'tests/fixtures/pcm-ficticio.xls';
-const linhas = (page: Page) => page.locator('.lista-eq > li');
-
-async function esperarServiceWorker(page: Page) {
-  await page.evaluate(() => navigator.serviceWorker.ready);
-  await page.reload();
-  await expect
-    .poll(() => page.evaluate(() => !!navigator.serviceWorker.controller), { timeout: 15_000 })
-    .toBe(true);
-}
-
-async function importarFixture(page: Page) {
-  await page.getByRole('link', { name: 'Importar PCM' }).first().click();
-  await page.locator('input[type=file]').setInputFiles(FIXTURE);
-  await expect(page.getByRole('heading', { name: 'pcm-ficticio.xls' })).toBeVisible();
-  await page.getByRole('button', { name: 'Importar (9 equipamentos)' }).click();
-  await expect(page.getByText('9 equipamentos', { exact: true })).toBeVisible();
-}
+import { expect, test } from '@playwright/test';
+import { esperarServiceWorker, importarFixture, linhas } from './apoio.ts';
 
 test('importa o PCM, lista, busca e filtra por aba', async ({ page }) => {
   await page.goto('./');

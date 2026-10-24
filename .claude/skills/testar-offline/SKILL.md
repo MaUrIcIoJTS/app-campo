@@ -14,8 +14,15 @@ npm run test:e2e        # faz build + preview na porta 4173 e roda o Playwright 
 ```
 
 O teste `tests/e2e/offline.spec.ts` abre o app, espera o SW assumir a página, liga
-`context.setOffline(true)`, recarrega e confere que o app abriu. A partir da fase 1 deve
-também: preencher medidas → recarregar offline → conferir que tudo continua lá.
+`context.setOffline(true)`, recarrega e confere que o app abriu. `tests/e2e/medicao.spec.ts`
+cobre a perda de dado, em modo avião:
+
+- 20 medidas + ✓/✗ + observações → `page.close()` sem esperar → página nova: tudo lá;
+- fechar 100 ms depois de digitar (antes da fila gravar) → o valor continua;
+- **app morto sem aviso**: `SIGKILL` no processo do renderer (pega o PID com
+  `SystemInfo.getProcessInfo` via `browser.newBrowserCDPSession()`). Nenhum `pagehide` roda;
+  o teste confere que o valor estava só no diário e que voltou ao reabrir.
+  Não use `chrome://crash` nem `Page.crash`: no headless o evento de crash leva 20–30 s.
 
 Se falhar: `npx playwright show-report` (trace com rede e console).
 

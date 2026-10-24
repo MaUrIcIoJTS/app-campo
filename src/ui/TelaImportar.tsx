@@ -7,6 +7,7 @@ import {
   type ImportacaoResumo,
   type PreviaImportacao,
 } from '../db/repositorio.ts';
+import { registrosNoDiario } from '../db/edicao.ts';
 import { filaDeGravacao, semRecarregarDurante } from '../db/salvamento.ts';
 import { useDados } from './dados.tsx';
 import { rotas } from './rota.ts';
@@ -49,8 +50,10 @@ export function TelaImportar({ onImportado }: { onImportado: (mensagem: string) 
     setEstado({ etapa: 'lendo', nome: arquivo.name });
 
     // Medidas na fila entram no plano; se não gravaram, não dá para importar com segurança.
+    // O diário também: a importação remapeia ids e a entrada iria para um id velho.
     await filaDeGravacao.descarregar();
-    if (filaDeGravacao.pendentes() > 0) return erro(ERRO.pendente);
+    if (filaDeGravacao.pendentes() > 0 || registrosNoDiario().length > 0)
+      return erro(ERRO.pendente);
 
     let lerPcm: (dados: ArrayBuffer) => Pcm;
     try {
@@ -81,6 +84,9 @@ export function TelaImportar({ onImportado }: { onImportado: (mensagem: string) 
 
   async function confirmar(e: Previa) {
     setEstado({ etapa: 'gravando' });
+    await filaDeGravacao.descarregar(); // de novo: pode ter chegado edição de outra janela
+    if (filaDeGravacao.pendentes() > 0 || registrosNoDiario().length > 0)
+      return erro(ERRO.pendente);
     try {
       await semRecarregarDurante(() =>
         gravarImportacao(

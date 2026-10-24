@@ -1,13 +1,21 @@
 /** Regras puras de edição da medição de um item (a UI só chama estas funções). */
-import type { Conferencia, Medicao } from '../db/esquema.ts';
+import type { Conferencia, Medicao, NotaEquipamento } from '../db/esquema.ts';
 import { arredondar, formatarNumero, medidaAmbigua, parseMedida, parseNumero } from './numeros.ts';
 import { TEMPLATES, type CampoTemplate } from './templates/registro.ts';
 import type { ItemPcm } from './tipos.ts';
 
-const agoraIso = () => new Date().toISOString();
+/**
+ * Carimbo de alteração sempre MAIOR que o da versão anterior do mesmo registro, mesmo se o
+ * relógio do celular voltar (ajuste da operadora). Ao reabrir o app, o diário só vence o
+ * banco se for mais novo — com relógio voltando, a última digitação perderia.
+ */
+export function carimbo(anterior?: string, agora = Date.now()): string {
+  const antes = anterior ? Date.parse(anterior) : NaN;
+  return new Date(Number.isFinite(antes) ? Math.max(agora, antes + 1) : agora).toISOString();
+}
 
 export function medicaoVazia(itemId: string): Medicao {
-  return { itemId, valores: {}, conferencia: {}, observacao: '', atualizadaEm: agoraIso() };
+  return { itemId, valores: {}, conferencia: {}, observacao: '', atualizadaEm: carimbo() };
 }
 
 /** Novo valor digitado (guardado como texto, do jeito que o técnico escreveu). */
@@ -21,10 +29,10 @@ export function comValor(
   const valores = { ...base.valores };
   if (valor === '') delete valores[campoId];
   else valores[campoId] = valor;
-  return { ...base, valores, atualizadaEm: agoraIso() };
+  return { ...base, valores, atualizadaEm: carimbo(base.atualizadaEm) };
 }
 
-/** ✓/✗ por campo. Tocar de novo na mesma marca desmarca. */
+/** ✓/✗/"não tem" por campo. Tocar de novo na mesma marca desmarca. */
 export function comConferencia(
   m: Medicao | undefined,
   itemId: string,
@@ -35,11 +43,20 @@ export function comConferencia(
   const conferencia = { ...base.conferencia };
   if (conferencia[campoId] === marca) delete conferencia[campoId];
   else conferencia[campoId] = marca;
-  return { ...base, conferencia, atualizadaEm: agoraIso() };
+  return { ...base, conferencia, atualizadaEm: carimbo(base.atualizadaEm) };
 }
 
 export function comObservacao(m: Medicao | undefined, itemId: string, observacao: string): Medicao {
-  return { ...(m ?? medicaoVazia(itemId)), observacao, atualizadaEm: agoraIso() };
+  const base = m ?? medicaoVazia(itemId);
+  return { ...base, observacao, atualizadaEm: carimbo(base.atualizadaEm) };
+}
+
+export function novaNota(
+  equipamentoId: string,
+  observacao: string,
+  anterior?: NotaEquipamento,
+): NotaEquipamento {
+  return { equipamentoId, observacao, atualizadaEm: carimbo(anterior?.atualizadaEm) };
 }
 
 export function valorPcm(campo: CampoTemplate, item: ItemPcm): string | number | null {
@@ -74,7 +91,9 @@ export function avisosDoItem(item: Pick<ItemPcm, 'tipo'>, m: Medicao | undefined
   if (item.tipo === 'tapete' && m) {
     const ld = parseMedida(m.valores.centroLd);
     const le = parseMedida(m.valores.centroLe);
-    if (ld !== null && le !== null && ld !== le) {
+    // "12.450" já tem a pergunta no próprio campo; um Δ com ele seria absurdo.
+    const ambiguo = medidaAmbigua(m.valores.centroLd) || medidaAmbigua(m.valores.centroLe);
+    if (ld !== null && le !== null && ld !== le && !ambiguo) {
       const dif = formatarNumero(Math.abs(ld - le));
       avisos.push(`LD e LE diferentes: ${dif} mm. Confira alinhamento e esticador.`);
     }

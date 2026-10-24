@@ -44,6 +44,24 @@ export function riscar(chave: string, area = local()): void {
   }
 }
 
+/**
+ * Risca só se o diário ainda guarda exatamente este registro. Se o técnico digitou de novo
+ * enquanto o IndexedDB gravava a versão anterior, a anotação mais nova fica.
+ */
+export function riscarSe(chave: string, registro: unknown, area = local()): void {
+  try {
+    if (area?.getItem(PREFIXO + chave) === JSON.stringify(registro))
+      area.removeItem(PREFIXO + chave);
+  } catch {
+    // idem
+  }
+}
+
+/** Chave do diário a partir da chave do localStorage (evento `storage` de outra janela). */
+export function chaveDoDiario(chaveArmazenamento: string | null): string | null {
+  return chaveArmazenamento?.startsWith(PREFIXO) ? chaveArmazenamento.slice(PREFIXO.length) : null;
+}
+
 /** Tudo que ficou no diário (gravações que talvez não chegaram ao IndexedDB). */
 export function pendentesNoDiario(area = local()): Array<[chave: string, registro: unknown]> {
   if (!area) return [];

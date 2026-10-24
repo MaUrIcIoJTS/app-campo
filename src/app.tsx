@@ -56,7 +56,7 @@ export function App() {
           }}
         />
       ) : rota.tela === 'equipamento' ? (
-        <TelaEquipamento id={rota.id} />
+        <TelaEquipamento id={rota.id} abaFiltrada={filtros.aba} />
       ) : (
         <TelaLista
           filtros={filtros}

@@ -21,6 +21,9 @@ no precache. Código previsto em `src/exportar/`.
     técnico digitou (vírgula decimal).
   - `Confere/Diverge`: `Confere` se todos os campos marcados conferem; `Diverge: Largura, Lonas`
     listando os divergentes; vazio se nada foi marcado.
+  - Campo marcado **"Não tem"** (`conferencia[campo] === 'naoTem'`, peça que não existe no
+    equipamento): entra no `Medido` como `Ponta do acoplamento: não se aplica` e não conta
+    como confere nem diverge.
   - `Observação`: observação do item (+ `N foto(s)` se houver).
   - `Data`: última alteração, `dd/mm/aaaa hh:mm` (hora local).
 - Itens que **não estão no PCM** (tambores deduzidos, itens criados em campo) vão para uma aba nova

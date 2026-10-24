@@ -31,7 +31,8 @@ export type ItemDb = ItemPcm & {
   orfao?: boolean;
 };
 
-export type Conferencia = 'confere' | 'diverge';
+/** ✓ / ✗ contra o PCM; `naoTem` = a peça não existe neste equipamento (conta como feito). */
+export type Conferencia = 'confere' | 'diverge' | 'naoTem';
 
 /** Medições de um item. Valores ficam como o técnico digitou ("38,1"). */
 export interface Medicao {

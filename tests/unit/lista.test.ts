@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { filtrarEquipamentos } from '../../src/dominio/busca.ts';
+import { filtrarEquipamentos, proximoEquipamento } from '../../src/dominio/busca.ts';
 import { percentual, progressoItem, somarProgresso } from '../../src/dominio/progresso.ts';
 import type { Medicao } from '../../src/db/esquema.ts';
 
@@ -40,6 +40,28 @@ describe('filtrarEquipamentos', () => {
     expect(tags('', 'SECAGEM E CLASSIFICAÇÃO')).toEqual(['SALA DE PAINÉIS', 'XB-PV-01']);
     expect(tags('sala', 'AREA 1')).toEqual(['SALA DE PAINÉIS']);
     expect(tags('xyz')).toEqual([]);
+  });
+});
+
+describe('proximoEquipamento', () => {
+  const lista = [
+    { id: 'a:1', aba: 'AREA 1' },
+    { id: 'a:2', aba: 'AREA 1' },
+    { id: 'b:1', aba: 'AREA 2' },
+  ];
+  const proximo = (id: string, aba = '') => proximoEquipamento(lista, id, aba)?.id ?? null;
+
+  it('segue a ordem do PCM, atravessando abas quando não há filtro', () => {
+    expect(proximo('a:1')).toBe('a:2');
+    expect(proximo('a:2')).toBe('b:1');
+    expect(proximo('b:1')).toBeNull();
+    expect(proximo('nao-existe')).toBeNull();
+  });
+
+  it('com a aba filtrada, para no último equipamento dela', () => {
+    expect(proximo('a:1', 'AREA 1')).toBe('a:2');
+    expect(proximo('a:2', 'AREA 1')).toBeNull();
+    expect(proximo('a:2', 'AREA 2')).toBe('b:1'); // o atual nem está na aba filtrada
   });
 });
 

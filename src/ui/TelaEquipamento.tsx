@@ -1,16 +1,47 @@
-import { useEffect } from 'preact/hooks';
-import { TEMPLATES } from '../dominio/templates/registro.ts';
+import { useLayoutEffect } from 'preact/hooks';
+import { proximoEquipamento } from '../dominio/busca.ts';
+import { avisosDoItem } from '../dominio/medicao.ts';
+import { percentual, progressoItem, somarProgresso } from '../dominio/progresso.ts';
+import { CartaoItem, estadoDoItem, irParaItem } from './CartaoItem.tsx';
 import { useDados } from './dados.tsx';
-import { rotas } from './rota.ts';
+import { irAoProximoCampo } from './foco.ts';
+import { esquecerRolagem, guardarRolagem, rolagemDaFicha } from './rolagem.ts';
+import { rotas, substituirPor, voltarPara } from './rota.ts';
 import { Topo } from './Topo.tsx';
 
-/** Ficha do equipamento. Fase 1: só os itens do PCM (medição entra na fase 2). */
-export function TelaEquipamento({ id }: { id: string }) {
-  const { dados, erro } = useDados();
-  useEffect(() => window.scrollTo(0, 0), [id]);
+interface Props {
+  id: string;
+  /** Aba filtrada na lista ('' = todas): "Próximo equipamento" fica dentro dela. */
+  abaFiltrada: string;
+}
+
+/** Ficha do equipamento: itens com os campos de medição, observações e "próximo". */
+export function TelaEquipamento({ id, abaFiltrada }: Props) {
+  const { dados, erro, alterarMedicao, alterarNota } = useDados();
+  const eq = dados?.equipamentos.find((e) => e.id === id);
+  const pronto = !!eq;
+
+  // Volta onde parou nesta ficha (ou no topo, na primeira vez). A posição vem dos eventos de
+  // rolagem; ao esconder/recarregar o app (câmera) ainda é esta ficha na tela, então lê direto.
+  useLayoutEffect(() => {
+    if (!pronto) return;
+    window.scrollTo(0, rolagemDaFicha(id));
+    let y = window.scrollY;
+    const rolou = () => (y = window.scrollY);
+    const saindo = () => guardarRolagem(id, window.scrollY);
+    const escondeu = () => document.visibilityState === 'hidden' && saindo();
+    window.addEventListener('scroll', rolou, { passive: true });
+    window.addEventListener('pagehide', saindo);
+    document.addEventListener('visibilitychange', escondeu);
+    return () => {
+      window.removeEventListener('scroll', rolou);
+      window.removeEventListener('pagehide', saindo);
+      document.removeEventListener('visibilitychange', escondeu);
+      guardarRolagem(id, y);
+    };
+  }, [id, pronto]);
 
   const voltar = { href: rotas.lista, rotulo: 'Lista' };
-  const eq = dados?.equipamentos.find((e) => e.id === id);
   if (!dados || !eq) {
     return (
       <>
@@ -29,37 +60,125 @@ export function TelaEquipamento({ id }: { id: string }) {
   }
 
   const itens = dados.itensPorEquipamento.get(id) ?? [];
+  const progresso = somarProgresso(itens.map((i) => progressoItem(i, dados.medicoes.get(i.id))));
+  const avisos = itens.reduce((s, i) => s + avisosDoItem(i, dados.medicoes.get(i.id)).length, 0);
+  const pct = percentual(progresso);
+  const proximoEq = proximoEquipamento(dados.equipamentos, id, abaFiltrada);
+
   return (
     <>
       <Topo voltar={voltar} />
-      <main class="tela">
+      <main class="tela ficha">
         <section class="cabecalho-eq">
           <p class="eq-aba">{eq.aba}</p>
           <h1 class="titulo-tela">{eq.tag ?? eq.nome}</h1>
           {eq.tag && <p class="cabecalho-nome">{eq.nome}</p>}
-          <p class="suave">{itens.length === 1 ? '1 item' : `${itens.length} itens`}</p>
+          <p class="ficha-progresso">
+            <span class="barra" aria-hidden="true">
+              <span style={{ width: `${pct}%` }} />
+            </span>
+            <span class="eq-pct">{pct}%</span>
+            <span>{itens.length === 1 ? '1 item' : `${itens.length} itens`}</span>
+            {progresso.divergencias > 0 && (
+              <span class="eq-diverge">✗ {progresso.divergencias} diverge</span>
+            )}
+            {avisos > 0 && (
+              <span class="eq-aviso">⚠ {avisos === 1 ? '1 aviso' : `${avisos} avisos`}</span>
+            )}
+          </p>
           {eq.orfao && <span class="selo selo--alerta">Fora do PCM atual</span>}
         </section>
 
+        {itens.length > 2 && (
+          <details class="indice">
+            <summary class="indice-resumo">Ir para item…</summary>
+            <ol class="indice-lista">
+              {itens.map((i) => {
+                const estado = estadoDoItem(i, dados.medicoes.get(i.id));
+                return (
+                  <li key={i.id}>
+                    <button
+                      type="button"
+                      class="indice-item"
+                      onClick={(e) => {
+                        const indice = e.currentTarget.closest('details');
+                        if (indice) indice.open = false;
+                        irParaItem(i.id);
+                      }}
+                    >
+                      <span class="indice-nome">{i.nome}</span>
+                      <span class={`item-estado ${estado.classe}`}>{estado.texto}</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ol>
+          </details>
+        )}
+
         <ol class="itens">
-          {itens.map((i) => (
-            <li key={i.id} class="item cartao">
-              <h2 class="item-nome">{i.nome}</h2>
-              <p class="item-tipo">{TEMPLATES[i.tipo].nome}</p>
-              {i.especificacao && (
-                <p class="item-pcm">
-                  <span class="rotulo-pcm">PCM</span> {i.especificacao}
-                </p>
-              )}
-              {i.quantidade && <p class="item-qtd">Qtd.: {i.quantidade}</p>}
-              {i.origem === 'deduzido' && (
-                <span class="selo">Não está no PCM — deduzido dos mancais</span>
-              )}
-              {i.orfao && <span class="selo selo--alerta">Fora do PCM atual</span>}
-            </li>
+          {itens.map((i, k) => (
+            <CartaoItem
+              key={i.id}
+              item={i}
+              medicao={dados.medicoes.get(i.id)}
+              proximo={itens[k + 1] ?? null}
+              onMedicao={(mudar) => alterarMedicao(i.id, mudar)}
+            />
           ))}
         </ol>
-        <p class="suave nota-fase">Campos de medição: próxima versão do app.</p>
+
+        <section class="cartao obs-eq">
+          <label class="campo-med-rotulo" for="obs-eq">
+            Observação do equipamento
+          </label>
+          <textarea
+            id="obs-eq"
+            class="campo campo-texto"
+            rows={3}
+            enterkeyhint="done"
+            value={dados.notas.get(id)?.observacao ?? ''}
+            onInput={(e) => alterarNota(id, e.currentTarget.value)}
+            onKeyDown={irAoProximoCampo}
+            data-campo-ficha
+          />
+        </section>
+
+        <nav class="fim-ficha" aria-label="Próximo">
+          {proximoEq ? (
+            <a
+              class="botao botao--grande botao--proximo"
+              href={rotas.equipamento(proximoEq.id)}
+              onClick={(e) => {
+                e.preventDefault();
+                esquecerRolagem(proximoEq.id);
+                substituirPor(rotas.equipamento(proximoEq.id));
+              }}
+            >
+              <span>Próximo equipamento ›</span>
+              <span class="botao-sub">
+                {proximoEq.tag ?? proximoEq.nome}
+                {proximoEq.aba !== eq.aba && ` · ${proximoEq.aba}`}
+              </span>
+            </a>
+          ) : (
+            <p class="suave">
+              {abaFiltrada
+                ? `Último equipamento de ${abaFiltrada}.`
+                : 'Este é o último equipamento do PCM.'}
+            </p>
+          )}
+          <a
+            class="botao botao--secundario botao--grande"
+            href={rotas.lista}
+            onClick={(e) => {
+              e.preventDefault();
+              voltarPara(rotas.lista);
+            }}
+          >
+            ‹ Voltar para a lista
+          </a>
+        </nav>
       </main>
     </>
   );

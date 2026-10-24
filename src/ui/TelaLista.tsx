@@ -1,6 +1,7 @@
 import type { ComponentChildren } from 'preact';
 import { useLayoutEffect, useMemo } from 'preact/hooks';
 import { filtrarEquipamentos } from '../dominio/busca.ts';
+import { avisosDoItem } from '../dominio/medicao.ts';
 import { percentual, progressoItem, somarProgresso, type Progresso } from '../dominio/progresso.ts';
 import type { Dados } from '../db/repositorio.ts';
 import { useDados } from './dados.tsx';
@@ -26,6 +27,8 @@ let rolagemSalva = 0;
 interface Resumo {
   progresso: Progresso;
   fotos: number;
+  /** Avisos de conferência (ex.: tapete com LD ≠ LE). */
+  avisos: number;
 }
 
 function resumir(dados: Dados): Map<string, Resumo> {
@@ -37,6 +40,7 @@ function resumir(dados: Dados): Map<string, Resumo> {
       fotos:
         (dados.fotosPorAlvo.get(eq.id) ?? 0) +
         itens.reduce((s, i) => s + (dados.fotosPorAlvo.get(i.id) ?? 0), 0),
+      avisos: itens.reduce((s, i) => s + avisosDoItem(i, dados.medicoes.get(i.id)).length, 0),
     });
   }
   return mapa;
@@ -193,6 +197,7 @@ export function TelaLista({ filtros, onFiltros, rodape, status }: Props) {
                       <span class="eq-pct">{pct}%</span>
                       {fotos > 0 && <span>{fotos === 1 ? '1 foto' : `${fotos} fotos`}</span>}
                       {diverg > 0 && <span class="eq-diverge">✗ {diverg} diverge</span>}
+                      {(r?.avisos ?? 0) > 0 && <span class="eq-aviso">⚠ aviso</span>}
                       {eq.orfao && <span class="selo selo--alerta">Fora do PCM atual</span>}
                     </span>
                   </a>
