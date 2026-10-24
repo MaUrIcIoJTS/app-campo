@@ -59,8 +59,12 @@ const CASOS: [nome: string, espec: string, tipo: TipoItem][] = [
   ['ÓLEO DO MANCAL', '', 'generico'],
   ['PARAFUSOS DAS CANECAS', '', 'generico'],
   ['PORCA P/ ROLAMENTO (CAIXA)', '', 'generico'],
-  ['ROTOR', '1700X170', 'generico'],
+  ['ROTOR', '1700X170', 'rotor'],
+  ['ROTOR DO MOINHO', '', 'rotor'],
+  ['RODA DO AERO', '', 'rotor'],
+  ['ROLAMENTO DO ROTOR', '', 'mancal'],
   ['GRELHAS', '', 'generico'],
+  ['MANGAS', '', 'generico'],
   ['', '', 'generico'],
 ];
 

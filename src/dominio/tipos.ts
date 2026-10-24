@@ -14,6 +14,7 @@ export type TipoItem =
   | 'polia'
   | 'correia-v'
   | 'acoplamento'
+  | 'rotor'
   | 'tela'
   | 'cabo-aco'
   | 'canecas'

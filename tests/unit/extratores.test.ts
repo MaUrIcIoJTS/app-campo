@@ -46,6 +46,30 @@ describe('extratores do PCM', () => {
   });
 });
 
+describe('rotor', () => {
+  it.each([
+    ['1700X170', [1700, 170]],
+    ['Ø1300X345L', [1300, 345]],
+    ['ø960/330MM', [960, 330]],
+    ['ø800x340', [800, 340]],
+    ['800X625 - PALETAS 80X80X560', [800, 625]],
+  ])('dimensoesRotor(%j) = %j', (espec, esperado) => {
+    expect(x.dimensoesRotor(espec)).toEqual(esperado);
+  });
+
+  it('não inventa dimensão quando o PCM não informa', () => {
+    expect(x.dimensoesRotor('VER PROJETO; #1/2')).toBeNull();
+    expect(x.dimensoesRotor('')).toBeNull();
+  });
+
+  it('Ø do eixo e nº de pás', () => {
+    expect(x.diametroEixo('Ø900X350L EIXO 97,63')).toBe(97.63);
+    expect(x.diametroEixo('EIXO ø 110MM PRIMITIVO, 80MM NOS MANCAIS')).toBe(110);
+    expect(x.pasRotor('ROTOR 12 PÁS RETAS')).toBe(12);
+    expect(x.pasRotor('1700X170')).toBeNull();
+  });
+});
+
 describe('registro de templates', () => {
   it('todo tipo tem template com campos de ids únicos', () => {
     for (const [tipo, t] of Object.entries(TEMPLATES)) {

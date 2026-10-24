@@ -42,7 +42,7 @@ registra o SW. Opções:
 - **Android + cabo USB** (mais rápido): depuração USB ligada, `npm run preview`, depois
   `adb reverse tcp:4173 tcp:4173` e abra `http://localhost:4173` no Chrome do celular.
   `chrome://inspect` no PC mostra o console do celular.
-- **GitHub Pages** (Android e iPhone): faça o push (skill `publicar`) e abra a URL do Pages.
+- **GitHub Pages** (sem cabo): faça o push (skill `publicar`) e abra a URL do Pages.
 
 Roteiro no aparelho:
 
@@ -52,8 +52,7 @@ Roteiro no aparelho:
 4. **Fechar à força** (remover dos recentes) no meio de uma digitação. Reabrir em modo avião:
    tudo tem que estar lá, inclusive o último campo digitado.
 5. Exportar `.xlsx` e backup `.json` em modo avião; compartilhar quando voltar o sinal.
-6. iPhone: repetir no Safari (lá o armazenamento de sites não instalados pode ser apagado
-   após 7 dias sem uso — por isso instalar na tela inicial é obrigatório).
+   O aparelho de campo é **Android**; iPhone não é alvo de teste.
 
 ## Problemas comuns
 

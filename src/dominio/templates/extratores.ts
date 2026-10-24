@@ -94,6 +94,18 @@ export const fioTela = (espec: string) =>
   primeiroNumero(espec, new RegExp(String.raw`FIO\s*${NUM}`));
 export const diametroCaboMm = (espec: string) =>
   primeiroNumero(espec, new RegExp(String.raw`${NUM}\s*MM\b`));
+// ---- Rotor -------------------------------------------------------------------------
+/** Ø × largura do rotor: "1700X170", "Ø1300X345L", "ø960/330MM", "800X625 - PALETAS…". */
+export function dimensoesRotor(espec: string): [diametro: number, largura: number] | null {
+  const m = normalizar(espec).match(new RegExp(String.raw`^\s*Ø?\s*${NUM}\s*[X/]\s*${NUM}`));
+  if (!m) return null;
+  const d = parseNumero(m[1]);
+  const l = parseNumero(m[2]);
+  return d !== null && l !== null ? [d, l] : null;
+}
+/** Nº de pás/paletas, quando o PCM informa ("8 PÁS", "12 PALETAS"). */
+export const pasRotor = (espec: string) => primeiroNumero(espec, /\b(\d{1,2})\s*(?:PAS|PALETAS)\b/);
+
 /** Dimensões "155X260X190MM (AXLXP)" → [155, 260, 190]. */
 export function dimensoes3(espec: string): [number, number, number] | null {
   const m = normalizar(espec).match(new RegExp(String.raw`${NUM}\s*X\s*${NUM}\s*X\s*${NUM}`));

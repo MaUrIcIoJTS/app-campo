@@ -1,8 +1,9 @@
 # Levantamento PCM
 
 App web (PWA) para levantar em campo as medidas de equipamentos de uma fábrica e comparar
-com o **PCM** do cliente. Roda no navegador do celular (Chrome Android / Safari iOS),
-instala na tela inicial e funciona **100% offline** depois do primeiro acesso.
+com o **PCM** do cliente. Roda no navegador do celular, instala na tela inicial e funciona
+**100% offline** depois do primeiro acesso. **Aparelho de campo: Android (Chrome)** — é onde
+tudo é testado; iOS/Safari não é alvo de teste (evite só quebrar o básico nele).
 
 Toda a documentação, a interface e as mensagens são em **português do Brasil**.
 
@@ -146,7 +147,7 @@ Fotos: máx. ~1600 px no maior lado, JPEG ~0,8, como `Blob` (nunca base64 no ban
 - **Fresado** — faces planas usinadas na ponta do eixo do rolete, que encaixam no suporte;
   mede-se a distância entre as faces.
 - **LD / LE** — lado direito / lado esquerdo do equipamento, olhando no sentido do fluxo do
-  material (convenção a confirmar em campo). **Centro a centro LD/LE**: distância entre os
+  material (convenção confirmada pelo usuário). **Centro a centro LD/LE**: distância entre os
   centros dos eixos dos tambores em cada lado; LD ≠ LE indica desalinhamento ou esticador desigual.
 - **Mancal** — caixa que aloja o rolamento e apoia o eixo. **SNA** (ex.: `SNA 515`) = mancal
   bipartido de pedestal; `P209`/`F211` = mancal com rolamento de pedestal (P) ou flange (F).
@@ -164,7 +165,10 @@ Fotos: máx. ~1600 px no maior lado, JPEG ~0,8, como `Blob` (nunca base64 no ban
 - **Acoplamento** — liga dois eixos (motor–redutor, redutor–tambor): borracha, dedo, rígido, cardan.
 - **Chaveta** — peça que trava polia/acoplamento no eixo; anota-se largura × altura (ex.: 14 × 9).
 - **Δ** — diferença **medido − PCM**, só quando os dois são números.
-- **Confere / Diverge** — marcação manual do técnico por campo; o app não usa tolerância automática.
+- **Confere / Diverge** — marcação manual do técnico **por campo** (decisão do usuário); o item
+  diverge se qualquer campo divergir. O app não usa tolerância automática.
+- **Rotor / roda** — rotor de exaustor, moinho, filtro ou roda do aeroseparador: Ø × largura
+  (`1700X170`, `Ø1300X345L`), Ø do eixo, nº de pás. Grelhas e mangas ficam no genérico.
 
 ## Automação do Claude Code (`.claude/`)
 

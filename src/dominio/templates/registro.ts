@@ -191,6 +191,23 @@ export const TEMPLATES: Readonly<Record<TipoItem, TemplateItem>> = {
       txt('chavetas', 'Chavetas'),
     ],
   },
+  rotor: {
+    tipo: 'rotor',
+    nome: 'Rotor / roda',
+    desenhos: [],
+    campos: [
+      num('diametro', 'Ø externo', 'mm', {
+        pcm: (i) => x.dimensoesRotor(i.especificacao)?.[0] ?? null,
+      }),
+      num('largura', 'Largura', 'mm', {
+        pcm: (i) => x.dimensoesRotor(i.especificacao)?.[1] ?? null,
+      }),
+      num('eixo', 'Ø do eixo', 'mm', { pcm: (i) => x.diametroEixo(i.especificacao) }),
+      num('pas', 'Nº de pás', 'un', { pcm: (i) => x.pasRotor(i.especificacao) }),
+      opc('estado', 'Estado', ['Bom', 'Desgaste', 'Incrustado', 'Vibração', 'Danificado']),
+      txt('referencia', 'Referência do PCM', { pcm: espec, dica: 'Texto do PCM, para conferir.' }),
+    ],
+  },
   tela: conferencia('tela', 'Tela de peneira', [
     num('malha', 'Malha', 'mm', { pcm: (i) => x.malhaTela(i.especificacao) }),
     num('fio', 'Fio', 'mm', { pcm: (i) => x.fioTela(i.especificacao) }),

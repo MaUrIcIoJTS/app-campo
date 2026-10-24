@@ -22,6 +22,7 @@ const REGRAS: ReadonlyArray<{ tipo: TipoItem; casa: (nome: string, espec: string
   { tipo: 'polia', casa: (n) => /^POLIA/.test(n) },
   { tipo: 'acoplamento', casa: (n) => /^(ACOPLAMENTO|CARDAN)\b/.test(n) },
   { tipo: 'mancal', casa: (n) => /^(MANCAL|ROLAMENTOS?|BUCHA|CAIXA DE ROLAMENTO)\b/.test(n) },
+  { tipo: 'rotor', casa: (n) => /^(ROTOR|RODA DO AERO)\b/.test(n) },
   { tipo: 'tela', casa: (n) => /^(TELA|PENEIRA)\b/.test(n) },
   { tipo: 'cabo-aco', casa: (n) => /^CABO DE ACO/.test(n) },
   { tipo: 'canecas', casa: (n) => /^CANEC(A|O)S?\b/.test(n) },
