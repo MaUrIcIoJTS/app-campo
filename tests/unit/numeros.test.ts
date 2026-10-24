@@ -3,6 +3,8 @@ import {
   calcularDelta,
   formatarDelta,
   formatarNumero,
+  medidaAmbigua,
+  parseMedida,
   parseNumero,
   parsePolegadas,
   polegadasParaMm,
@@ -74,5 +76,30 @@ describe('formatação pt-BR', () => {
     expect(formatarDelta(1.5)).toBe('+1,5');
     expect(formatarDelta(-0.25)).toBe('−0,25');
     expect(formatarDelta(0)).toBe('0');
+  });
+});
+
+describe('parseMedida (o que o técnico digita)', () => {
+  it.each([
+    ['658', 658],
+    ['658,5', 658.5],
+    ['658.5', 658.5],
+    [' 38,14 ', 38.14],
+    [',5', 0.5],
+    ['-2', -2],
+  ])('%j → %d', (entrada, esperado) => {
+    expect(parseMedida(entrada)).toBe(esperado);
+  });
+
+  it.each(['65O', '63 mm', '1.234,5', '12,4,5', '', 'abc', '--2'])('rejeita %j', (entrada) => {
+    expect(parseMedida(entrada)).toBeNull();
+  });
+
+  it('marca como ambíguo só ponto + 3 casas', () => {
+    expect(medidaAmbigua('12.450')).toBe(true);
+    expect(medidaAmbigua('1.500')).toBe(true);
+    expect(medidaAmbigua('0.125')).toBe(false);
+    expect(medidaAmbigua('38.14')).toBe(false);
+    expect(medidaAmbigua('12,450')).toBe(false);
   });
 });

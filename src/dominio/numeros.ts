@@ -41,6 +41,21 @@ export function polegadasParaMm(polegadas: number): number {
   return arredondar(polegadas * MM_POR_POLEGADA, 2);
 }
 
+/**
+ * Medida DIGITADA pelo técnico: estrita — só um número, com vírgula ou ponto decimal.
+ * Diferente de `parseNumero` (tolerante, para o texto do PCM): "65O" aqui é inválido.
+ */
+export function parseMedida(texto: string | null | undefined): number | null {
+  const s = (texto ?? '').trim();
+  if (!/^[-+]?(\d+([.,]\d+)?|[.,]\d+)$/.test(s)) return null;
+  return Number(s.replace(',', '.'));
+}
+
+/** "12.450": ponto + 3 casas pode ser milhar (12450) ou decimal (12,45). Avisar, não adivinhar. */
+export function medidaAmbigua(texto: string | null | undefined): boolean {
+  return /^[-+]?[1-9]\d{0,2}\.\d{3}$/.test((texto ?? '').trim());
+}
+
 /** Δ = medido − PCM. Só existe quando os dois lados são números. */
 export function calcularDelta(
   medido: string | number | null | undefined,
