@@ -10,6 +10,7 @@ import {
 import { progressoItem } from '../dominio/progresso.ts';
 import { TEMPLATES } from '../dominio/templates/registro.ts';
 import { CampoMedicao } from './CampoMedicao.tsx';
+import { DesenhosDoItem } from './DesenhosDoItem.tsx';
 import { irAoProximoCampo } from './foco.ts';
 
 export const idDoCartao = (itemId: string) => `item-${itemId}`;
@@ -73,6 +74,7 @@ export function CartaoItem({ item, medicao, proximo, onMedicao }: Props) {
         <span class="selo">Não está no PCM — deduzido dos mancais</span>
       )}
       {item.orfao && <span class="selo selo--alerta">Fora do PCM atual</span>}
+      <DesenhosDoItem ids={template.desenhos} />
 
       <div class="campos">
         {template.campos.map((c) => (

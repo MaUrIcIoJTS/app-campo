@@ -35,11 +35,19 @@ Um tipo de item tem 4 partes: **detecção** (coluna B/C → tipo), **template**
    - `dica` só se ajudar em campo, em até ~8 palavras.
    - `fotoPlaca: true` para itens com placa (motor, redutor).
 
-6. **Desenho** — `src/ui/desenhos/<id>.tsx` (fase 3) e o id em `IdDesenho`:
-   - SVG inline, `viewBox` sem `width/height` fixos, `stroke="currentColor"` (funciona nos 2 temas).
-   - Legível em 360 px: traço ≥ 2 px, textos ≥ 14 px, poucas cotas, letras iguais às dos campos.
-   - Cotas com setas nas duas pontas; o que é medido fica em destaque (cor primária).
-   - Teste visual: abrir a ficha em 360 px, tema claro e escuro.
+6. **Desenho** — `src/ui/desenhos/<id>.tsx`, o id em `IdDesenho`, a entrada em
+   `src/ui/desenhos/index.ts` (SVG + legenda de 1–2 frases) e o id em `desenhos` do template:
+   - Use as peças de `desenhos/base.tsx`: `Svg`, `Cota` (setas nas duas pontas; `externa` para
+     medida curta), `Linha` (extensão), `Guia` (chamada até o rótulo), `Texto`, `Marca` (nº
+     explicado na legenda), `Centro`. Classes: `peca`, `cheia`, `escura`, `furo`, `placa`.
+     Nada de `<marker>` (some quando o SVG nasce dentro de `<details>` fechado).
+   - `viewBox` com **300 de largura** (na tela de 360 px a escala é ~0,96): texto de 15
+     (= 14,4 px na tela), traço ≥ 2. Cores só pelas classes (dois temas).
+   - Letras e nomes **iguais aos rótulos dos campos**; o que se mede em destaque (primária).
+   - Desenho tecnicamente certo antes de bonito (ex.: correia liga eixos paralelos e afastados;
+     Ø do cabo no topo dos pernos; malha = vão livre).
+   - `tests/e2e/desenhos.spec.ts` confere que todos abrem, texto ≥ 14 px e 360 px; atualize a
+     contagem. Teste visual: capturas em 360 px, tema claro e escuro (ver `docs/plano.md`).
 
 7. **Exportação** — confira se os campos novos aparecem em "Medido" no `.xlsx` (skill `exportar-pcm`).
 

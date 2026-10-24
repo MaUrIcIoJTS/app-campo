@@ -1013,3 +1013,154 @@ input[type='search']::-webkit-search-cancel-button {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* ---- Desenhos de referência ("onde medir") ------------------------------------ */
+
+.desenhos {
+  margin: 12px 0 0;
+  border: 2px solid var(--borda);
+  border-radius: var(--raio);
+}
+
+.desenhos > summary {
+  display: flex;
+  align-items: center;
+  min-height: var(--toque);
+  padding: 0 var(--espaco);
+  color: var(--primaria);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.desenho {
+  margin: 0;
+  padding: 8px 0 12px; /* sem margem lateral: o SVG usa a largura toda (texto ≥ 14 px) */
+  border-top: 1px solid var(--trilho);
+}
+
+.desenho figcaption {
+  margin-top: 6px;
+  padding: 0 12px;
+  white-space: pre-line; /* uma ideia por linha */
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+}
+
+/* viewBox de 300 de largura: na tela de 360 px o SVG tem 288 px (escala 0,96) — texto de 15
+   vira 14,4 px e traço de 2,2 vira 2,1 px. */
+.desenho-svg {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  height: auto;
+  margin: 0 auto;
+  color: var(--texto);
+}
+
+.desenho-svg .peca {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+}
+
+.desenho-svg .cheia {
+  fill: var(--trilho);
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+}
+
+.desenho-svg .escura {
+  fill: var(--texto-suave);
+  stroke: currentColor;
+  stroke-width: 2.2;
+}
+
+.desenho-svg .escura-linha {
+  stroke: var(--texto-suave);
+  stroke-width: 6;
+}
+
+.desenho-svg .furo {
+  fill: var(--superficie);
+  stroke: currentColor;
+  stroke-width: 2.5;
+}
+
+.desenho-svg .placa {
+  fill: var(--superficie);
+  stroke: var(--primaria);
+  stroke-width: 2.5;
+}
+
+.desenho-svg .centro {
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-dasharray: 12 4 3 4;
+}
+
+.desenho-svg .escondida {
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-dasharray: 6 4;
+}
+
+.desenho-svg .extensao,
+.desenho-svg .guia line,
+.desenho-svg .seta line {
+  stroke: currentColor;
+  stroke-width: 2.2;
+}
+
+.desenho-svg .guia circle,
+.desenho-svg .seta polygon {
+  fill: currentColor;
+}
+
+.desenho-svg .seta line {
+  stroke-width: 3;
+}
+
+.desenho-svg .cota line {
+  stroke: var(--primaria);
+  stroke-width: 2.5;
+}
+
+.desenho-svg .cota polygon {
+  fill: var(--primaria);
+}
+
+.desenho-svg text {
+  fill: currentColor;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  /* contorno da cor do fundo: o texto se lê mesmo sobre linhas e peças */
+  paint-order: stroke;
+  stroke: var(--superficie);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
+.desenho-svg .cota text,
+.desenho-svg text.destaque {
+  fill: var(--primaria);
+}
+
+.desenho-svg .meio {
+  text-anchor: middle;
+}
+
+.desenho-svg .fim {
+  text-anchor: end;
+}
+
+.desenho-svg .marca circle {
+  fill: var(--primaria);
+}
+
+.desenho-svg .marca text {
+  fill: var(--primaria-texto);
+  stroke: none;
+}

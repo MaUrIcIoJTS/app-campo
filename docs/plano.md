@@ -18,7 +18,7 @@ Site: https://mauriciojts.github.io/app-campo/ (deploy automático a cada push n
 | 0. Repositório, CI, Pages                       | ✅ feito                                                      |
 | 1. Banco, importação, lista, ficha (só leitura) | ✅ feito e **validado no celular em 24/10** (critérios 1 e 2) |
 | 2. Ficha com medição                            | ✅ feito — **aguardando teste no celular** (roteiro abaixo)   |
-| 3. Fotos e desenhos SVG                         | ⏳ próxima                                                    |
+| 3. Fotos e desenhos SVG                         | ◐ desenhos feitos (25/10); fotos a fazer                      |
 | 4. Exportar, backup, restaurar, compartilhar    | a fazer                                                       |
 | 5. Ensaio geral (critérios 1–5 no Android)      | a fazer                                                       |
 
@@ -75,8 +75,18 @@ Ver "Roteiro — fase 2" no fim deste documento.
   `createImageBitmap` (orientação EXIF) → canvas ≤ 1600 px → JPEG 0,8 → Blob no store `fotos`
   (`alvoId` = item ou equipamento), miniaturas, ampliar, apagar com confirmação, foto da placa
   (motor/redutor), aviso de espaço (`navigator.storage.estimate()`).
-- Desenhos SVG (skill `novo-tipo-de-item`, passo 6): tambor, rolete (A–E), vista superior
-  (LD/LE), acionamento, mancal, polia.
+- ✅ **Desenhos "onde medir"** (24–25/10): 15 SVGs em `src/ui/desenhos/` — tapete de cima
+  (LD/LE) e em corte (coberturas, lonas), tambor, rolete (A–E e o fresado de frente),
+  acionamento (motor → polias e correias → redutor com eixo vazado), motor (placa), redutor
+  (maciço/vazado), acoplamento, mancal, polia, correia em V, rotor, caneca, tela, cabo de aço.
+  No cartão do item, um botão por desenho ("▸ Desenho: rolete"; `<details>` fechado, o SVG só
+  monta ao abrir; "▾ Fechar desenho"). Legenda curta embaixo, uma ideia por linha.
+  E2E `tests/e2e/desenhos.spec.ts` (os 15 abrem; texto ≥ 14 px, traço ≥ 2 px e nada cortado em
+  360 px). Como fazer um novo: skill `novo-tipo-de-item`, passo 6.
+  Revisão do `revisor-de-campo` (25/10) aplicada. Mudanças nos campos:
+  - tambor: rótulo "Ø ponta (redutor ou acoplamento)" (id `pontaAcoplamento` mantido);
+  - motor: campo novo "Chaveta da ponta";
+  - dicas "Vão livre entre fios" (malha) e "Por cima de 2 pernas opostas" (cabo de aço).
 - E2E: `setInputFiles` com JPEG grande → comprimido → recarregar → foto continua.
 
 ## Fase 4 — exportar e backup
@@ -125,3 +135,11 @@ Preparação: com internet, abrir o app instalado → aparece "Nova versão do a
 
 Anote o que travou, o que ficou pequeno/apagado ao sol e qualquer medida que sumiu (com o
 horário) — medida sumida vira teste antes da correção.
+
+## Roteiro — desenhos (no Android, ~5 min)
+
+1. Atualizar o app (com internet) e abrir uma transportadora em modo avião.
+2. Em cada item, tocar "▸ Desenho: …": abre o desenho com a legenda; "▾ Fechar desenho" fecha.
+3. Conferir ao sol, tema claro e escuro: letras e nomes legíveis e iguais aos campos da ficha.
+4. Conferir se cada desenho mostra o que você mede de verdade em campo (fresado, LD/LE, Ø do
+   cabo, malha, eixo vazado). O que estiver errado ou confuso: anote qual desenho e o porquê.

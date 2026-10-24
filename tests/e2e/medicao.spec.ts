@@ -280,11 +280,11 @@ test('"Não tem", índice de itens, nome do item preso no topo e volta onde paro
 
   // Campo sem valor no PCM: "Não tem" no lugar de ✓/✗, e conta como feito.
   const tambor = cartao(page, 'TAMBOR 1');
-  await expect(tambor.getByRole('button', { name: 'Ø ponta do acoplamento: confere' })).toHaveCount(
-    0,
-  );
+  await expect(
+    tambor.getByRole('button', { name: 'Ø ponta (redutor ou acoplamento): confere' }),
+  ).toHaveCount(0);
   await expect(tambor.getByRole('button', { name: 'Ø eixo no mancal: confere' })).toBeVisible();
-  const naoTem = tambor.getByRole('button', { name: 'Ø ponta do acoplamento: não tem' });
+  const naoTem = tambor.getByRole('button', { name: 'Ø ponta (redutor ou acoplamento): não tem' });
   await naoTem.click();
   await expect(naoTem).toHaveAttribute('aria-pressed', 'true');
   await expect(tambor.locator('.item-estado')).toHaveText('1/7');

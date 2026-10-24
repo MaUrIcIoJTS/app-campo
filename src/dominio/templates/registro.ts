@@ -2,7 +2,23 @@ import type { ItemPcm, TipoItem } from '../tipos.ts';
 import { parseCodigoRolete, type CodigoRolete } from '../rolete.ts';
 import * as x from './extratores.ts';
 
-export type IdDesenho = 'tambor' | 'rolete' | 'vista-superior' | 'acionamento' | 'mancal' | 'polia';
+/** Desenho de referência "onde medir" (`src/ui/desenhos/`). */
+export type IdDesenho =
+  | 'vista-superior'
+  | 'tapete-corte'
+  | 'tambor'
+  | 'rolete'
+  | 'acionamento'
+  | 'motor'
+  | 'redutor'
+  | 'acoplamento'
+  | 'mancal'
+  | 'polia'
+  | 'correia-v'
+  | 'rotor'
+  | 'caneca'
+  | 'tela'
+  | 'cabo-aco';
 
 export interface CampoTemplate {
   id: string;
@@ -45,10 +61,15 @@ const qtd = num('quantidade', 'Quantidade', 'un', { pcm: (i) => x.quantidade(i.q
 const ESTADO = ['Bom', 'Folga', 'Ruído', 'Aquecido', 'Vazando', 'Danificado'] as const;
 
 /** Campos de conferência simples (tela, sensores, painéis…): modelo + quantidade. */
-const conferencia = (tipo: TipoItem, nome: string, extras: CampoTemplate[] = []): TemplateItem => ({
+const conferencia = (
+  tipo: TipoItem,
+  nome: string,
+  extras: CampoTemplate[] = [],
+  desenhos: IdDesenho[] = [],
+): TemplateItem => ({
   tipo,
   nome,
-  desenhos: [],
+  desenhos,
   campos: [txt('modelo', 'Modelo / medida principal', { pcm: espec }), ...extras, qtd],
 });
 
@@ -56,7 +77,7 @@ export const TEMPLATES: Readonly<Record<TipoItem, TemplateItem>> = {
   tapete: {
     tipo: 'tapete',
     nome: 'Tapete / correia transportadora',
-    desenhos: ['vista-superior'],
+    desenhos: ['vista-superior', 'tapete-corte'],
     campos: [
       num('largura', 'Largura', 'mm', {
         pcm: (i) => x.larguraTapeteMm(i.especificacao),
@@ -81,13 +102,14 @@ export const TEMPLATES: Readonly<Record<TipoItem, TemplateItem>> = {
   tambor: {
     tipo: 'tambor',
     nome: 'Tambor / rolo',
-    desenhos: ['tambor', 'acionamento'],
+    desenhos: ['tambor'],
     campos: [
       opc('funcao', 'Função', ['Tração', 'Retorno', 'Esticador', 'Desvio', 'Encosto']),
       num('diametro', 'Ø do tambor', 'mm'),
       num('comprimento', 'Comprimento (face)', 'mm'),
       num('eixoMancal', 'Ø eixo no mancal', 'mm', { pcm: (i) => x.diametroEixo(i.especificacao) }),
-      num('pontaAcoplamento', 'Ø ponta do acoplamento', 'mm'),
+      // id antigo mantido (é a chave das medições salvas); o rótulo serve também ao eixo vazado
+      num('pontaAcoplamento', 'Ø ponta (redutor ou acoplamento)', 'mm'),
       txt('chaveta', 'Chaveta da ponta', { dica: 'Largura × altura, ex.: 14 × 9' }),
       num('comprimentoEixo', 'Comprimento total do eixo', 'mm'),
     ],
@@ -122,7 +144,7 @@ export const TEMPLATES: Readonly<Record<TipoItem, TemplateItem>> = {
   redutor: {
     tipo: 'redutor',
     nome: 'Redutor / motorredutor',
-    desenhos: ['acionamento'],
+    desenhos: ['redutor', 'acionamento'],
     fotoPlaca: true,
     campos: [
       txt('modelo', 'Fabricante / modelo', { pcm: espec }),
@@ -141,7 +163,7 @@ export const TEMPLATES: Readonly<Record<TipoItem, TemplateItem>> = {
   motor: {
     tipo: 'motor',
     nome: 'Motor',
-    desenhos: ['acionamento'],
+    desenhos: ['motor', 'acionamento'],
     fotoPlaca: true,
     campos: [
       num('potencia', 'Potência', 'cv', { pcm: (i) => x.potenciaCv(i.especificacao) }),
@@ -150,6 +172,7 @@ export const TEMPLATES: Readonly<Record<TipoItem, TemplateItem>> = {
       num('corrente', 'Corrente nominal', 'A'),
       txt('carcaca', 'Carcaça', { dica: 'Ex.: 112M' }),
       num('pontaEixo', 'Ø ponta de eixo', 'mm'),
+      txt('chaveta', 'Chaveta da ponta', { dica: 'Largura × altura, ex.: 8 × 7' }),
     ],
   },
   polia: {
@@ -170,7 +193,7 @@ export const TEMPLATES: Readonly<Record<TipoItem, TemplateItem>> = {
   'correia-v': {
     tipo: 'correia-v',
     nome: 'Correia em V',
-    desenhos: ['polia'],
+    desenhos: ['correia-v', 'polia'],
     campos: [
       txt('codigo', 'Código da correia', {
         pcm: (i) => x.codigoCorreiaV(i.especificacao),
@@ -182,7 +205,7 @@ export const TEMPLATES: Readonly<Record<TipoItem, TemplateItem>> = {
   acoplamento: {
     tipo: 'acoplamento',
     nome: 'Acoplamento',
-    desenhos: ['acionamento'],
+    desenhos: ['acoplamento'],
     campos: [
       txt('modelo', 'Tipo / modelo', { pcm: espec }),
       num('diametro', 'Ø externo', 'mm', { pcm: (i) => x.diametroExterno(i.especificacao) }),
@@ -194,7 +217,7 @@ export const TEMPLATES: Readonly<Record<TipoItem, TemplateItem>> = {
   rotor: {
     tipo: 'rotor',
     nome: 'Rotor / roda',
-    desenhos: [],
+    desenhos: ['rotor'],
     campos: [
       num('diametro', 'Ø externo', 'mm', {
         pcm: (i) => x.dimensoesRotor(i.especificacao)?.[0] ?? null,
@@ -208,18 +231,41 @@ export const TEMPLATES: Readonly<Record<TipoItem, TemplateItem>> = {
       txt('referencia', 'Referência do PCM', { pcm: espec, dica: 'Texto do PCM, para conferir.' }),
     ],
   },
-  tela: conferencia('tela', 'Tela de peneira', [
-    num('malha', 'Malha', 'mm', { pcm: (i) => x.malhaTela(i.especificacao) }),
-    num('fio', 'Fio', 'mm', { pcm: (i) => x.fioTela(i.especificacao) }),
-  ]),
-  'cabo-aco': conferencia('cabo-aco', 'Cabo de aço', [
-    num('diametro', 'Ø do cabo', 'mm', { pcm: (i) => x.diametroCaboMm(i.especificacao) }),
-  ]),
-  canecas: conferencia('canecas', 'Canecas', [
-    num('a', 'A — altura', 'mm', { pcm: (i) => x.dimensoes3(i.especificacao)?.[0] ?? null }),
-    num('l', 'L — largura', 'mm', { pcm: (i) => x.dimensoes3(i.especificacao)?.[1] ?? null }),
-    num('p', 'P — profundidade', 'mm', { pcm: (i) => x.dimensoes3(i.especificacao)?.[2] ?? null }),
-  ]),
+  tela: conferencia(
+    'tela',
+    'Tela de peneira',
+    [
+      num('malha', 'Malha', 'mm', {
+        pcm: (i) => x.malhaTela(i.especificacao),
+        dica: 'Vão livre entre fios.',
+      }),
+      num('fio', 'Fio', 'mm', { pcm: (i) => x.fioTela(i.especificacao) }),
+    ],
+    ['tela'],
+  ),
+  'cabo-aco': conferencia(
+    'cabo-aco',
+    'Cabo de aço',
+    [
+      num('diametro', 'Ø do cabo', 'mm', {
+        pcm: (i) => x.diametroCaboMm(i.especificacao),
+        dica: 'Por cima de 2 pernas opostas.',
+      }),
+    ],
+    ['cabo-aco'],
+  ),
+  canecas: conferencia(
+    'canecas',
+    'Canecas',
+    [
+      num('a', 'A — altura', 'mm', { pcm: (i) => x.dimensoes3(i.especificacao)?.[0] ?? null }),
+      num('l', 'L — largura', 'mm', { pcm: (i) => x.dimensoes3(i.especificacao)?.[1] ?? null }),
+      num('p', 'P — profundidade', 'mm', {
+        pcm: (i) => x.dimensoes3(i.especificacao)?.[2] ?? null,
+      }),
+    ],
+    ['caneca'],
+  ),
   hidraulico: conferencia('hidraulico', 'Hidráulico / cilindro'),
   sensor: conferencia('sensor', 'Sensor / chave / instrumento'),
   painel: conferencia('painel', 'Painel / comando'),
