@@ -1,0 +1,40 @@
+# Dependências e build
+node_modules/
+dist/
+dev-dist/
+coverage/
+*.tsbuildinfo
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# DADOS DO CLIENTE — nunca versionar
+dados/
+*.xls
+*.xlsx
+*.xlsm
+*.ods
+*.csv
+# ...exceto fixtures anonimizadas
+!tests/fixtures/**/*.xls
+!tests/fixtures/**/*.xlsx
+
+# Backups e exportações geradas pelo app (podem conter dados reais)
+levantamento-*.json
+fotos-*.zip
+
+# Ambiente / editor
+.env
+.env.*
+.DS_Store
+Thumbs.db
+*:Zone.Identifier
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Claude Code (configuração pessoal)
+.claude/settings.local.json

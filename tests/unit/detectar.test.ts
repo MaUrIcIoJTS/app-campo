@@ -1,0 +1,71 @@
+import { describe, expect, it } from 'vitest';
+import { detectarTipo } from '../../src/dominio/templates/detectar.ts';
+import type { TipoItem } from '../../src/dominio/tipos.ts';
+
+// Nomes reais da coluna B (genéricos, sem dado sensível) → tipo esperado.
+const CASOS: [nome: string, espec: string, tipo: TipoItem][] = [
+  ['TAPETE', '26" 3/16 X 1/16 2 LONAS', 'tapete'],
+  ['TAPETE - ATUALIZADO EM 01/01/2025', '', 'tapete'],
+  ['CORREIA', 'CORREIA TRANSPORTADORA 30" 2 LONAS (10MM)', 'tapete'],
+  ['CORREIA', 'CORREIA ELEVADORA EP1000/4 12" 1/4 X 1/8"', 'tapete'],
+  ['CORREIA', '20" 2L PL140 1/8 X 1/16', 'tapete'],
+  ['CORREIA', 'C165', 'correia-v'],
+  ['CORREIA EM V', 'A50', 'correia-v'],
+  ['CORREIA EM V/POLIA DO MOTOR', 'B 50', 'correia-v'],
+  ['CORREIA DA POLIA DO REDUTOR', 'B42', 'correia-v'],
+  ['ROLETE DE CARGA', '212x250x102x14x20', 'rolete'],
+  ['ROLETE DE RETORNO', '', 'rolete'],
+  ['ROLETE DE CARGA/EMBURRACHADO', '', 'rolete'],
+  ['MANCAL', 'SNA 515 EIXO 63', 'mancal'],
+  ['MANCAL DE BAIXO', '', 'mancal'],
+  ['ROLAMENTO', '', 'mancal'],
+  ['ROLAMENTOS', '', 'mancal'],
+  ['BUCHA', 'HE 315', 'mancal'],
+  ['CAIXA DE ROLAMENTO', '', 'mancal'],
+  ['REDUTOR', '1:100', 'redutor'],
+  ['REDUTORA', '', 'redutor'],
+  ['MOTORREDUTOR', '', 'redutor'],
+  ['MOTOREDUTOR', '', 'redutor'],
+  ['REDUTOR (MOTORREDUTOR)', '', 'redutor'],
+  ['MOTOR', '5CV 1730RPM', 'motor'],
+  ['MOTOR ', '', 'motor'],
+  ['MOTOR (MOTORREDUTOR)', '', 'motor'],
+  ['MOTOR DO EXAUSTOR', '', 'motor'],
+  ['MOTOFREIO', '', 'motor'],
+  ['MOTOBOMBA', '', 'motor'],
+  ['POLIA DO MOTOR', '100 2 GORNES A', 'polia'],
+  ['POLIA DO REDUTOR', '', 'polia'],
+  ['ACOPLAMENTO DE BORRACHA', '', 'acoplamento'],
+  ['CARDAN', '', 'acoplamento'],
+  ['TELA', 'TELA MALHA 30MM', 'tela'],
+  ['PENEIRA BYPASS', '', 'tela'],
+  ['CABO DE AÇO', '1/2 6X19 AF', 'cabo-aco'],
+  ['CANECOS', '155X260X190MM', 'canecas'],
+  ['CANECAS', '', 'canecas'],
+  ['PISTÃO DA UNID. HIDRÁULICA', '', 'hidraulico'],
+  ['UNIDADE HIDRÁULICA', '', 'hidraulico'],
+  ['SENSOR INDUTIVO', '', 'sensor'],
+  ['TERMOPAR X1-TE-05', '', 'sensor'],
+  ['TRANSMISSOR DE PRESSÃO X1-PE-04', '', 'sensor'],
+  ['CHAVE DE SEGURANÇA', '', 'sensor'],
+  ['CHAVE DE DESALINHAMENTO', '', 'sensor'],
+  ['PAINEL DE COMANDO LOCAL', '', 'painel'],
+  ['CCM', '', 'painel'],
+  ['INVERSOR DE FREQUENCIA', '', 'painel'],
+  ['ILUMINAÇÃO', '', 'iluminacao'],
+  ['REFLETORES', '', 'iluminacao'],
+  // Não podem ser confundidos com os tipos acima:
+  ['ÓLEO DA REDUTORA', '', 'generico'],
+  ['ÓLEO DO MANCAL', '', 'generico'],
+  ['PARAFUSOS DAS CANECAS', '', 'generico'],
+  ['PORCA P/ ROLAMENTO (CAIXA)', '', 'generico'],
+  ['ROTOR', '1700X170', 'generico'],
+  ['GRELHAS', '', 'generico'],
+  ['', '', 'generico'],
+];
+
+describe('detectarTipo', () => {
+  it.each(CASOS)('%j (%j) → %s', (nome, espec, tipo) => {
+    expect(detectarTipo(nome, espec)).toBe(tipo);
+  });
+});

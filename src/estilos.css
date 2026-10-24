@@ -1,0 +1,156 @@
+/*
+ * Uso em campo: sol forte, luva, tela de 360 px.
+ * Alto contraste nos dois temas, alvos de toque ≥ 48 px, texto base 18 px,
+ * inputs ≥ 16 px (abaixo disso o iOS dá zoom ao focar).
+ */
+:root {
+  color-scheme: light dark;
+  --fundo: #f8fafc;
+  --superficie: #ffffff;
+  --texto: #0b1220;
+  --texto-suave: #334155;
+  --borda: #475569;
+  --primaria: #0b4f99;
+  --primaria-texto: #ffffff;
+  --ok: #0a6b2e;
+  --erro: #b42318;
+  --aviso-fundo: #fff4c2;
+  --aviso-texto: #3d2a00;
+  --toque: 48px;
+  --raio: 10px;
+  --espaco: 16px;
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  font-size: 18px;
+  line-height: 1.4;
+  -webkit-text-size-adjust: 100%;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema='claro']) {
+    --fundo: #0b1220;
+    --superficie: #111a2e;
+    --texto: #f8fafc;
+    --texto-suave: #cbd5e1;
+    --borda: #94a3b8;
+    --primaria: #7cc4ff;
+    --primaria-texto: #0b1220;
+    --ok: #4ade80;
+    --erro: #ff8a80;
+    --aviso-fundo: #4a3800;
+    --aviso-texto: #fff4c2;
+  }
+}
+
+:root[data-tema='escuro'] {
+  --fundo: #0b1220;
+  --superficie: #111a2e;
+  --texto: #f8fafc;
+  --texto-suave: #cbd5e1;
+  --borda: #94a3b8;
+  --primaria: #7cc4ff;
+  --primaria-texto: #0b1220;
+  --ok: #4ade80;
+  --erro: #ff8a80;
+  --aviso-fundo: #4a3800;
+  --aviso-texto: #fff4c2;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--fundo);
+  color: var(--texto);
+  min-height: 100dvh;
+}
+
+input,
+select,
+textarea,
+button {
+  font: inherit;
+  font-size: max(16px, 1rem);
+  color: inherit;
+}
+
+.tela {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: max(var(--espaco), env(safe-area-inset-top)) var(--espaco)
+    max(var(--espaco), env(safe-area-inset-bottom));
+}
+
+.topo h1 {
+  font-size: 1.4rem;
+  margin: 0 0 var(--espaco);
+}
+
+.cartao {
+  background: var(--superficie);
+  border: 2px solid var(--borda);
+  border-radius: var(--raio);
+  padding: var(--espaco);
+}
+
+.botao {
+  min-height: var(--toque);
+  min-width: var(--toque);
+  padding: 0 20px;
+  border: 0;
+  border-radius: var(--raio);
+  background: var(--primaria);
+  color: var(--primaria-texto);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.aviso {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: var(--espaco);
+  padding: 12px var(--espaco);
+  border-radius: var(--raio);
+  background: var(--aviso-fundo);
+  color: var(--aviso-texto);
+  font-weight: 600;
+}
+
+.status {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.status li {
+  padding-left: 1.6em;
+  position: relative;
+  color: var(--texto-suave);
+}
+
+.status li::before {
+  content: '…';
+  position: absolute;
+  left: 0;
+}
+
+.status li[data-ok='true'] {
+  color: var(--ok);
+  font-weight: 700;
+}
+
+.status li[data-ok='true']::before {
+  content: '✓';
+}
