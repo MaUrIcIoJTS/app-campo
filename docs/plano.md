@@ -17,8 +17,8 @@ Site: https://mauriciojts.github.io/app-campo/ (deploy automático a cada push n
 | ----------------------------------------------- | ------------------------------------------------------------- |
 | 0. Repositório, CI, Pages                       | ✅ feito                                                      |
 | 1. Banco, importação, lista, ficha (só leitura) | ✅ feito e **validado no celular em 24/10** (critérios 1 e 2) |
-| 2. Ficha com medição                            | ✅ feito — **aguardando teste no celular** (roteiro abaixo)   |
-| 3. Fotos e desenhos SVG                         | ◐ desenhos feitos (25/10); fotos a fazer                      |
+| 2. Ficha com medição                            | ✅ feito e **validado no celular em 24/10**                   |
+| 3. Fotos e desenhos SVG                         | ◐ desenhos feitos e validados (24/10); **fotos: próxima**     |
 | 4. Exportar, backup, restaurar, compartilhar    | a fazer                                                       |
 | 5. Ensaio geral (critérios 1–5 no Android)      | a fazer                                                       |
 
@@ -75,7 +75,7 @@ Ver "Roteiro — fase 2" no fim deste documento.
   `createImageBitmap` (orientação EXIF) → canvas ≤ 1600 px → JPEG 0,8 → Blob no store `fotos`
   (`alvoId` = item ou equipamento), miniaturas, ampliar, apagar com confirmação, foto da placa
   (motor/redutor), aviso de espaço (`navigator.storage.estimate()`).
-- ✅ **Desenhos "onde medir"** (24–25/10): 15 SVGs em `src/ui/desenhos/` — tapete de cima
+- ✅ **Desenhos "onde medir"** (24/10, validados no celular): 15 SVGs em `src/ui/desenhos/` — tapete de cima
   (LD/LE) e em corte (coberturas, lonas), tambor, rolete (A–E e o fresado de frente),
   acionamento (motor → polias e correias → redutor com eixo vazado), motor (placa), redutor
   (maciço/vazado), acoplamento, mancal, polia, correia em V, rotor, caneca, tela, cabo de aço.
@@ -83,11 +83,36 @@ Ver "Roteiro — fase 2" no fim deste documento.
   monta ao abrir; "▾ Fechar desenho"). Legenda curta embaixo, uma ideia por linha.
   E2E `tests/e2e/desenhos.spec.ts` (os 15 abrem; texto ≥ 14 px, traço ≥ 2 px e nada cortado em
   360 px). Como fazer um novo: skill `novo-tipo-de-item`, passo 6.
-  Revisão do `revisor-de-campo` (25/10) aplicada. Mudanças nos campos:
+  Revisão do `revisor-de-campo` (24/10) aplicada. Mudanças nos campos:
   - tambor: rótulo "Ø ponta (redutor ou acoplamento)" (id `pontaAcoplamento` mantido);
   - motor: campo novo "Chaveta da ponta";
   - dicas "Vão livre entre fios" (malha) e "Por cima de 2 pernas opostas" (cabo de aço).
 - E2E: `setInputFiles` com JPEG grande → comprimido → recarregar → foto continua.
+
+### Fotos — já existe (sem tela ainda)
+
+- Store `fotos` (`id`, índice `porAlvo`) e o tipo `Foto` em `db/esquema.ts` (blob, `alvoId` =
+  item ou equipamento, `criadaEm`, largura, altura) — **não precisa de migração**.
+- `salvarFoto` em `db/repositorio.ts`; `carregarDados` traz `fotosPorAlvo` (só a contagem, sem
+  carregar blobs); a lista já mostra "N fotos"; a importação conta e remapeia fotos.
+- `TemplateItem.fotoPlaca` (motor e redutor): botão "Foto da placa" em destaque.
+
+### Fotos — cuidados (aprendidos nas fases 2 e 3)
+
+- Foto **não** passa pelo diário (localStorage não guarda Blob e tem ~5 MB): comprimir e gravar
+  direto no IndexedDB numa transação, dentro de `semRecarregarDurante`; só mostrar a miniatura
+  como salva depois que o banco confirmar. Erro de cota → "Celular sem espaço" (`semEspaco`).
+- Atualizar `fotosPorAlvo` em memória (como `alterarMedicao` em `ui/dados.tsx`) para a lista e
+  a ficha mudarem sem recarregar. Miniaturas com `URL.createObjectURL`, revogar ao desmontar;
+  carregar blobs só das fotos do equipamento aberto.
+- O Android costuma recarregar a aba ao voltar da câmera: a ficha já volta onde parou
+  (`ui/rolagem.ts`); conferir no aparelho que a foto não se perde nesse caminho.
+- Apagar foto: confirmação na própria tela (alvo ≥ 48 px, longe do "Tirar foto").
+- E2E: o Preact redesenha depois do evento (espere com `expect`, não conte logo após clicar);
+  o click do Playwright num elemento `sticky` rola a página (use o "voltar" com `page.goBack()`);
+  app morto de verdade = `SIGKILL` no renderer (skill `testar-offline`).
+- Depois das fotos vem a **Fase 4** (backup, restaurar e exportar — nunca cortar). Lembrar que
+  `conferencia` agora pode ser `'naoTem'` (regra na skill `exportar-pcm`).
 
 ## Fase 4 — exportar e backup
 
