@@ -15,7 +15,7 @@ async function importarFixture(page: Page) {
   await page.getByRole('link', { name: 'Importar PCM' }).first().click();
   await page.locator('input[type=file]').setInputFiles(FIXTURE);
   await expect(page.getByRole('heading', { name: 'pcm-ficticio.xls' })).toBeVisible();
-  await page.getByRole('button', { name: 'Importar 9 equipamentos' }).click();
+  await page.getByRole('button', { name: 'Importar (9 equipamentos)' }).click();
   await expect(page.getByText('9 equipamentos', { exact: true })).toBeVisible();
 }
 
@@ -83,7 +83,7 @@ test('arquivo que não é PCM mostra erro claro e deixa tentar de novo', async (
     buffer: Buffer.from('isto não é uma planilha'),
   });
   await expect(page.getByRole('alert')).toBeVisible();
-  await expect(page.locator('label', { hasText: 'Escolher outro arquivo' })).toBeVisible();
+  await expect(page.locator('label', { hasText: 'Escolher arquivo de novo' })).toBeVisible();
 });
 
 test('lista e ficha cabem em 360 px sem rolagem horizontal', async ({ page }) => {
@@ -94,4 +94,29 @@ test('lista e ficha cabem em 360 px sem rolagem horizontal', async ({ page }) =>
   await linhas(page).nth(4).click(); // elevador, nome longo
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   expect(await largura()).toBeLessThanOrEqual(360);
+});
+
+test('TAG nunca quebra no hífen, mesmo com nome de aba longo', async ({ page }) => {
+  await page.goto('./');
+  await importarFixture(page);
+  const linhasDeTexto = await page
+    .locator('.eq-tag:not(.eq-tag--nome)')
+    .evaluateAll((els) => els.map((e) => e.getClientRects().length));
+  expect(linhasDeTexto.length).toBeGreaterThan(0);
+  expect(linhasDeTexto.every((n) => n === 1)).toBe(true);
+});
+
+test('"‹ Lista" volta sem empilhar histórico (o voltar do Android não reabre a ficha)', async ({
+  page,
+}) => {
+  await page.goto('./');
+  await importarFixture(page);
+  await linhas(page).nth(2).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'XA-TC-01' })).toBeVisible();
+  const naFicha = await page.evaluate(() => history.length);
+  await page.getByRole('link', { name: /Lista/ }).click();
+  await expect(linhas(page)).toHaveCount(9);
+  expect(await page.evaluate(() => history.length)).toBe(naFicha); // nada empilhado
+  await page.goForward(); // usou history.back(): a ficha ficou "à frente"
+  await expect(page.getByRole('heading', { level: 1, name: 'XA-TC-01' })).toBeVisible();
 });

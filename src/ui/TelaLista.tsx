@@ -5,6 +5,7 @@ import { percentual, progressoItem, somarProgresso, type Progresso } from '../do
 import type { Dados } from '../db/repositorio.ts';
 import { useDados } from './dados.tsx';
 import { rotas } from './rota.ts';
+import { AlertaAparelho, type StatusAparelho } from './RodapeAparelho.tsx';
 import { Topo } from './Topo.tsx';
 
 export interface Filtros {
@@ -16,6 +17,7 @@ interface Props {
   filtros: Filtros;
   onFiltros: (f: Filtros) => void;
   rodape: ComponentChildren;
+  status: StatusAparelho;
 }
 
 /** Posição da rolagem ao sair para a ficha — volta no mesmo lugar. */
@@ -40,7 +42,7 @@ function resumir(dados: Dados): Map<string, Resumo> {
   return mapa;
 }
 
-export function TelaLista({ filtros, onFiltros, rodape }: Props) {
+export function TelaLista({ filtros, onFiltros, rodape, status }: Props) {
   const { dados, erro } = useDados();
   const pronto = dados !== null;
 
@@ -63,7 +65,7 @@ export function TelaLista({ filtros, onFiltros, rodape }: Props) {
     [dados, filtros],
   );
 
-  const topo = <Topo titulo="Levantamento PCM" />;
+  const topo = <Topo titulo={{ curto: 'PCM', completo: 'Levantamento PCM' }} />;
   if (erro) {
     return (
       <>
@@ -91,6 +93,7 @@ export function TelaLista({ filtros, onFiltros, rodape }: Props) {
       <>
         {topo}
         <main class="tela">
+          <AlertaAparelho status={status} />
           <section class="cartao vazio">
             <h2>Nenhum PCM neste aparelho</h2>
             <p>Importe a planilha do PCM (.xls ou .xlsx). Ela fica só neste celular.</p>
@@ -108,6 +111,7 @@ export function TelaLista({ filtros, onFiltros, rodape }: Props) {
     <>
       {topo}
       <main class="tela">
+        <AlertaAparelho status={status} />
         <div class="filtros">
           <div class="busca">
             <input
@@ -121,6 +125,10 @@ export function TelaLista({ filtros, onFiltros, rodape }: Props) {
               autoComplete="off"
               autoCapitalize="characters"
               spellcheck={false}
+              onKeyDown={(e) => {
+                // "Buscar" no teclado: fecha o teclado para ver os resultados
+                if (e.key === 'Enter') e.currentTarget.blur();
+              }}
             />
             {filtros.termo && (
               <button

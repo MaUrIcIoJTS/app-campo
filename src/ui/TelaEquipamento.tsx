@@ -6,7 +6,7 @@ import { Topo } from './Topo.tsx';
 
 /** Ficha do equipamento. Fase 1: só os itens do PCM (medição entra na fase 2). */
 export function TelaEquipamento({ id }: { id: string }) {
-  const { dados } = useDados();
+  const { dados, erro } = useDados();
   useEffect(() => window.scrollTo(0, 0), [id]);
 
   const voltar = { href: rotas.lista, rotulo: 'Lista' };
@@ -16,7 +16,13 @@ export function TelaEquipamento({ id }: { id: string }) {
       <>
         <Topo voltar={voltar} />
         <main class="tela">
-          <p class="suave">{dados ? 'Equipamento não encontrado.' : 'Abrindo…'}</p>
+          {erro ? (
+            <p class="erro" role="alert">
+              ⚠ {erro}
+            </p>
+          ) : (
+            <p class="suave">{dados ? 'Equipamento não encontrado.' : 'Abrindo…'}</p>
+          )}
         </main>
       </>
     );

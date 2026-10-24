@@ -97,8 +97,8 @@ dados/                  FORA DO GIT — pcm.xls real, só nesta máquina
 | `importacoes`  | `id`            | nome do arquivo, data, **Blob do arquivo original** (para exportar igual)                                          |
 | `equipamentos` | `id`            | `EquipamentoPcm` sem itens + `importacaoId`                                                                        |
 | `itens`        | `id`            | `ItemPcm` + `equipamentoId`                                                                                        |
-| `medicoes`     | `itemId`        | `valores {campoId: texto digitado}`, `conferencia {campoId: 'confere' \| 'diverge'}`, `observacao`, `atualizadoEm` |
-| `notas`        | `equipamentoId` | observação do equipamento, `atualizadoEm`                                                                          |
+| `medicoes`     | `itemId`        | `valores {campoId: texto digitado}`, `conferencia {campoId: 'confere' \| 'diverge'}`, `observacao`, `atualizadaEm` |
+| `notas`        | `equipamentoId` | observação do equipamento, `atualizadaEm`                                                                          |
 | `fotos`        | `id`            | `alvoId` (item ou equipamento), `blob` JPEG, `criadaEm`, largura, altura                                           |
 | `meta`         | `chave`         | versão do esquema, último backup, preferências                                                                     |
 

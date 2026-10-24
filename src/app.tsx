@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'preact/hooks';
 import { useRegisterSW } from 'virtual:pwa-register/preact';
 import { pedirArmazenamentoPersistente } from './armazenamento.ts';
-import { filaDeGravacao } from './db/salvamento.ts';
+import { prontoParaRecarregar } from './db/salvamento.ts';
 import { ProvedorDados } from './ui/dados.tsx';
-import { RodapeAparelho } from './ui/RodapeAparelho.tsx';
-import { irPara, rotas, useRota } from './ui/rota.ts';
+import { RodapeAparelho, type StatusAparelho } from './ui/RodapeAparelho.tsx';
+import { rotas, useRota, voltarPara } from './ui/rota.ts';
 import { TelaEquipamento } from './ui/TelaEquipamento.tsx';
 import { TelaImportar } from './ui/TelaImportar.tsx';
 import { TelaLista, type Filtros } from './ui/TelaLista.tsx';
@@ -21,6 +21,7 @@ export function App() {
   const [filtros, setFiltros] = useState<Filtros>({ termo: '', aba: '' });
   const [aviso, setAviso] = useState<string | null>(null);
   const [persistente, setPersistente] = useState<boolean | null>(null);
+  const [adiouAtualizacao, setAdiouAtualizacao] = useState(false);
 
   useEffect(() => {
     void pedirArmazenamentoPersistente().then(setPersistente);
@@ -32,29 +33,26 @@ export function App() {
     return () => clearTimeout(t);
   }, [aviso]);
 
-  const offline = offlinePronto || !!navigator.serviceWorker?.controller;
+  const status: StatusAparelho = {
+    offline: offlinePronto || !!navigator.serviceWorker?.controller,
+    persistente,
+  };
 
   async function atualizar() {
-    await filaDeGravacao.descarregar(); // nada pendente se perde no recarregamento
-    await updateServiceWorker(true);
+    // Recarregar com medida na fila (ou durante uma importação) perderia dado.
+    if (await prontoParaRecarregar()) await updateServiceWorker(true);
+    else setAviso('Ainda há medidas sendo salvas. Atualize daqui a pouco.');
   }
+
+  const mostrarAtualizacao = temAtualizacao && !adiouAtualizacao;
 
   return (
     <ProvedorDados>
-      {temAtualizacao && (
-        <div class="aviso aviso--topo" role="status">
-          <span>Nova versão do app.</span>
-          <button type="button" class="botao" onClick={() => void atualizar()}>
-            Atualizar
-          </button>
-        </div>
-      )}
-
       {rota.tela === 'importar' ? (
         <TelaImportar
           onImportado={(mensagem) => {
             setAviso(mensagem);
-            irPara(rotas.lista);
+            voltarPara(rotas.lista);
           }}
         />
       ) : rota.tela === 'equipamento' ? (
@@ -63,20 +61,30 @@ export function App() {
         <TelaLista
           filtros={filtros}
           onFiltros={setFiltros}
-          rodape={
-            <RodapeAparelho
-              offline={offline}
-              persistente={persistente}
-              tema={tema}
-              trocarTema={trocarTema}
-            />
-          }
+          status={status}
+          rodape={<RodapeAparelho status={status} tema={tema} trocarTema={trocarTema} />}
         />
       )}
 
       {aviso && (
-        <div class="toast" role="status">
+        <div class={mostrarAtualizacao ? 'toast toast--acima' : 'toast'} role="status">
           {aviso}
+        </div>
+      )}
+
+      {mostrarAtualizacao && (
+        <div class="barra-atualizacao" role="status">
+          <span>Nova versão do app.</span>
+          <button
+            type="button"
+            class="botao botao--secundario"
+            onClick={() => setAdiouAtualizacao(true)}
+          >
+            Agora não
+          </button>
+          <button type="button" class="botao" onClick={() => void atualizar()}>
+            Atualizar
+          </button>
         </div>
       )}
     </ProvedorDados>

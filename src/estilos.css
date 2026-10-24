@@ -12,8 +12,8 @@
   --borda: #475569;
   --primaria: #0b4f99;
   --primaria-texto: #ffffff;
-  --ok: #0a6b2e;
-  --erro: #b42318;
+  --ok: #05561f;
+  --erro: #991b1b;
   --aviso-fundo: #fff4c2;
   --aviso-texto: #3d2a00;
   --foco: #d97706;
@@ -91,7 +91,7 @@ button {
 .tela {
   max-width: 720px;
   margin: 0 auto;
-  padding: var(--espaco) var(--espaco) max(calc(var(--espaco) * 2), env(safe-area-inset-bottom));
+  padding: var(--espaco) var(--espaco) max(96px, env(safe-area-inset-bottom));
 }
 
 /* Barra do topo: fica visível ao rolar, com "Salvo no aparelho" sempre à vista. */
@@ -124,8 +124,9 @@ button {
   min-width: 0;
   margin: 0;
   overflow: hidden;
-  font-size: 0.95rem;
+  font-size: 1.3rem;
   line-height: 1.15;
+  letter-spacing: 0.02em;
 }
 
 .salvo {
@@ -133,7 +134,7 @@ button {
   padding: 5px 8px;
   border: 2px solid currentColor;
   border-radius: 999px;
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -262,13 +263,22 @@ button {
   left: 0;
 }
 
-.status li[data-ok='true'] {
+.status li[data-estado='ok'] {
   color: var(--ok);
   font-weight: 700;
 }
 
-.status li[data-ok='true']::before {
+.status li[data-estado='ok']::before {
   content: '✓';
+}
+
+.status li[data-estado='alerta'] {
+  color: var(--erro);
+  font-weight: 700;
+}
+
+.status li[data-estado='alerta']::before {
+  content: '⚠';
 }
 
 .aviso--topo {
@@ -322,6 +332,49 @@ button {
   font-weight: 700;
   text-align: center;
   box-shadow: 0 4px 16px rgb(0 0 0 / 0.35);
+  pointer-events: none;
+}
+
+.toast--acima {
+  bottom: calc(max(var(--espaco), env(safe-area-inset-bottom)) + 76px);
+}
+
+/* Nova versão: fixa embaixo, não empurra a tela; dá para adiar. */
+.barra-atualizacao {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px var(--espaco) max(10px, env(safe-area-inset-bottom));
+  background: var(--aviso-fundo);
+  color: var(--aviso-texto);
+  border-top: 2px solid var(--borda);
+  font-weight: 700;
+}
+
+.barra-atualizacao span {
+  flex: 1;
+  min-width: 0;
+}
+
+.barra-atualizacao .botao {
+  padding: 0 12px;
+}
+
+.alerta-aparelho p {
+  margin: 0;
+}
+
+.alerta-aparelho p + p {
+  margin-top: 6px;
+}
+
+.previa-troca {
+  margin: 0 0 4px;
 }
 
 /* ---- Lista ------------------------------------------------------------------ */
@@ -362,6 +415,11 @@ button {
   cursor: pointer;
 }
 
+.campo::placeholder {
+  color: var(--texto-suave);
+  opacity: 1;
+}
+
 input[type='search']::-webkit-search-cancel-button {
   display: none;
 }
@@ -377,6 +435,10 @@ input[type='search']::-webkit-search-cancel-button {
   margin: 0 0 var(--espaco);
   padding: 0;
   border-top: 2px solid var(--borda);
+}
+
+.lista-eq > li + li {
+  margin-top: 6px;
 }
 
 .eq {
@@ -404,17 +466,24 @@ input[type='search']::-webkit-search-cancel-button {
   font-size: 1.1rem;
   font-weight: 800;
   letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
 .eq-tag--nome {
   font-size: 1rem;
   letter-spacing: 0;
+  white-space: normal;
 }
 
 .eq-aba {
-  flex: none;
   color: var(--texto-suave);
   font-size: 0.8rem;
+}
+
+.eq-linha1 .eq-aba {
+  flex: 0 1 auto;
+  min-width: 0;
+  text-align: right;
 }
 
 .eq-nome {

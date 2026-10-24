@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { criarFilaDeGravacao } from '../../src/db/salvamento.ts';
+import {
+  criarFilaDeGravacao,
+  prontoParaRecarregar,
+  semEspaco,
+  semRecarregarDurante,
+} from '../../src/db/salvamento.ts';
 
 beforeEach(() => vi.useFakeTimers());
 afterEach(() => vi.useRealTimers());
@@ -76,5 +81,66 @@ describe('fila de gravação automática', () => {
     await lote;
     await fila.descarregar();
     expect(gravadas).toEqual(['nova']);
+  });
+});
+
+describe('robustez da fila (revisão de campo)', () => {
+  it('exceção síncrona em um gravar não derruba as outras chaves do lote', async () => {
+    const fila = criarFilaDeGravacao();
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const gravadas: string[] = [];
+    fila.agendar('ruim', (() => {
+      throw new Error('síncrono');
+    }) as () => Promise<void>);
+    fila.agendar('boa', async () => void gravadas.push('boa'));
+    await fila.descarregar();
+    expect(gravadas).toEqual(['boa']);
+    expect(fila.estado()).toBe('erro');
+    expect(fila.pendentes()).toBe(1);
+  });
+
+  it('em erro, tenta de novo sozinha: 2 s, 5 s, 15 s', async () => {
+    const fila = criarFilaDeGravacao();
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const quando: number[] = [];
+    const inicio = Date.now();
+    fila.agendar('item-1', async () => {
+      quando.push(Date.now() - inicio);
+      if (quando.length < 4) throw new Error('banco ocupado');
+    });
+    await vi.advanceTimersByTimeAsync(300 + 2000 + 5000 + 15000);
+    expect(quando).toEqual([300, 2300, 7300, 22300]);
+    expect(fila.estado()).toBe('salvo');
+    expect(fila.ultimoErro()).toBeNull();
+  });
+
+  it('reconhece "celular sem espaço"', async () => {
+    const fila = criarFilaDeGravacao();
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    fila.agendar('item-1', async () => {
+      throw new DOMException('cheio', 'QuotaExceededError');
+    });
+    await fila.descarregar();
+    expect(semEspaco(fila.ultimoErro())).toBe(true);
+    expect(semEspaco(new Error('outro'))).toBe(false);
+  });
+
+  it('não deixa recarregar o app com gravação pendente ou durante operação crítica', async () => {
+    const fila = criarFilaDeGravacao();
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    expect(await prontoParaRecarregar(fila)).toBe(true);
+
+    fila.agendar('item-1', async () => {
+      throw new Error('falhou');
+    });
+    expect(await prontoParaRecarregar(fila)).toBe(false);
+
+    const ok = criarFilaDeGravacao();
+    let liberar!: () => void;
+    const operacao = semRecarregarDurante(() => new Promise<void>((r) => (liberar = r)));
+    expect(await prontoParaRecarregar(ok)).toBe(false);
+    liberar();
+    await operacao;
+    expect(await prontoParaRecarregar(ok)).toBe(true);
   });
 });

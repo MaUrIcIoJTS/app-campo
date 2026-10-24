@@ -53,7 +53,20 @@ export interface PreviaImportacao {
   plano: PlanoReimportacao;
   /** Quantos registros do usuário já existem (para avisar antes de importar). */
   existentes: { medicoes: number; fotos: number; notas: number };
+  /** Ids com dado do usuário quando a prévia foi feita — conferidos de novo ao gravar. */
+  idsComDados: string[];
 }
+
+/** O usuário (ou a fila) gravou algo entre a prévia e a confirmação: refazer a prévia. */
+export class DadosMudaramDuranteImportacao extends Error {
+  constructor() {
+    super('Os dados do aparelho mudaram durante a importação.');
+    this.name = 'DadosMudaramDuranteImportacao';
+  }
+}
+
+/** Retratos de segurança guardados em `meta` (os mais antigos são descartados). */
+const RETRATOS_MANTIDOS = 5;
 
 /** Calcula o que a importação vai fazer, sem gravar nada. */
 export async function previaImportacao(pcm: Pcm, importacaoId: string): Promise<PreviaImportacao> {
@@ -72,17 +85,20 @@ export async function previaImportacao(pcm: Pcm, importacaoId: string): Promise<
     comDados,
     importacaoId,
   );
-  return { plano, existentes: { medicoes, fotos, notas } };
+  return { plano, existentes: { medicoes, fotos, notas }, idsComDados: [...comDados].sort() };
 }
 
 /**
  * Grava a importação numa transação só: arquivo original, equipamentos/itens novos,
  * e move medições/notas/fotos conforme o plano. Se algo falhar, nada muda.
+ * Antes de mexer, confere que os dados do usuário são os mesmos que a prévia viu e guarda
+ * um retrato (medições, notas e vínculos das fotos) em `meta` como rede de segurança.
  */
 export async function gravarImportacao(
   importacao: Importacao,
-  plano: PlanoReimportacao,
+  previa: PreviaImportacao,
 ): Promise<void> {
+  const { plano } = previa;
   const db = await banco();
   const tx = db.transaction(
     ['importacoes', 'equipamentos', 'itens', 'medicoes', 'notas', 'fotos', 'meta'],
@@ -91,6 +107,37 @@ export async function gravarImportacao(
   const medicoes = tx.objectStore('medicoes');
   const notas = tx.objectStore('notas');
   const fotos = tx.objectStore('fotos');
+  const meta = tx.objectStore('meta');
+
+  // 0) Confere e fotografa o estado atual, dentro da mesma transação.
+  const todasMedicoes = await medicoes.getAll();
+  const todasNotas = await notas.getAll();
+  const vinculosFotos: { id: string; alvoId: string }[] = [];
+  for (let c = await fotos.index('porAlvo').openKeyCursor(); c; c = await c.continue()) {
+    vinculosFotos.push({ id: c.primaryKey, alvoId: c.key });
+  }
+  const agora = new Set([
+    ...todasMedicoes.map((m) => m.itemId),
+    ...todasNotas.map((n) => n.equipamentoId),
+    ...vinculosFotos.map((f) => f.alvoId),
+  ]);
+  const naPrevia = new Set(previa.idsComDados);
+  if (agora.size !== naPrevia.size || [...agora].some((id) => !naPrevia.has(id))) {
+    tx.done.catch(() => {}); // a rejeição do abort é esperada
+    tx.abort();
+    throw new DadosMudaramDuranteImportacao();
+  }
+  await meta.put({
+    chave: `retrato:${importacao.id}`,
+    valor: {
+      criadoEm: importacao.importadaEm,
+      medicoes: todasMedicoes,
+      notas: todasNotas,
+      fotos: vinculosFotos,
+    },
+  });
+  const retratos = (await meta.getAllKeys()).filter((k) => k.startsWith('retrato:')).sort();
+  for (const k of retratos.slice(0, -RETRATOS_MANTIDOS)) await meta.delete(k);
 
   // 1) Lê tudo que vai mudar de id ANTES de escrever (os remapeamentos podem se encadear).
   const origem = await Promise.all(
@@ -119,7 +166,7 @@ export async function gravarImportacao(
   for (const e of plano.equipamentos) await tx.objectStore('equipamentos').put(e);
   for (const i of plano.itens) await tx.objectStore('itens').put(i);
   await tx.objectStore('importacoes').put(importacao);
-  await tx.objectStore('meta').put({ chave: CHAVE_IMPORTACAO_ATUAL, valor: importacao.id });
+  await meta.put({ chave: CHAVE_IMPORTACAO_ATUAL, valor: importacao.id });
   await tx.done;
 }
 

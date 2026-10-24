@@ -18,7 +18,15 @@ export interface PlanoReimportacao {
   itens: ItemDb[];
   /** [id antigo, id novo] — mover medições/notas/fotos. */
   remapear: [string, string][];
-  resumo: { equipamentos: number; itens: number; remapeados: number; orfaos: number };
+  resumo: {
+    equipamentos: number;
+    itens: number;
+    /** Registros com dado do usuário que mudaram de linha e foram junto. */
+    remapeados: number;
+    /** Itens/equipamentos com dado que não existem no PCM novo (ficam "Fora do PCM atual"). */
+    orfaosItens: number;
+    orfaosEquipamentos: number;
+  };
 }
 
 export interface Anteriores {
@@ -41,20 +49,28 @@ export function registrosDoPcm(pcm: Pcm, importacaoId: string): Anteriores {
   return { equipamentos, itens };
 }
 
-/** Chaves de conteúdo, estáveis quando só a posição das linhas muda. */
+/** Na ordem da PLANILHA — nunca na ordem do banco (lá "x:100" vem antes de "x:96"). */
+const porOrdem = <T extends { ordem: number }>(lista: readonly T[]) =>
+  [...lista].sort((a, b) => a.ordem - b.ordem);
+
+/**
+ * Chaves de conteúdo, estáveis quando só a posição das linhas muda. Repetidos são numerados
+ * na ordem da planilha (#1, #2…). Órfãos ficam num espaço de chaves próprio: nunca "roubam"
+ * o lugar de um item do PCM.
+ */
 function chaves(regs: Anteriores): { eq: Map<string, string>; item: Map<string, string> } {
   const eq = new Map<string, string>(); // id → chave
   const contaEq = new Map<string, number>();
-  for (const e of regs.equipamentos) {
-    const base = `${normalizar(e.aba)}|${e.tag ?? normalizar(e.nomeOriginal)}`;
+  for (const e of porOrdem(regs.equipamentos)) {
+    const base = `${e.orfao ? 'orfao|' : ''}${normalizar(e.aba)}|${e.tag ?? normalizar(e.nomeOriginal)}`;
     const n = (contaEq.get(base) ?? 0) + 1;
     contaEq.set(base, n);
     eq.set(e.id, `${base}#${n}`);
   }
   const item = new Map<string, string>();
   const contaItem = new Map<string, number>();
-  for (const i of regs.itens) {
-    const base = `${eq.get(i.equipamentoId) ?? i.equipamentoId}|${normalizar(i.nome)}`;
+  for (const i of porOrdem(regs.itens)) {
+    const base = `${i.orfao ? 'orfao|' : ''}${eq.get(i.equipamentoId) ?? i.equipamentoId}|${normalizar(i.nome)}`;
     const n = (contaItem.get(base) ?? 0) + 1;
     contaItem.set(base, n);
     item.set(i.id, `${base}#${n}`);
@@ -91,7 +107,8 @@ export function planejarReimportacao(
   const eqAntigo = new Map(antigos.equipamentos.map((e) => [e.id, e]));
   const eqOrfaoPorIdAntigo = new Map<string, string>(); // id antigo → id do órfão
   const idOrfao = (id: string) => `orfao:${marca}:${id}`;
-  let orfaos = 0;
+  let orfaosItens = 0;
+  let orfaosEquipamentos = 0;
 
   /** Id do equipamento (novo, ou órfão criado agora) que vai receber o que era de `idAntigo`. */
   function destinoEquipamento(idAntigo: string): string {
@@ -105,7 +122,7 @@ export function planejarReimportacao(
       eqOrfaoPorIdAntigo.set(idAntigo, orfao);
       if (antigo)
         equipamentos.push({ ...antigo, id: orfao, orfao: true, ordem: 1e6 + antigo.ordem });
-      orfaos++;
+      orfaosEquipamentos++;
     }
     return orfao;
   }
@@ -122,7 +139,7 @@ export function planejarReimportacao(
     const id = antigo.orfao && !idsNovos.has(antigo.id) ? antigo.id : idOrfao(antigo.id);
     if (id !== antigo.id) remapear.push([antigo.id, id]);
     itens.push({ ...antigo, id, equipamentoId, orfao: true, ordem: 1e6 + antigo.ordem });
-    orfaos++;
+    orfaosItens++;
   }
 
   for (const antigo of antigos.equipamentos) {
@@ -139,7 +156,8 @@ export function planejarReimportacao(
       equipamentos: novos.equipamentos.length,
       itens: novos.itens.length,
       remapeados: remapear.filter(([, para]) => !para.startsWith('orfao:')).length,
-      orfaos,
+      orfaosItens,
+      orfaosEquipamentos,
     },
   };
 }

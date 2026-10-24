@@ -7,6 +7,7 @@ import { abrirBanco, banco, fecharBanco } from '../../src/db/banco.ts';
 import { MIGRACOES, VERSAO_BANCO, type Importacao, type Medicao } from '../../src/db/esquema.ts';
 import {
   carregarDados,
+  DadosMudaramDuranteImportacao,
   gravarImportacao,
   previaImportacao,
   salvarFoto,
@@ -42,8 +43,28 @@ function pcmDe(abas: Map<string, Linha[]>): Pcm {
   return { abas: [...abas].map(([nome, linhas]) => parseAba(nome, linhas)) };
 }
 
+/**
+ * Aba fictícia que cruza a linha 100 (ids "…:96" e "…:100" ordenam ao contrário como texto),
+ * com nomes repetidos no mesmo equipamento e dois equipamentos sem TAG de mesmo nome.
+ */
+function abaQueCruzaALinha100(): Linha[] {
+  const l: Linha[] = [[], [], [], [], ['EQUIPAMENTOS PARA INSPEÇÃO'], []];
+  l.push(['SALA DE PAINÉIS', 'CCM', 'PAINEL A', '1 UNIDADE']); // 6
+  while (l.length < 95) l.push([]);
+  l.push(['BRITADOR XC-BT-01', 'MOTOR', '10CV 1750RPM', '1 UNIDADE']); // 95
+  l.push(['', 'MANCAL', 'SNA 515 EIXO 63', '2 UNIDADES']); // 96
+  l.push(['', 'ROLAMENTO', '22215 K', '2 UNIDADES']); // 97
+  l.push(['', 'BUCHA', 'HE 315', '2 UNIDADES']); // 98
+  l.push(['', 'POLIA', '100 2 GORNES B', '1 UNIDADE']); // 99
+  l.push(['', 'MANCAL', 'SNA 517 EIXO 75', '2 UNIDADES']); // 100
+  l.push(['SALA DE PAINÉIS', 'CCM', 'PAINEL B', '1 UNIDADE']); // 101
+  l.push(['OBSERVAÇÕES']);
+  return l;
+}
+
 async function importar(pcm: Pcm, id: string) {
-  const { plano, existentes } = await previaImportacao(pcm, id);
+  const previa = await previaImportacao(pcm, id);
+  const { plano, existentes } = previa;
   const importacao: Importacao = {
     id,
     nomeArquivo: 'pcm-ficticio.xls',
@@ -52,7 +73,7 @@ async function importar(pcm: Pcm, id: string) {
     abas: pcm.abas.map((a) => a.nome),
     arquivo: new Blob([readFileSync(FIXTURE)]),
   };
-  await gravarImportacao(importacao, plano);
+  await gravarImportacao(importacao, previa);
   return { plano, existentes };
 }
 
@@ -117,7 +138,75 @@ describe('esquema e migrações', () => {
   });
 });
 
+describe('reimportação com ids que cruzam a linha 100 (bug achado na revisão)', () => {
+  it('cada medição continua no seu item, mesmo com nomes repetidos', async () => {
+    const pcm = pcmDe(new Map([['BRITAGEM', abaQueCruzaALinha100()]]));
+    await importar(pcm, 'imp-1');
+    const dados = await carregarDados();
+    const britador = dados.equipamentos.find((e) => e.tag === 'XC-BT-01')!;
+    const mancais = dados.itensPorEquipamento.get(britador.id)!.filter((i) => i.nome === 'MANCAL');
+    const salas = dados.equipamentos.filter((e) => e.nome === 'SALA DE PAINÉIS');
+    expect(mancais.map((m) => m.especificacao)).toEqual(['SNA 515 EIXO 63', 'SNA 517 EIXO 75']);
+    expect(salas).toHaveLength(2);
+
+    const esperado = new Map<string, string>([
+      [mancais[0]!.id, 'mancal 515'],
+      [mancais[1]!.id, 'mancal 517'],
+      [dados.itensPorEquipamento.get(salas[0]!.id)![0]!.id, 'painel A'],
+      [dados.itensPorEquipamento.get(salas[1]!.id)![0]!.id, 'painel B'],
+    ]);
+    for (const [id, v] of esperado) await salvarMedicao(medicao(id, v));
+    await salvarNota({ equipamentoId: salas[1]!.id, observacao: 'sala B', atualizadaEm: '' });
+
+    for (const imp of ['imp-2', 'imp-3']) {
+      const { plano } = await importar(pcm, imp);
+      expect(plano.remapear).toEqual([]);
+      const depois = await carregarDados();
+      for (const [id, v] of esperado) expect(depois.medicoes.get(id)?.valores.largura).toBe(v);
+      expect(depois.notas.get(salas[1]!.id)?.observacao).toBe('sala B');
+    }
+  });
+});
+
 describe('importação', () => {
+  it('se os dados mudarem entre a prévia e a confirmação, aborta sem mexer em nada', async () => {
+    const pcm = lerPcm(readFileSync(FIXTURE));
+    await importar(pcm, 'imp-1');
+    const { item } = await itemPorNome('XA-TC-01', 'TAPETE');
+    const previa = await previaImportacao(pcm, 'imp-2');
+    await salvarMedicao(medicao(item.id, '658')); // a fila gravou depois da prévia
+
+    const imp = {
+      id: 'imp-2',
+      nomeArquivo: 'x',
+      importadaEm: '',
+      tamanho: 1,
+      abas: [],
+      arquivo: new Blob(['x']),
+    };
+    await expect(gravarImportacao(imp, previa)).rejects.toBeInstanceOf(
+      DadosMudaramDuranteImportacao,
+    );
+    const dados = await carregarDados();
+    expect(dados.importacao?.id).toBe('imp-1');
+    expect(dados.medicoes.get(item.id)?.valores).toEqual({ largura: '658' });
+  });
+
+  it('guarda um retrato das medições antes de cada importação (mantém os 5 últimos)', async () => {
+    const pcm = lerPcm(readFileSync(FIXTURE));
+    await importar(pcm, 'imp-1');
+    const { item } = await itemPorNome('XA-TC-01', 'TAPETE');
+    await salvarMedicao(medicao(item.id, '658'));
+    for (let n = 2; n <= 8; n++) await importar(pcm, `imp-${n}`);
+    const db = await banco();
+    const retratos = (await db.getAllKeys('meta')).filter((k) => k.startsWith('retrato:'));
+    expect(retratos).toHaveLength(5);
+    const ultimo = await db.get('meta', 'retrato:imp-8');
+    expect(ultimo?.valor).toMatchObject({
+      medicoes: [{ itemId: item.id, valores: { largura: '658' } }],
+    });
+  });
+
   it('grava e carrega o PCM fictício, guardando o arquivo original', async () => {
     const { existentes } = await importar(lerPcm(readFileSync(FIXTURE)), 'imp-1');
     expect(existentes).toEqual({ medicoes: 0, fotos: 0, notas: 0 });
@@ -146,7 +235,7 @@ describe('importação', () => {
 
     const { plano, existentes } = await importar(pcm, 'imp-2');
     expect(existentes.medicoes).toBe(1);
-    expect(plano.resumo).toMatchObject({ remapeados: 0, orfaos: 0 });
+    expect(plano.resumo).toMatchObject({ remapeados: 0, orfaosItens: 0, orfaosEquipamentos: 0 });
     const depois = await carregarDados();
     expect(depois.medicoes.get(item.id)?.valores).toEqual({ largura: '658' });
   });
@@ -176,7 +265,7 @@ describe('importação', () => {
     const area1 = abas.get('AREA 1')!;
     area1.splice(6, 0, ['EQUIPAMENTO NOVO XA-ZZ-99', 'MOTOR', '1CV', '1 UNIDADE'], [], []);
     const { plano } = await importar(pcmDe(abas), 'imp-2');
-    expect(plano.resumo.orfaos).toBe(0);
+    expect(plano.resumo).toMatchObject({ orfaosItens: 0, orfaosEquipamentos: 0 });
     expect(plano.resumo.remapeados).toBeGreaterThanOrEqual(3);
 
     const depois = await itemPorNome('XA-TC-01', 'TAPETE');
@@ -199,7 +288,7 @@ describe('importação', () => {
     const k = area1.findIndex((l) => l[1] === 'CHAVE DE SEGURANÇA');
     area1.splice(k, 1);
     const { plano } = await importar(pcmDe(abas), 'imp-2');
-    expect(plano.resumo.orfaos).toBe(1);
+    expect(plano.resumo).toMatchObject({ orfaosItens: 1, orfaosEquipamentos: 0 });
 
     const dados = await carregarDados();
     const tc01 = dados.equipamentos.find((e) => e.tag === 'XA-TC-01')!;
