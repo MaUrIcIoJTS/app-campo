@@ -1,6 +1,7 @@
+import JSZip from 'jszip';
 import { readFileSync } from 'node:fs';
 import * as XLSX from 'xlsx';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { EquipamentoDb, ItemDb, Medicao, NotaEquipamento } from '../../src/db/esquema.ts';
 import { gerarPlanilha, type DadosDaPlanilha } from '../../src/exportar/planilha.ts';
 import { lerPcm } from '../../src/dominio/pcm/parser.ts';
@@ -233,5 +234,164 @@ describe('rede de segurança', () => {
     const r = gerarPlanilha({ ...dados, equipamentos });
     expect(r.itensNoPcm).toBe(1); // só a TELA (com foto), de outro equipamento
     expect(r.itensForaDoPcm).toBe(3);
+  });
+});
+
+/** Formato de uma célula lido direto do XML do .xlsx (o SheetJS não lê fontes e bordas). */
+interface FormatoLido {
+  negrito: boolean;
+  cor: string | null;
+  fundo: string | null;
+  borda: boolean;
+  quebra: boolean;
+}
+
+async function abrirXlsx(bytes: Uint8Array) {
+  const zip = await JSZip.loadAsync(bytes, { checkCRC32: true });
+  const texto = (caminho: string) => zip.file(caminho)!.async('string');
+  const estilos = await texto('xl/styles.xml');
+  const lista = (nome: string, item: string) =>
+    [
+      ...(
+        new RegExp(`<${nome} count="\\d+">([\\s\\S]*?)</${nome}>`).exec(estilos)?.[1] ?? ''
+      ).matchAll(new RegExp(`<${item}(?:\\s[^>]*?)?(?:/>|>[\\s\\S]*?</${item}>)`, 'g')),
+    ].map((m) => m[0]);
+  const fontes = lista('fonts', 'font');
+  const fundos = lista('fills', 'fill');
+  const bordas = lista('borders', 'border');
+  const xfs = lista('cellXfs', 'xf');
+  const atributo = (xml: string, nome: string) =>
+    new RegExp(`${nome}="([^"]*)"`).exec(xml)?.[1] ?? null;
+  const abas = new Map<string, string>();
+  const wb = XLSX.read(bytes);
+  for (const [k, nome] of wb.SheetNames.entries())
+    abas.set(nome, await texto(`xl/worksheets/sheet${k + 1}.xml`));
+
+  const formato = (aba: string, end: string): FormatoLido | null => {
+    const c = new RegExp(`<c r="${end}"[^>]*>`).exec(abas.get(aba)!)?.[0];
+    const s = c ? atributo(c, 's') : null;
+    if (!s) return null;
+    const xf = xfs[Number(s)]!;
+    const fonte = fontes[Number(atributo(xf, 'fontId'))]!;
+    return {
+      negrito: fonte.includes('<b/>'),
+      cor: atributo(fonte, 'rgb'),
+      fundo: atributo(fundos[Number(atributo(xf, 'fillId'))]!, 'rgb'),
+      borda: bordas[Number(atributo(xf, 'borderId'))]!.includes('style="thin"'),
+      quebra: xf.includes('wrapText="1"'),
+    };
+  };
+  const congelado = (aba: string) => {
+    const painel = /<pane [^>]*state="frozen"[^>]*\/>/.exec(abas.get(aba)!)?.[0];
+    return painel ? Number(atributo(painel, 'ySplit')) : 0;
+  };
+  const altura = (aba: string, linha: number) => {
+    const row = new RegExp(`<row r="${linha + 1}"[^>]*>`).exec(abas.get(aba)!)?.[0];
+    return row ? Number(atributo(row, 'ht') ?? 0) : 0;
+  };
+  return { zip, wb, formato, congelado, altura };
+}
+
+const end = (r: number, c: number) => XLSX.utils.encode_cell({ r, c });
+
+describe.each(FIXTURES)('aparência do PCM atualizado a partir de %s', (arquivo) => {
+  it('títulos em negrito com fundo, bordas, quebra de texto, "Diverge" em vermelho', async () => {
+    const { dados, tapete, motor, itens } = cenario(arquivo);
+    const erro = vi.spyOn(console, 'error');
+    const bytes = gerarPlanilha(dados).bytes;
+    expect(erro).not.toHaveBeenCalled(); // não caiu no "sem formatação"
+    erro.mockRestore();
+    const x = await abrirXlsx(bytes);
+    const a1 = aba(x.wb, 'AREA 1');
+
+    // Cabeçalho do PCM (cinza) e das colunas do app (azul-claro), nas duas linhas.
+    for (const r of [a1.cab, a1.cab + 1]) {
+      expect(x.formato('AREA 1', end(r, 0))).toMatchObject({ negrito: true, fundo: 'FFD9D9D9' });
+      for (let k = 0; k < 4; k++)
+        expect(x.formato('AREA 1', end(r, a1.col + k))).toEqual({
+          negrito: true,
+          cor: null,
+          fundo: 'FFDDEBF7',
+          borda: true,
+          quebra: true,
+        });
+    }
+
+    // Linha do tapete: borda e quebra; "Diverge: Lonas" em vermelho e negrito.
+    const medido = x.formato('AREA 1', end(tapete.linha!, a1.col));
+    expect(medido).toMatchObject({ negrito: false, borda: true, quebra: true });
+    expect(x.formato('AREA 1', end(tapete.linha!, a1.col + 1))).toMatchObject({
+      negrito: true,
+      cor: 'FFC00000',
+      borda: true,
+    });
+    // "Confere" não fica vermelho.
+    expect(x.formato('AREA 1', end(motor.linha!, a1.col + 1))).toMatchObject({
+      negrito: false,
+      borda: true,
+    });
+    // Item sem medida: as 4 células vazias têm borda (a tabela fica inteira).
+    const semMedida = itens.find(
+      (i) => i.equipamentoId === tapete.equipamentoId && i.origem === 'pcm' && i.nome === 'REDUTOR',
+    )!;
+    for (let k = 0; k < 4; k++)
+      expect(x.formato('AREA 1', end(semMedida.linha!, a1.col + k))?.borda).toBe(true);
+    // Texto do "Medido" quebra em várias linhas: a linha fica mais alta.
+    expect(x.altura('AREA 1', tapete.linha!)).toBeGreaterThan(30);
+  });
+
+  it('cabeçalho congelado nas abas do PCM e nas do app', async () => {
+    const { dados } = cenario(arquivo);
+    const x = await abrirXlsx(gerarPlanilha(dados).bytes);
+    const a1 = aba(x.wb, 'AREA 1');
+    expect(x.congelado('AREA 1')).toBe(a1.cab + 2);
+    expect(x.congelado('SECAGEM E CLASSIFICAÇÃO')).toBe(
+      aba(x.wb, 'SECAGEM E CLASSIFICAÇÃO').cab + 2,
+    );
+    expect(x.congelado('Resumo')).toBe(3);
+    expect(x.congelado('Fora do PCM')).toBe(3);
+  });
+
+  it('abas Resumo e Fora do PCM: cabeçalho, bordas e divergências em vermelho', async () => {
+    const { dados } = cenario(arquivo);
+    const x = await abrirXlsx(gerarPlanilha(dados).bytes);
+    expect(x.formato('Resumo', 'A3')).toMatchObject({ negrito: true, fundo: 'FFDDEBF7' });
+    expect(x.formato('Fora do PCM', 'H3')).toMatchObject({ negrito: true, borda: true });
+    const resumo = XLSX.utils.sheet_to_json<(string | number)[]>(x.wb.Sheets.Resumo!, {
+      header: 1,
+    });
+    const r = resumo.findIndex((l) => l[1] === 'XA-TC-01');
+    expect(x.formato('Resumo', end(r, 5))).toMatchObject({ cor: 'FFC00000', borda: true });
+    const r2 = resumo.findIndex((l, k) => k > 2 && Number(l[5]) === 0);
+    expect(x.formato('Resumo', end(r2, 5))).toMatchObject({ cor: null, borda: true });
+    expect(x.formato('Fora do PCM', 'E4')).toMatchObject({ borda: true, quebra: true });
+  });
+
+  it('o arquivo formatado tem as mesmas partes do zip e reexporta formatado de novo', async () => {
+    const { dados } = cenario(arquivo);
+    const primeira = gerarPlanilha(dados).bytes;
+    const x = await abrirXlsx(primeira);
+    expect(Object.keys(x.zip.files).sort()).toEqual(
+      [
+        '[Content_Types].xml',
+        '_rels/.rels',
+        'docProps/app.xml',
+        'docProps/core.xml',
+        'xl/_rels/workbook.xml.rels',
+        'xl/metadata.xml',
+        'xl/styles.xml',
+        'xl/theme/theme1.xml',
+        'xl/workbook.xml',
+        'xl/worksheets/sheet1.xml',
+        'xl/worksheets/sheet2.xml',
+        'xl/worksheets/sheet3.xml',
+        'xl/worksheets/sheet4.xml',
+      ].sort(),
+    );
+    const segunda = await abrirXlsx(gerarPlanilha({ ...dados, arquivoOriginal: primeira }).bytes);
+    const a1 = aba(segunda.wb, 'AREA 1');
+    expect(a1.col).toBe(21);
+    expect(segunda.formato('AREA 1', end(a1.cab, a1.col))).toMatchObject({ negrito: true });
+    expect(segunda.congelado('Resumo')).toBe(3);
   });
 });

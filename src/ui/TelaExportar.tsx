@@ -1,3 +1,4 @@
+import type { ComponentChildren } from 'preact';
 import { useState } from 'preact/hooks';
 import {
   ErroAoPreparar,
@@ -6,10 +7,13 @@ import {
   prepararZip,
 } from '../exportar/preparar.ts';
 import { comTelaAcesa } from '../exportar/telaAcesa.ts';
-import { haQuantoTempo } from '../exportar/textos.ts';
+import { dataCurta, haQuantoTempo } from '../exportar/textos.ts';
 import type { UltimoBackup } from '../db/repositorio.ts';
 import { ArquivoPronto } from './ArquivoPronto.tsx';
 import { useDados } from './dados.tsx';
+import { IconeBackup, IconeCamera, IconePlanilha, IconeRestaurar } from './Icones.tsx';
+import { pendenciaDeBackup, textoPendencia, useAgora } from './LinhaBackup.tsx';
+import { Progresso } from './Progresso.tsx';
 import { rotas } from './rota.ts';
 import { Topo } from './Topo.tsx';
 
@@ -24,24 +28,34 @@ type Preparar = (aoProgredir: (feitas: number, total: number) => void) => Promis
 const ERRO_GERAL = 'Não consegui preparar o arquivo. Feche e abra o app e tente de novo.';
 
 /**
- * Uma exportação: "Preparar" gera o arquivo ANTES (com "Preparando…"); só então aparecem
- * "Baixar" e "Compartilhar" (o compartilhar precisa ser chamado direto do toque).
+ * Uma exportação: "Preparar" gera o arquivo ANTES (com a barra de progresso); só então aparecem
+ * "Baixar" e "Compartilhar" (o compartilhar precisa ser chamado direto do toque). `destaque`:
+ * o backup, com o botão grande; os outros ficam compactos.
  */
 function Exportacao({
+  icone,
   titulo,
+  extensao,
   texto,
   rotuloPreparar,
+  rotuloArquivo,
   unidade,
+  destaque = false,
   preparar,
   ocupado,
   setOcupado,
   aoEnviar,
 }: {
+  icone: ComponentChildren;
   titulo: string;
+  extensao: string;
   texto: string;
   rotuloPreparar: string;
+  /** "Backup" → "Backup de 26/10 14:30". */
+  rotuloArquivo: string;
   /** "fotos": mostra "Preparando… 12 de 300 fotos". */
   unidade?: string;
+  destaque?: boolean;
   preparar: Preparar;
   ocupado: boolean;
   setOcupado: (b: boolean) => void;
@@ -67,20 +81,35 @@ function Exportacao({
   }
 
   return (
-    <section class="cartao">
-      <h2 class="secao-titulo">{titulo}</h2>
-      <p class="suave">{texto}</p>
+    <section class={destaque ? 'cartao exportacao exportacao--destaque' : 'cartao exportacao'}>
+      <h2 class="secao-titulo">
+        {icone}
+        <span>
+          {titulo} <span class="extensao">({extensao})</span>
+        </span>
+      </h2>
+      <p class="exportacao-texto">{texto}</p>
       {estado.etapa === 'preparando' ? (
-        <p class="preparando" role="status">
-          Preparando…
-          {unidade && estado.total > 0 && ` ${estado.feitas} de ${estado.total} ${unidade}`}
-        </p>
+        <Progresso
+          texto={
+            unidade && estado.total > 0
+              ? `Preparando… ${estado.feitas} de ${estado.total} ${unidade}`
+              : 'Preparando…'
+          }
+          feitas={estado.feitas}
+          total={unidade ? estado.total : undefined}
+          nota="Deixe o app aberto."
+        />
       ) : estado.etapa === 'pronto' ? (
         <>
-          <ArquivoPronto arquivo={estado.arquivo} aoEnviar={aoEnviar} />
+          <ArquivoPronto
+            arquivo={estado.arquivo}
+            titulo={`${rotuloArquivo} de ${dataCurta(estado.arquivo.lastModified)}`}
+            aoEnviar={aoEnviar}
+          />
           <button
             type="button"
-            class="botao botao--secundario botao--largo"
+            class="botao botao--texto botao--largo"
             disabled={ocupado}
             onClick={() => void tocar()}
           >
@@ -96,7 +125,7 @@ function Exportacao({
           )}
           <button
             type="button"
-            class="botao botao--grande"
+            class={destaque ? 'botao botao--grande' : 'botao botao--secundario botao--largo'}
             disabled={ocupado}
             onClick={() => void tocar()}
           >
@@ -110,25 +139,39 @@ function Exportacao({
 
 export function TelaExportar() {
   const { dados, marcarBackup } = useDados();
+  const agora = useAgora();
   // Um arquivo por vez: dois backups de 200 MB juntos pesam num celular fraco.
   const [ocupado, setOcupado] = useState(false);
   const [backup, setBackup] = useState<UltimoBackup | null>(null);
   const ultimo = dados?.ultimoBackup;
+  const pendente = dados ? textoPendencia(pendenciaDeBackup(dados, agora)) : null;
 
   return (
     <>
       <Topo voltar={{ href: rotas.lista, rotulo: 'Lista' }} />
       <main class="tela">
         <h1 class="titulo-tela">Backup e exportar</h1>
-        <p class={ultimo ? 'suave' : 'aviso aviso--bloco'}>
-          {ultimo ? `Último backup: ${haQuantoTempo(ultimo.em)}.` : 'Nenhum backup feito ainda.'}
-        </p>
+        {ultimo ? (
+          <p class="estado-backup">
+            <strong>Último backup: {haQuantoTempo(ultimo.em, agora)}.</strong>
+            {pendente && <span>{pendente}.</span>}
+          </p>
+        ) : (
+          <p class="aviso aviso--bloco estado-backup">
+            <strong>Nenhum backup feito ainda.</strong>
+            {pendente && <span>{pendente}.</span>}
+          </p>
+        )}
 
         <Exportacao
-          titulo="Backup completo (.json)"
+          icone={<IconeBackup />}
+          titulo="Backup completo"
+          extensao=".json"
           texto="Medidas, observações, fotos e o PCM. Serve para restaurar neste ou em outro celular."
           rotuloPreparar="Preparar backup"
+          rotuloArquivo="Backup"
           unidade="fotos"
+          destaque
           ocupado={ocupado}
           setOcupado={setOcupado}
           preparar={async (p) => {
@@ -139,32 +182,38 @@ export function TelaExportar() {
           aoEnviar={() => backup && void marcarBackup(backup)}
         />
 
+        <h2 class="subtitulo-tela">Outros arquivos</h2>
+
         <Exportacao
-          titulo="PCM atualizado (.xlsx)"
-          texto="A planilha do PCM com as colunas Medido, Confere/Diverge, Observação e Data, e as abas Resumo e Fora do PCM."
+          icone={<IconePlanilha />}
+          titulo="PCM atualizado"
+          extensao=".xlsx"
+          texto="A planilha do PCM com Medido, Confere/Diverge, Observação e Data em cada item."
           rotuloPreparar="Preparar planilha"
+          rotuloArquivo="Planilha"
           ocupado={ocupado}
           setOcupado={setOcupado}
           preparar={() => prepararPlanilha()}
         />
 
         <Exportacao
-          titulo="Fotos (.zip)"
+          icone={<IconeCamera />}
+          titulo="Fotos"
+          extensao=".zip"
           texto="Todas as fotos, com nomes como XA-TC-01_MOTOR_1.jpg."
           rotuloPreparar="Preparar fotos"
+          rotuloArquivo="Fotos"
           unidade="fotos"
           ocupado={ocupado}
           setOcupado={setOcupado}
           preparar={(p) => prepararZip(p)}
         />
 
-        <section class="cartao">
-          <h2 class="secao-titulo">Restaurar backup</h2>
-          <p class="suave">Troca os dados deste celular pelos de um backup.</p>
-          <a class="botao botao--secundario botao--largo" href={rotas.restaurar}>
-            Restaurar backup…
-          </a>
-        </section>
+        <a class="link-acao" href={rotas.restaurar}>
+          <IconeRestaurar />
+          <span>Restaurar um backup</span>
+          <span aria-hidden="true">›</span>
+        </a>
       </main>
     </>
   );

@@ -1,29 +1,9 @@
 import { useEffect } from 'preact/hooks';
 import { useDados } from './dados.tsx';
 import { atualizarEspaco, useEstadoFotos } from './fotos.ts';
+import type { StatusAparelho } from './EstadoDoAparelho.tsx';
 import { rotas } from './rota.ts';
 import { NOME_TEMA, type Tema } from './tema.ts';
-
-export interface StatusAparelho {
-  offline: boolean;
-  persistente: boolean | null;
-}
-
-/** Linha compacta no topo da lista, só quando algo NÃO está pronto para o campo. */
-export function AlertaAparelho({ status }: { status: StatusAparelho }) {
-  const problemas = [
-    !status.offline && 'Ainda não está pronto para uso sem internet. Mantenha a internet ligada.',
-    status.persistente === false && 'Instale o app na tela inicial para proteger os dados.',
-  ].filter(Boolean);
-  if (problemas.length === 0) return null;
-  return (
-    <div class="aviso aviso--bloco alerta-aparelho" role="status">
-      {problemas.map((p) => (
-        <p key={String(p)}>⚠ {p}</p>
-      ))}
-    </div>
-  );
-}
 
 interface Props {
   status: StatusAparelho;

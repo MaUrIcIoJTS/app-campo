@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import type { Dados } from '../db/repositorio.ts';
 import { haQuantoTempo } from '../exportar/textos.ts';
+import { IconeBackup } from './Icones.tsx';
 import { rotas } from './rota.ts';
 
 /** Com mudanças depois do último backup, quanto tempo até a linha ficar em destaque. */
@@ -31,7 +32,7 @@ export function pendenciaDeBackup(dados: Dados, agora: number): Pendencia {
   };
 }
 
-function useAgora(): number {
+export function useAgora(): number {
   // Atualiza o "há X min" sozinho enquanto a tela está aberta.
   const [agora, setAgora] = useState(() => Date.now());
   useEffect(() => {
@@ -43,27 +44,33 @@ function useAgora(): number {
 
 const plural = (n: number, um: string, varios: string) => `${n} ${n === 1 ? um : varios}`;
 
+/** "35 itens e 12 fotos ainda sem backup" (null se nada mudou; sem backup, conta tudo). */
+export function textoPendencia(p: Pendencia): string | null {
+  const partes = [
+    p.itens > 0 && plural(p.itens, 'item', 'itens'),
+    p.fotos > 0 && plural(p.fotos, 'foto', 'fotos'),
+  ].filter(Boolean);
+  return partes.length > 0 ? `${partes.join(' e ')} ainda sem backup` : null;
+}
+
 /**
- * "Último backup: há 5 h · 35 itens e 12 fotos depois ›" — leva à tela de backup. Fica em
- * destaque (amarelo) quando há o que salvar há mais de 4 h. `soAtrasado`: só aparece em destaque
- * (fim da ficha, para quem vai de equipamento em equipamento sem passar pela lista).
+ * "Último backup: há 5 h" e, embaixo, "35 itens e 12 fotos ainda sem backup" — leva à tela de
+ * backup. Fica em destaque (amarelo) quando há o que salvar há mais de 4 h. `soAtrasado`: só
+ * aparece em destaque (fim da ficha, para quem vai de equipamento em equipamento sem passar
+ * pela lista).
  */
 export function LinhaBackup({ dados, soAtrasado = false }: { dados: Dados; soAtrasado?: boolean }) {
   const agora = useAgora();
   const p = pendenciaDeBackup(dados, agora);
   if (soAtrasado && !p.atrasado) return null;
   const ultimo = dados.ultimoBackup;
-  const mudancas = [
-    p.itens > 0 && plural(p.itens, 'item', 'itens'),
-    p.fotos > 0 && plural(p.fotos, 'foto', 'fotos'),
-  ].filter(Boolean);
+  const pendente = textoPendencia(p);
   return (
     <a class="linha-backup" data-alerta={p.atrasado || undefined} href={rotas.exportar}>
-      <span>
+      <IconeBackup />
+      <span class="linha-backup-texto">
         {ultimo ? `Último backup: ${haQuantoTempo(ultimo.em, agora)}` : 'Nenhum backup ainda'}
-        {ultimo && mudancas.length > 0 && (
-          <span class="linha-backup-depois"> · {mudancas.join(' e ')} depois</span>
-        )}
+        {pendente && <span class="linha-backup-depois">{pendente}</span>}
       </span>
       <span class="linha-backup-acao">Backup ›</span>
     </a>

@@ -1,8 +1,16 @@
-import { expect, type BrowserContext, type Page } from '@playwright/test';
+import { expect, type BrowserContext, type Locator, type Page } from '@playwright/test';
 
 export const FIXTURE = 'tests/fixtures/pcm-ficticio.xls';
 
 export const linhas = (page: Page) => page.locator('.lista-eq > li');
+
+/** Em quantas linhas o texto do elemento quebrou (conta as alturas distintas das linhas). */
+export const linhasDoTexto = (alvo: Locator) =>
+  alvo.evaluate((el) => {
+    const faixa = document.createRange();
+    faixa.selectNodeContents(el);
+    return new Set([...faixa.getClientRects()].map((r) => Math.round(r.bottom))).size;
+  });
 
 /** Cartão de um item na ficha, pelo nome exato do item. */
 export const cartao = (page: Page, item: string) =>

@@ -5,9 +5,8 @@ import { avisosDoItem } from '../dominio/medicao.ts';
 import { percentual, progressoItem, somarProgresso, type Progresso } from '../dominio/progresso.ts';
 import type { Dados } from '../db/repositorio.ts';
 import { useDados } from './dados.tsx';
-import { LinhaBackup } from './LinhaBackup.tsx';
 import { rotas } from './rota.ts';
-import { AlertaAparelho, type StatusAparelho } from './RodapeAparelho.tsx';
+import { EstadoDoAparelho, type StatusAparelho } from './EstadoDoAparelho.tsx';
 import { Topo } from './Topo.tsx';
 
 export interface Filtros {
@@ -98,7 +97,7 @@ export function TelaLista({ filtros, onFiltros, rodape, status }: Props) {
       <>
         {topo}
         <main class="tela">
-          <AlertaAparelho status={status} />
+          <EstadoDoAparelho status={status} />
           <section class="cartao vazio">
             <h2>Nenhum PCM neste aparelho</h2>
             <p>Importe a planilha do PCM (.xls ou .xlsx). Ela fica só neste celular.</p>
@@ -120,8 +119,7 @@ export function TelaLista({ filtros, onFiltros, rodape, status }: Props) {
     <>
       {topo}
       <main class="tela">
-        <AlertaAparelho status={status} />
-        <LinhaBackup dados={dados} />
+        <EstadoDoAparelho status={status} dados={dados} />
         <div class="filtros">
           <div class="busca">
             <input

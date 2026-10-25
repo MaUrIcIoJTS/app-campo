@@ -18,6 +18,8 @@
   --aviso-texto: #3d2a00;
   --foco: #d97706;
   --trilho: #e2e8f0;
+  /* Fundo das barras de progresso: visível ao sol (o --trilho some). */
+  --barra-fundo: #cbd5e1;
   --toque: 48px;
   /* Barra fixa do topo; o cabeçalho do item gruda logo abaixo dela. */
   --altura-topo: calc(60px + env(safe-area-inset-top));
@@ -49,6 +51,7 @@
     --aviso-texto: #fff4c2;
     --foco: #fbbf24;
     --trilho: #1e293b;
+    --barra-fundo: #334155;
   }
 }
 
@@ -66,6 +69,7 @@
   --aviso-texto: #fff4c2;
   --foco: #fbbf24;
   --trilho: #1e293b;
+  --barra-fundo: #334155;
 }
 
 *,
@@ -197,12 +201,22 @@ button {
 .botao--grande {
   width: 100%;
   min-height: 56px;
+  padding: 0 12px;
   font-size: 1.1rem;
 }
 
 .botao--secundario {
   background: transparent;
   color: var(--primaria);
+}
+
+/* Ação menor, sem moldura (ex.: "Preparar de novo"): o toque continua com 48 px. */
+.botao--texto {
+  border-color: transparent;
+  background: transparent;
+  color: var(--primaria);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 :focus-visible {
@@ -228,6 +242,10 @@ button {
 .acoes--pilha > * {
   flex: none;
   width: 100%;
+}
+
+.acoes--pilha > .botao {
+  padding: 0 12px;
 }
 
 .titulo-tela {
@@ -326,11 +344,13 @@ button {
   border: 0;
 }
 
+/* Aviso temporário: no topo, logo abaixo da barra — nunca cobre os botões do fim da tela.
+   Não recebe toques (o que está embaixo continua tocável). */
 .toast {
   position: fixed;
+  top: calc(var(--altura-topo) + 8px);
   left: var(--espaco);
   right: var(--espaco);
-  bottom: max(var(--espaco), env(safe-area-inset-bottom));
   z-index: 20;
   padding: 14px var(--espaco);
   border-radius: var(--raio);
@@ -340,10 +360,6 @@ button {
   text-align: center;
   box-shadow: 0 4px 16px rgb(0 0 0 / 0.35);
   pointer-events: none;
-}
-
-.toast--acima {
-  bottom: calc(max(var(--espaco), env(safe-area-inset-bottom)) + 76px);
 }
 
 /* Nova versão: fixa embaixo, não empurra a tela; dá para adiar. */
@@ -370,14 +386,6 @@ button {
 
 .barra-atualizacao .botao {
   padding: 0 12px;
-}
-
-.alerta-aparelho p {
-  margin: 0;
-}
-
-.alerta-aparelho p + p {
-  margin-top: 6px;
 }
 
 .previa-troca {
@@ -484,7 +492,7 @@ input[type='search']::-webkit-search-cancel-button {
 
 .eq-aba {
   color: var(--texto-suave);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
 }
 
 .eq-linha1 .eq-aba {
@@ -512,11 +520,11 @@ input[type='search']::-webkit-search-cancel-button {
 
 .barra {
   flex: 0 0 72px;
-  height: 10px;
+  height: 12px;
   overflow: hidden;
-  background: var(--trilho);
+  background: var(--barra-fundo);
   border: 1px solid var(--borda);
-  border-radius: 5px;
+  border-radius: 6px;
 }
 
 .barra > span {
@@ -542,7 +550,7 @@ input[type='search']::-webkit-search-cancel-button {
   border: 2px solid var(--borda);
   border-radius: 6px;
   color: var(--texto-suave);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 700;
 }
 
@@ -650,8 +658,9 @@ input[type='search']::-webkit-search-cancel-button {
   border-radius: 4px;
   background: var(--texto-suave);
   color: var(--superficie);
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   font-weight: 800;
+  line-height: 1.35;
   vertical-align: 1px;
 }
 
@@ -1249,7 +1258,7 @@ input[type='search']::-webkit-search-cancel-button {
   border-radius: 4px;
   background: var(--primaria);
   color: var(--primaria-texto);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 800;
 }
 
@@ -1264,9 +1273,12 @@ input[type='search']::-webkit-search-cancel-button {
   width: auto;
 }
 
+.fotos-acoes > .botao {
+  padding: 0 12px;
+}
+
 .fotos-galeria {
   flex: none;
-  padding: 0 14px;
 }
 
 .fotos-acoes > .botao--grande + .fotos-galeria {
@@ -1422,22 +1434,54 @@ html:has(.foto-dialogo[open]) {
   flex: 1 1 auto;
 }
 
-/* ===== Fase 4: backup e exportar (polimento visual fica para a sessão de aparência) ===== */
+/* ===== Backup, exportar, restaurar e estado do aparelho ===== */
+
+/* Topo da lista: um bloco só — último backup e o que falta para o campo. */
+.estado {
+  margin-bottom: var(--espaco);
+  overflow: hidden;
+  border: 2px solid var(--borda);
+  border-radius: var(--raio);
+  background: var(--superficie);
+}
+
+.estado > * + * {
+  border-top: 2px solid var(--borda);
+}
+
+.estado > .linha-backup {
+  margin: 0;
+  border-width: 0;
+  border-radius: 0;
+}
+
+.estado-aviso {
+  margin: 0;
+  padding: 10px var(--espaco);
+  background: var(--aviso-fundo);
+  color: var(--aviso-texto);
+  font-weight: 700;
+}
 
 .linha-backup {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  min-height: var(--toque);
+  gap: 10px;
+  min-height: 56px;
   margin-bottom: var(--espaco);
   padding: 8px var(--espaco);
   border: 2px solid var(--borda);
   border-radius: var(--raio);
   background: var(--superficie);
   color: var(--texto);
-  font-weight: 600;
+  font-weight: 700;
   text-decoration: none;
+}
+
+.linha-backup .icone {
+  width: 1.5em;
+  height: 1.5em;
+  margin: 0;
 }
 
 .linha-backup[data-alerta] {
@@ -1446,9 +1490,24 @@ html:has(.foto-dialogo[open]) {
   color: var(--aviso-texto);
 }
 
+.linha-backup-texto {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.linha-backup-depois {
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.linha-backup[data-alerta] .linha-backup-depois {
+  color: inherit;
+}
+
 .linha-backup-acao {
   color: var(--primaria);
-  font-weight: 700;
   white-space: nowrap;
 }
 
@@ -1457,23 +1516,168 @@ html:has(.foto-dialogo[open]) {
 }
 
 .secao-titulo {
-  margin: 0 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 6px;
   font-size: 1.15rem;
 }
 
-.preparando {
-  min-height: 56px;
+.secao-titulo .icone {
+  width: 1.5em;
+  height: 1.5em;
+  margin: 0;
+  color: var(--primaria);
+}
+
+.extensao {
+  color: var(--texto-suave);
+  font-size: 0.9em;
+  font-weight: 600;
+}
+
+.subtitulo-tela {
+  margin: calc(var(--espaco) * 1.5) 0 8px;
+  color: var(--texto-suave);
+  font-size: 1rem;
+}
+
+.estado-backup {
+  display: grid;
+  gap: 2px;
+  margin: 0 0 var(--espaco);
+}
+
+.estado-backup span {
+  color: var(--texto-suave);
+}
+
+/* Backup em destaque; planilha e fotos compactas. */
+.exportacao--destaque {
+  border-width: 3px;
+  border-color: var(--primaria);
+}
+
+.exportacao:not(.exportacao--destaque) {
+  padding-block: 12px;
+}
+
+.exportacao-texto {
+  margin: 0 0 12px;
+  color: var(--texto-suave);
+  font-size: 0.95rem;
+}
+
+.exportacao:not(.exportacao--destaque) .exportacao-texto {
+  margin-bottom: 10px;
+}
+
+/* "Restaurar um backup": link no fim da tela (alvo de 56 px). */
+.link-acao {
   display: flex;
   align-items: center;
+  gap: 8px;
+  min-height: 56px;
+  margin-top: var(--espaco);
+  padding: 0 4px;
+  color: var(--primaria);
   font-weight: 700;
+  text-decoration: none;
+}
+
+.link-acao > span:first-of-type {
+  flex: 1;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.link-acao .icone {
+  margin: 0;
+}
+
+/* Barra de progresso ("Preparando… 120 de 300 fotos"). */
+.progresso {
+  margin: 4px 0 0;
+}
+
+.progresso-barra {
+  height: 18px;
+  overflow: hidden;
+  border: 2px solid var(--borda);
+  border-radius: 9px;
+  background: var(--barra-fundo);
+}
+
+.progresso-barra > span {
+  display: block;
+  height: 100%;
+  background: var(--primaria);
+  transition: width 0.3s;
+}
+
+/* Sem contagem (planilha, gravação): um pedaço da barra vai e volta. */
+.progresso-barra--continua > span {
+  width: 35%;
+  animation: progresso-vai-e-volta 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes progresso-vai-e-volta {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(186%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progresso-barra--continua > span {
+    width: 100%;
+    animation: none;
+    background: repeating-linear-gradient(
+      -45deg,
+      var(--primaria) 0 10px,
+      var(--barra-fundo) 10px 20px
+    );
+  }
+}
+
+.progresso-texto {
+  margin: 8px 0 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.progresso-nota {
+  margin: 2px 0 0;
+  color: var(--texto-suave);
+  font-size: 0.95rem;
+}
+
+/* Arquivo pronto: "Backup de 26/10 14:30 · 243 MB" e o nome do arquivo menor, embaixo. */
+.arquivo-titulo {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
 }
 
 .arquivo-nome {
+  margin: 2px 0 12px;
+  color: var(--texto-suave);
+  font-size: 0.85rem;
   overflow-wrap: anywhere;
 }
 
+.arquivo-pendente {
+  margin: 0 0 2px;
+  color: var(--primaria);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+/* Longe do "Baixar": um toque de luva na borda de baixo não refaz o arquivo. */
 .arquivo-pronto + .botao {
-  margin-top: 8px;
+  margin-top: 16px;
 }
 
 .ok {
@@ -1482,6 +1686,7 @@ html:has(.foto-dialogo[open]) {
 }
 
 .aviso--feito {
+  margin-bottom: 0;
   border: 2px solid var(--ok);
   background: var(--superficie);
   color: var(--texto);
@@ -1489,20 +1694,21 @@ html:has(.foto-dialogo[open]) {
 }
 
 .aviso--feito p {
-  margin: 0 0 8px;
-}
-
-.aviso--feito p:first-child {
-  color: var(--ok);
-  font-weight: 700;
+  margin: 0 0 6px;
 }
 
 .aviso--feito p:last-child {
   margin-bottom: 0;
 }
 
+.aviso-feito-titulo {
+  color: var(--ok);
+  font-weight: 700;
+}
+
 .aviso-nota {
-  font-size: 0.95rem;
+  color: var(--texto-suave);
+  font-size: 0.9rem;
 }
 
 .aviso--perigo {
@@ -1511,12 +1717,71 @@ html:has(.foto-dialogo[open]) {
   color: var(--erro);
 }
 
-.linha-backup-depois {
-  font-weight: 500;
+.aviso--perigo p {
+  margin: 0 0 6px;
+}
+
+.aviso--perigo p:last-child {
+  margin-bottom: 0;
+}
+
+/* Dois botões lado a lado (cópia: Baixar | Apagar). */
+.acoes--linha {
+  flex-wrap: nowrap;
+  margin-top: 12px;
+}
+
+.acoes--linha > * {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* Restaurar: prévia "Backup × Este celular". */
+.previa-pcm {
+  margin: 0 0 4px;
+  overflow-wrap: anywhere;
+}
+
+/* Com letra grande no celular, só a tabela rola para o lado — a página nunca fica mais larga que
+   a tela (isso tira o zoom e desalinha os toques). */
+.tabela-rolagem {
+  overflow-x: auto;
+}
+
+.tabela--comparar {
+  font-size: 1rem;
+}
+
+.tabela--comparar th[scope='row'] {
+  font-weight: 600;
+}
+
+.tabela--comparar thead th {
+  vertical-align: bottom;
+  font-size: 0.9rem;
+}
+
+.tabela--comparar td {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.tabela--comparar td.mais {
+  color: var(--erro);
+  font-weight: 800;
+}
+
+.mais-nota {
+  display: block;
+  font-size: 0.85rem;
 }
 
 .copia + .copia {
   margin-top: var(--espaco);
   padding-top: var(--espaco);
   border-top: 2px solid var(--trilho);
+}
+
+.copia > .botao--grande {
+  margin-top: 4px;
 }

@@ -15,9 +15,10 @@ import {
   prontoParaRestaurar,
   restaurarBackup,
 } from '../exportar/restaurar.ts';
-import { dataHora } from '../exportar/textos.ts';
-import { ArquivoPronto } from './ArquivoPronto.tsx';
+import { dataCurta, dataHora } from '../exportar/textos.ts';
+import { AvisoBaixado, CabecalhoArquivo, LinkBaixar, useUrl } from './ArquivoPronto.tsx';
 import { useDados } from './dados.tsx';
+import { Progresso } from './Progresso.tsx';
 import { rotas } from './rota.ts';
 import { Topo } from './Topo.tsx';
 
@@ -126,9 +127,10 @@ export function TelaRestaurar() {
         )}
 
         {estado.etapa === 'lendo' && (
-          <p class="cartao" role="status">
-            Lendo “{estado.nome}”… {estado.pct}%
-          </p>
+          <section class="cartao">
+            <p class="arquivo-nome">{estado.nome}</p>
+            <Progresso texto={`Lendo o backup… ${estado.pct}%`} feitas={estado.pct} total={100} />
+          </section>
         )}
 
         {estado.etapa === 'previa' && (
@@ -142,16 +144,24 @@ export function TelaRestaurar() {
         )}
 
         {estado.etapa === 'copiando' && (
-          <p class="cartao preparando" role="status">
-            Guardando cópia do que está no celular…{' '}
-            {estado.total > 0 && `${estado.feitas} de ${estado.total} fotos. `}Não feche o app.
-          </p>
+          <section class="cartao">
+            <Progresso
+              texto={
+                estado.total > 0
+                  ? `Guardando cópia do que está no celular… ${estado.feitas} de ${estado.total} fotos`
+                  : 'Guardando cópia do que está no celular…'
+              }
+              feitas={estado.feitas}
+              total={estado.total || undefined}
+              nota="Não feche o app."
+            />
+          </section>
         )}
 
         {estado.etapa === 'gravando' && (
-          <p class="cartao preparando" role="status">
-            Restaurando… não feche o app.
-          </p>
+          <section class="cartao">
+            <Progresso texto="Restaurando…" nota="Não feche o app." />
+          </section>
         )}
 
         {estado.etapa === 'feito' && (
@@ -182,7 +192,7 @@ export function TelaRestaurar() {
                 : 'Cópias de antes das restaurações'}
             </h2>
             <p class="suave">
-              O que estava neste celular antes de restaurar, guardado pelo app (ficam as 2 últimas).
+              O que estava neste celular antes de restaurar. O app guarda as 2 últimas.
             </p>
             {copias.map((c) => (
               <CopiaGuardada
@@ -199,6 +209,7 @@ export function TelaRestaurar() {
   );
 }
 
+/** Uma cópia: "Restaurar esta cópia" em destaque; embaixo, Baixar e Apagar lado a lado. */
 function CopiaGuardada({
   copia,
   onVoltar,
@@ -212,16 +223,16 @@ function CopiaGuardada({
     () => new File([copia.arquivo], copia.nome, { type: MIME.json }),
     [copia],
   );
+  const url = useUrl(arquivo);
   const [apagando, setApagando] = useState(false);
+  const [erroAoApagar, setErroAoApagar] = useState(false);
+  const [baixadoEm, setBaixadoEm] = useState<Date | null>(null);
   return (
     <div class="copia">
-      <p>
-        <strong>Cópia de {dataHora(copia.criadaEm)}</strong>
-      </p>
-      <button type="button" class="botao botao--grande" onClick={onVoltar}>
-        Voltar para esta cópia
+      <CabecalhoArquivo titulo={`Cópia de ${dataCurta(copia.criadaEm)}`} arquivo={arquivo} />
+      <button type="button" class="botao botao--grande botao--largo" onClick={onVoltar}>
+        Restaurar esta cópia
       </button>
-      <ArquivoPronto arquivo={arquivo} />
       {apagando ? (
         <div class="acoes acoes--pilha">
           {/* "Não" no lugar do "Apagar": tocar de novo no mesmo lugar não apaga. */}
@@ -229,25 +240,48 @@ function CopiaGuardada({
             Não, manter a cópia
           </button>
           <p class="aviso aviso--bloco aviso--perigo">
-            Apagar a cópia de {dataHora(copia.criadaEm)}? Não dá para desfazer.
+            Apagar a cópia de {dataHora(copia.criadaEm)} ({tamanhoLegivel(copia.arquivo.size)})? Não
+            dá para desfazer.
           </p>
           <button
             type="button"
             class="botao botao--perigo"
-            onClick={() => void apagarCopia(copia.chave).then(onApagada)}
+            onClick={() =>
+              void apagarCopia(copia.chave)
+                .then(onApagada)
+                .catch((e: unknown) => {
+                  console.error('Cópia não apagada', e);
+                  setErroAoApagar(true);
+                })
+            }
           >
             Sim, apagar a cópia
           </button>
         </div>
       ) : (
-        <button
-          type="button"
-          class="botao botao--secundario botao--largo"
-          onClick={() => setApagando(true)}
-        >
-          Apagar esta cópia ({tamanhoLegivel(copia.arquivo.size)})
-        </button>
+        <div class="acoes acoes--linha">
+          <LinkBaixar
+            url={url}
+            arquivo={arquivo}
+            classe="botao botao--secundario"
+            rotulo="Baixar"
+            onBaixou={() => setBaixadoEm(new Date())}
+          />
+          <button
+            type="button"
+            class="botao botao--secundario botao--perigo-contorno"
+            onClick={() => setApagando(true)}
+          >
+            Apagar
+          </button>
+        </div>
       )}
+      {erroAoApagar && (
+        <p class="erro" role="alert">
+          ⚠ Não consegui apagar a cópia. Ela continua guardada.
+        </p>
+      )}
+      {baixadoEm && <AvisoBaixado em={baixadoEm} />}
     </div>
   );
 }
@@ -291,6 +325,42 @@ function arriscado(lido: BackupLido, aparelho: ContagemDoAparelho): boolean {
   );
 }
 
+interface LinhaDaPrevia {
+  rotulo: string;
+  backup: string;
+  aqui: string;
+  /** O celular tem mais (ou mais novo) que o backup: em vermelho. */
+  mais: boolean;
+}
+
+function linhasDaPrevia(lido: BackupLido, aparelho: ContagemDoAparelho): LinhaDaPrevia[] {
+  const r = lido.resumo;
+  const backup = Date.parse(lido.criadoEm);
+  const ultima = aparelho.ultimaAlteracao ? Date.parse(aparelho.ultimaAlteracao) : NaN;
+
+  const n = (backup: number, aqui: number, mais = aqui > backup) => ({
+    backup: String(backup),
+    aqui: String(aqui),
+    mais,
+  });
+  return [
+    {
+      rotulo: 'Dados até',
+      backup: dataCurta(lido.criadoEm) || '?',
+      aqui: aparelho.ultimaAlteracao ? dataCurta(aparelho.ultimaAlteracao) : '—',
+      mais: Number.isFinite(ultima) && (!Number.isFinite(backup) || ultima > backup),
+    },
+    { rotulo: 'Equipamentos', ...n(r.equipamentos, aparelho.equipamentos, false) },
+    { rotulo: 'Itens medidos', ...n(r.medicoes, aparelho.medicoes) },
+    { rotulo: 'Obs. de equipamento', ...n(r.notas, aparelho.notas, false) },
+    { rotulo: 'Fotos', ...n(r.fotos, aparelho.fotos) },
+  ];
+}
+
+/**
+ * Confere antes de restaurar: tabela "Backup × Este celular" (o que o celular tem a mais fica
+ * em vermelho) e os botões. Com risco, 2ª confirmação com o "Não" no lugar do botão tocado.
+ */
 function Previa({
   lido,
   nome,
@@ -309,36 +379,60 @@ function Previa({
   const temAqui = aparelho.importacoes + aparelho.medicoes + aparelho.notas + aparelho.fotos > 0;
   const risco = temAqui && arriscado(lido, aparelho);
   const dataBackup = dataHora(lido.criadoEm) || 'data desconhecida';
+  const linhas = linhasDaPrevia(lido, aparelho);
   return (
     <section class="cartao">
-      <h2 class="previa-titulo">{nome}</h2>
-      <p>
-        Backup de <strong>{dataBackup}</strong> ({tamanhoLegivel(lido.tamanho)})
-        {pcm && `, PCM “${pcm.nomeArquivo}”`}:
+      <h2 class="secao-titulo">Confira antes de restaurar</h2>
+      <p class="arquivo-nome">
+        {nome} · {tamanhoLegivel(lido.tamanho)}
       </p>
-      <p>
-        <strong>{resumoDoBackup(lido)}</strong>.
-      </p>
+      {pcm && (
+        <p class="previa-pcm">
+          PCM: <strong>{pcm.nomeArquivo}</strong>
+        </p>
+      )}
+      <div class="tabela-rolagem">
+        <table class="tabela tabela--comparar">
+          <thead>
+            <tr>
+              <th scope="col">
+                <span class="oculto">O quê</span>
+              </th>
+              <th scope="col">Backup</th>
+              {temAqui && <th scope="col">Este celular</th>}
+            </tr>
+          </thead>
+          <tbody>
+            {linhas.map((l) => (
+              <tr key={l.rotulo}>
+                <th scope="row">{l.rotulo}</th>
+                <td>{l.backup}</td>
+                {temAqui && (
+                  <td class={l.mais ? 'mais' : undefined}>
+                    {l.mais && <span aria-hidden="true">⚠ </span>}
+                    {l.aqui}
+                    {l.mais && (
+                      <span class="mais-nota">
+                        {l.rotulo === 'Dados até' ? 'mais novo' : 'a mais'}
+                      </span>
+                    )}
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       {risco ? (
         <div class="aviso aviso--bloco aviso--perigo" role="alert">
-          <p>
-            ⚠ Este celular tem dados que o backup não tem:{' '}
-            {plural(aparelho.medicoes, 'item medido', 'itens medidos')} e{' '}
-            {plural(aparelho.fotos, 'foto', 'fotos')}
-            {aparelho.ultimaAlteracao && `, o último em ${dataHora(aparelho.ultimaAlteracao)}`}. O
-            backup é de {dataBackup}.
-          </p>
-          <p>Restaurar troca tudo: o que foi feito depois fica só na cópia.</p>
+          <p>⚠ Este celular tem dados que o backup não tem (em vermelho).</p>
+          <p>Restaurar troca tudo: o que foi feito depois de {dataBackup} fica só na cópia.</p>
         </div>
       ) : temAqui ? (
-        <div class="aviso aviso--bloco">
-          <p>
-            Este celular tem agora {plural(aparelho.equipamentos, 'equipamento', 'equipamentos')},{' '}
-            {plural(aparelho.medicoes, 'item medido', 'itens medidos')} e{' '}
-            {plural(aparelho.fotos, 'foto', 'fotos')}. <strong>Tudo será trocado</strong> pelo
-            backup. Antes, o app guarda uma cópia.
-          </p>
-        </div>
+        <p class="aviso aviso--bloco">
+          <strong>Tudo neste celular será trocado</strong> pelo backup. Antes, o app guarda uma
+          cópia.
+        </p>
       ) : (
         <p class="suave">Este celular está vazio.</p>
       )}

@@ -4,8 +4,15 @@ import { esperarServiceWorker, importarFixture, linhas } from './apoio.ts';
 test('importa o PCM, lista, busca e filtra por aba', async ({ page }) => {
   await page.goto('./');
   await importarFixture(page);
-  await expect(page.getByText('PCM importado: 9 equipamentos.')).toBeVisible();
+  const aviso = page.getByText('PCM importado: 9 equipamentos.');
+  await expect(aviso).toBeVisible();
   await expect(linhas(page)).toHaveCount(9);
+  // O aviso fica no topo (logo abaixo da barra): não cobre os botões do fim da tela.
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  const caixa = (await aviso.boundingBox())!;
+  expect(caixa.y).toBeLessThan(140);
+  const tema = (await page.getByRole('button', { name: /^Tema:/ }).boundingBox())!;
+  expect(caixa.y + caixa.height).toBeLessThan(tema.y);
 
   const busca = page.getByRole('searchbox', { name: /Buscar equipamento/ });
   await busca.fill('tc02');

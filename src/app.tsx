@@ -3,7 +3,8 @@ import { useRegisterSW } from 'virtual:pwa-register/preact';
 import { pedirArmazenamentoPersistente } from './armazenamento.ts';
 import { prontoParaRecarregar } from './db/salvamento.ts';
 import { ProvedorDados } from './ui/dados.tsx';
-import { RodapeAparelho, type StatusAparelho } from './ui/RodapeAparelho.tsx';
+import type { StatusAparelho } from './ui/EstadoDoAparelho.tsx';
+import { RodapeAparelho } from './ui/RodapeAparelho.tsx';
 import { rotas, useRota, voltarPara } from './ui/rota.ts';
 import { TelaEquipamento } from './ui/TelaEquipamento.tsx';
 import { TelaExportar } from './ui/TelaExportar.tsx';
@@ -24,7 +25,9 @@ export function App() {
   const restaurando = useRestaurando();
   const [tema, trocarTema] = useTema();
   const [filtros, setFiltros] = useState<Filtros>({ termo: '', aba: '' });
-  const [aviso, setAviso] = useState<string | null>(null);
+  // Aviso temporário de uma tela: só aparece nela (trocar de tela não leva o aviso junto).
+  const [aviso, setAviso] = useState<{ texto: string; tela: string } | null>(null);
+  const [avisoAtualizacao, setAvisoAtualizacao] = useState<string | null>(null);
   const [persistente, setPersistente] = useState<boolean | null>(null);
   const [adiouAtualizacao, setAdiouAtualizacao] = useState(false);
 
@@ -38,6 +41,12 @@ export function App() {
     return () => clearTimeout(t);
   }, [aviso]);
 
+  useEffect(() => {
+    if (!avisoAtualizacao) return;
+    const t = setTimeout(() => setAvisoAtualizacao(null), 5000);
+    return () => clearTimeout(t);
+  }, [avisoAtualizacao]);
+
   const status: StatusAparelho = {
     offline: offlinePronto || !!navigator.serviceWorker?.controller,
     persistente,
@@ -46,7 +55,8 @@ export function App() {
   async function atualizar() {
     // Recarregar com medida na fila (ou durante uma importação) perderia dado.
     if (await prontoParaRecarregar()) await updateServiceWorker(true);
-    else setAviso('Ainda há medidas sendo salvas. Atualize daqui a pouco.');
+    // A resposta aparece na própria barra, perto do dedo que tocou "Atualizar".
+    else setAvisoAtualizacao('Ainda salvando medidas. Tente daqui a pouco.');
   }
 
   const mostrarAtualizacao = temAtualizacao && !adiouAtualizacao;
@@ -56,7 +66,7 @@ export function App() {
       {rota.tela === 'importar' ? (
         <TelaImportar
           onImportado={(mensagem) => {
-            setAviso(mensagem);
+            setAviso({ texto: mensagem, tela: 'lista' });
             voltarPara(rotas.lista);
           }}
         />
@@ -75,15 +85,16 @@ export function App() {
         />
       )}
 
-      {aviso && (
-        <div class={mostrarAtualizacao ? 'toast toast--acima' : 'toast'} role="status">
-          {aviso}
+      {aviso?.tela === rota.tela && !restaurando && (
+        // No topo, logo abaixo da barra: nunca cobre os botões do fim da tela.
+        <div class="toast" role="status">
+          {aviso.texto}
         </div>
       )}
 
       {mostrarAtualizacao && (
         <div class="barra-atualizacao" role="status">
-          <span>Nova versão do app.</span>
+          <span>{avisoAtualizacao ?? 'Nova versão do app.'}</span>
           <button
             type="button"
             class="botao botao--secundario"

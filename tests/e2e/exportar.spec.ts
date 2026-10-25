@@ -11,6 +11,7 @@ import {
   FIXTURE,
   jpegDeCamera,
   linhas,
+  linhasDoTexto,
 } from './apoio.ts';
 
 const arquivo = (buffer: Buffer, name: string) => ({ name, mimeType: 'image/jpeg', buffer });
@@ -130,12 +131,16 @@ test('backup offline → outro aparelho limpo → restaurar: medidas, observaç�
   expect(antes.medicoes).toHaveLength(2);
 
   await page.getByRole('link', { name: /‹ Lista/ }).click();
-  await expect(page.locator('.linha-backup')).toHaveText(/Nenhum backup ainda/);
+  // Um bloco só de estado do aparelho no topo da lista, com o último backup dentro.
+  const estado = page.getByRole('region', { name: 'Estado do aparelho' });
+  await expect(estado.locator('.linha-backup')).toHaveText(/Nenhum backup ainda/);
   await page.getByRole('link', { name: /Backup ›/ }).click();
   await semRolagemLateral(page);
   await page.getByRole('button', { name: 'Preparar backup' }).click();
   // Android: o Chrome não compartilha .json, então só "Baixar".
   await expect(page.getByRole('link', { name: 'Baixar', exact: true })).toBeVisible();
+  // Antes de baixar, deixa claro que o backup ainda não foi salvo fora do app.
+  await expect(page.getByText('Pronto para baixar')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Compartilhar' })).toHaveCount(0);
   const download = await baixar(page);
   expect(download.suggestedFilename()).toMatch(/^levantamento-backup-\d{4}-\d\d-\d\d-\d{4}\.json$/);
@@ -144,8 +149,14 @@ test('backup offline → outro aparelho limpo → restaurar: medidas, observaç�
   // é sair pelo app de arquivos do celular (Downloads → Compartilhar → WhatsApp).
   const feito = page.getByRole('status').filter({ hasText: '✓ Baixado às' });
   await expect(feito).toContainText('Downloads');
-  await expect(feito).toContainText(`“${download.suggestedFilename()}”`);
+  await expect(feito).toContainText('segure o arquivo');
   await expect(feito).toContainText('app de arquivos do celular');
+  // Título curto ("Backup de 26/10 14:30") e, embaixo, tamanho e nome do arquivo, para achar.
+  await expect(page.getByText('Pronto para baixar')).toHaveCount(0);
+  await expect(page.locator('.arquivo-titulo')).toHaveText(/^Backup de \d\d\/\d\d \d\d:\d\d$/);
+  await expect(page.locator('.arquivo-nome')).toHaveText(
+    new RegExp(`^\\d+ KB · ${download.suggestedFilename().replaceAll('.', '\\.')}$`),
+  );
   await expect(feito).toContainText('Compartilhar → WhatsApp');
   await expect(feito).not.toContainText('Documento');
   await expect(page.getByRole('link', { name: 'Baixar de novo' })).toBeVisible();
@@ -158,7 +169,7 @@ test('backup offline → outro aparelho limpo → restaurar: medidas, observaç�
 
   // "Último backup" na tela inicial.
   await page.getByRole('link', { name: /‹ Lista/ }).click();
-  await expect(page.locator('.linha-backup')).toHaveText(/Último backup: agora há pouco/);
+  await expect(estado.locator('.linha-backup')).toHaveText(/Último backup: agora há pouco/);
 
   // Fotos em .zip: nomes com TAG e item, bytes iguais aos do banco (sem recomprimir).
   await page.getByRole('link', { name: /Backup ›/ }).click();
@@ -182,12 +193,19 @@ test('backup offline → outro aparelho limpo → restaurar: medidas, observaç�
   const p2 = outro.page;
   await p2.getByRole('link', { name: 'Restaurar backup' }).click();
   await p2.locator('input[type=file]').setInputFiles(caminho);
-  await expect(
-    p2.getByText(/9 equipamentos, 2 itens medidos, 1 observação de equipamento, 2 fotos/),
-  ).toBeVisible();
+  // Prévia em tabela: o que o backup traz (o celular está vazio: só a coluna do backup).
+  const linha = (rotulo: string) => p2.getByRole('row', { name: new RegExp(`^${rotulo}`) });
+  await expect(linha('Equipamentos')).toHaveText(/Equipamentos\s*9$/);
+  await expect(linha('Itens medidos')).toHaveText(/Itens medidos\s*2$/);
+  await expect(linha('Obs. de equipamento')).toHaveText(/Obs. de equipamento\s*1$/);
+  await expect(linha('Fotos')).toHaveText(/Fotos\s*2$/);
+  await expect(p2.getByRole('columnheader', { name: 'Este celular' })).toHaveCount(0);
   await expect(p2.getByText('Este celular está vazio.')).toBeVisible();
   await semRolagemLateral(p2);
-  await p2.getByRole('button', { name: 'Restaurar este backup' }).click();
+  // "Restaurar este backup" numa linha só em 360 px.
+  const restaurar = p2.getByRole('button', { name: 'Restaurar este backup' });
+  expect(await linhasDoTexto(restaurar)).toBe(1);
+  await restaurar.click();
   await expect(p2.getByText(/✓ Backup restaurado/)).toBeVisible();
   await expect(p2.getByText('Cópia de antes da restauração')).toHaveCount(0); // estava vazio
   await p2.getByRole('link', { name: 'Ir para a lista' }).click();
@@ -254,6 +272,12 @@ test('PCM atualizado (.xlsx) offline: colunas na linha de cada item e reimporta 
 
   // Lido de volta: as 4 colunas na linha do item, abas novas, e o mesmo PCM para o parser.
   const bytes = readFileSync(caminho);
+  // Formatada no navegador (não caiu no "sem formatação"): cabeçalho congelado e vermelho.
+  const partes = await JSZip.loadAsync(bytes, { checkCRC32: true });
+  expect(await partes.file('xl/worksheets/sheet1.xml')!.async('string')).toContain(
+    'state="frozen"',
+  );
+  expect(await partes.file('xl/styles.xml')!.async('string')).toContain('FFC00000');
   const wb = XLSX.read(bytes);
   expect(wb.SheetNames).toEqual(['AREA 1', 'SECAGEM E CLASSIFICAÇÃO', 'Resumo', 'Fora do PCM']);
   const area1 = XLSX.utils.sheet_to_json<string[]>(wb.Sheets['AREA 1']!, {
@@ -315,7 +339,7 @@ test('restaurar: backup inválido não apaga nada; o válido guarda antes uma c�
   await expect(page.getByText('✓ Salvo no aparelho')).toBeVisible();
   const antes = await estadoDoBanco(page);
   await irParaBackup(page);
-  await page.getByRole('link', { name: 'Restaurar backup…' }).click();
+  await page.getByRole('link', { name: 'Restaurar um backup' }).click();
 
   // Arquivo cortado (download interrompido) e arquivo que não é backup: recusados.
   const texto = readFileSync(caminho, 'utf8');
@@ -334,11 +358,23 @@ test('restaurar: backup inválido não apaga nada; o válido guarda antes uma c�
   // "Não" no lugar do botão tocado (tocar duas vezes no mesmo lugar não restaura).
   await page.locator('input[type=file]').setInputFiles(caminho);
   await expect(page.getByRole('alert')).toHaveText(/dados que o backup não tem/);
+  // Na tabela, a data deste celular (mais nova que a do backup) aparece em vermelho.
+  const dados = page.getByRole('row', { name: /^Dados até/ });
+  // Mesmo minuto do backup: a célula diz "mais novo" (senão as duas datas parecem iguais).
+  await expect(dados.locator('td.mais')).toHaveText(/mais novo/);
+  await semRolagemLateral(page);
+  await expect(page.getByRole('columnheader', { name: 'Este celular' })).toBeVisible();
   const restaurar = page.getByRole('button', { name: 'Restaurar este backup' });
+  await restaurar.scrollIntoViewIfNeeded(); // a prévia é mais alta que a tela
+  // Toque de dedo no meio do botão; no mesmo ponto da tela agora tem que estar o "Não".
   const lugar = (await restaurar.boundingBox())!;
-  await restaurar.click();
+  const ponto = { x: lugar.x + lugar.width / 2, y: lugar.y + lugar.height / 2 };
+  await page.touchscreen.tap(ponto.x, ponto.y);
   const nao = page.getByRole('button', { name: 'Não, manter os dados deste celular' });
-  expect((await nao.boundingBox())!.y).toBeCloseTo(lugar.y, 0);
+  await expect(nao).toBeVisible();
+  expect(
+    await page.evaluate(({ x, y }) => document.elementFromPoint(x, y)?.textContent, ponto),
+  ).toBe('Não, manter os dados deste celular');
   await page.getByRole('button', { name: 'Sim, trocar tudo pelo backup' }).click();
   await expect(page.getByText(/✓ Backup restaurado/)).toBeVisible();
   const copia = page.locator('section', { hasText: 'Cópia de antes da restauração' });
@@ -357,12 +393,38 @@ test('restaurar: backup inválido não apaga nada; o válido guarda antes uma c�
   // A cópia continua guardada no app depois de recarregar, e dá para voltar a ela.
   await page.goto('./#/restaurar');
   await page.reload();
-  await page.getByRole('button', { name: 'Voltar para esta cópia' }).click();
-  await expect(page.getByText('Este celular tem agora')).toBeVisible(); // sem risco: sem 2º passo
+  await page.getByRole('button', { name: 'Restaurar esta cópia' }).click();
+  await expect(page.getByText('Tudo neste celular será trocado')).toBeVisible(); // sem risco: sem 2º passo
   await page.getByRole('button', { name: 'Restaurar este backup' }).click();
   await expect(page.getByText(/✓ Backup restaurado/)).toBeVisible();
   expect(await estadoDoBanco(page)).toEqual(antes); // o 999 voltou
   await expect(page.getByText('Cópias de antes das restaurações')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Voltar para esta cópia' })).toHaveCount(2);
+  await expect(page.getByRole('button', { name: 'Restaurar esta cópia' })).toHaveCount(2);
+  await semRolagemLateral(page);
+});
+
+test('preparar o backup mostra a barra de progresso com as fotos feitas', async ({
+  page,
+  context,
+}) => {
+  // Deixa cada foto mais lenta para dar tempo de ver a barra andando.
+  await context.addInitScript(() => {
+    const ler = FileReader.prototype.readAsDataURL;
+    FileReader.prototype.readAsDataURL = function (b) {
+      setTimeout(() => ler.call(this, b), 400);
+    };
+  });
+  await fichaOffline(page, context);
+  await preencher(page);
+  await irParaBackup(page);
+  await page.getByRole('button', { name: 'Preparar backup' }).click();
+  const barra = page.getByRole('progressbar');
+  await expect(barra).toBeVisible();
+  await expect(page.getByText(/^Preparando… \d de 2 fotos$/)).toBeVisible();
+  await expect.poll(() => barra.getAttribute('aria-valuenow')).toBe('50');
+  // Os outros arquivos esperam (um por vez).
+  await expect(page.getByRole('button', { name: 'Preparar planilha' })).toBeDisabled();
+  await expect(page.getByRole('link', { name: 'Baixar', exact: true })).toBeVisible();
+  await expect(barra).toHaveCount(0);
   await semRolagemLateral(page);
 });

@@ -20,6 +20,7 @@ Site: https://mauriciojts.github.io/app-campo/ (deploy automático a cada push n
 | 2. Ficha com medição                            | ✅ feito e **validado no celular em 24/10**                                                                                                     |
 | 3. Fotos e desenhos SVG                         | ✅ desenhos validados (24/10); fotos feitas (24/10), **testar no celular**                                                                      |
 | 4. Exportar, backup, restaurar, compartilhar    | ✅ feito (25/10); exportar e enviar pelo WhatsApp **validado no celular em 25/10** (critério 4); falta restaurar em outro aparelho (critério 5) |
+| Aparência e usabilidade em campo                | ✅ feito (25/10): telas de backup e restaurar, estado do aparelho, toast, letras pequenas, `.xlsx` formatado; **conferir no celular**           |
 | 5. Ensaio geral (critérios 1–5 no Android)      | a fazer                                                                                                                                         |
 
 Se atrasar: os desenhos SVG (fase 3) e o `.zip` de fotos (fase 4) podem ficar para depois, porque
@@ -184,7 +185,8 @@ na tela vazia, para o outro aparelho).
   dá o mesmo PCM** (pedido do usuário): abas do app marcadas na A1 e ignoradas pelo parser,
   reexportar reaproveita as colunas. Conferido com o PCM real: 84 equipamentos, 717 itens nas
   linhas certas, reimportação idêntica (1ª e 2ª exportação), 0 células originais alteradas.
-  Limite: SheetJS gratuito não grava fontes/bordas/cores (fica para a sessão de aparência).
+  Formatação (negrito, bordas, "Diverge" em vermelho, cabeçalho congelado): ver "Aparência e
+  usabilidade" abaixo.
 - **Backup .json** (`exportar/backup.ts`, `lerBackup.ts`): formato na skill (cabeçalho com
   `resumo` no começo, fotos por último, uma por linha, blob + miniatura em base64, `daPlaca`).
   Gerado em pedaços de Blob (nunca uma string gigante); lido em fatias de 1 MB, um registro por
@@ -197,7 +199,7 @@ na tela vazia, para o outro aparelho).
   Bloqueia como a importação. **Durante a restauração o app mostra só essa tela** (sem "‹ Lista",
   o voltar do Android não sai). **Cópia automática** do estado atual gravada **na mesma transação**
   da restauração (se falhar, nada muda, nem as cópias); ficam as **2 últimas**
-  (`meta.copiaAntesDeRestaurar:<data>`), cada uma com "Voltar para esta cópia", Baixar e "Apagar
+  (`meta.copiaAntesDeRestaurar:<data>`), cada uma com "Restaurar esta cópia", Baixar e "Apagar
   esta cópia" (com confirmação). A transação confere a "impressão" dos dados (cada medição/nota
   com seu `atualizadaEm`, ids das fotos e importações): se algo mudou desde a cópia (outra janela),
   aborta. Outra janela aberta recarrega sozinha depois.
@@ -350,8 +352,8 @@ e instalar ("Adicionar à tela inicial").
 2. "Preparar backup": aparece "Preparando… N de M fotos" e depois o nome e o tamanho. **Anotar o
    tempo e o tamanho.**
 3. **"Baixar"**: o Chrome avisa o download. Voltar à lista: "Último backup: agora há pouco".
-4. Na tela aparece "✓ Baixado às …: está em Downloads" com o nome do arquivo, e o botão vira
-   "Baixar de novo". (No Android não há "Compartilhar": o Chrome não compartilha .json.) Abrir o
+4. Embaixo do botão aparece "✓ Baixado às …: está em Downloads" e o caminho para mandar; o nome
+   do arquivo fica em letra menor acima do botão, que vira "Baixar de novo". (No Android não há "Compartilhar": o Chrome não compartilha .json.) Abrir o
    app "Arquivos"/"Downloads" do celular e conferir que o arquivo está lá com o tamanho certo.
 5. **Ainda em modo avião**: app de arquivos do celular → **Downloads** → segurar
    `levantamento-backup-….json` → **Compartilhar → WhatsApp** → uma conversa (pode ser com você
@@ -385,7 +387,7 @@ e instalar ("Adicionar à tela inicial").
     **em vermelho** "Este celular tem dados que o backup não tem…" → "Restaurar este backup" →
     no lugar do botão aparece "Não, manter os dados deste celular" (tocar duas vezes no mesmo
     lugar não restaura) → "Sim, trocar tudo pelo backup" → aparece **"Cópia de antes da
-    restauração"**; a Largura volta ao valor do backup. **"Voltar para esta cópia"** → restaurar:
+    restauração"**; a Largura volta ao valor do backup. **"Restaurar esta cópia"** → restaurar:
     o 999 volta e agora há 2 cópias.
 14. Durante "Guardando cópia… / Restaurando…", tentar o **voltar do Android**: a tela não sai.
 15. Na tela de restaurar, escolher a planilha `.xlsx` (arquivo errado): "Este arquivo não é um
@@ -395,21 +397,75 @@ Anote: tempos e tamanho, onde o arquivo foi parar, o que não apareceu no seleto
 qualquer diferença entre os dois celulares (com o item e o campo). Dado diferente ou sumido vira
 teste antes da correção.
 
-## Ideias para a sessão de aparência e usabilidade
+## Aparência e usabilidade (feita em 25/10)
 
-Anotadas na Fase 4 (sem mexer agora):
+Sem funcionalidade nova e sem mexer no esquema do IndexedDB nem na lógica de gravação, backup,
+restauração ou importação. Capturas antes/depois em 360 px (claro e escuro) e auditoria: o
+contraste já estava alto (texto secundário ~10:1 nos dois temas) e nenhum alvo de toque < 48 px.
 
-- **Planilha**: bordas finas, negrito nos títulos, quebra de texto e largura certa nas 4 colunas
-  novas; "Diverge" em vermelho; congelar o cabeçalho (pós-processar o `.xlsx`: `styles.xml`).
-- **Backup e exportar**: tela comprida (4 cartões). Backup em destaque no topo; planilha e fotos
-  mais compactas; restaurar como link no fim.
-- Arquivo pronto: o nome longo quebra em 2 linhas — mostrar "Backup de 26/10 14:30 · 243 MB" e
-  o nome em letra menor. Ícones de baixar/compartilhar nos botões. O bloco "✓ Baixado às…" tem
-  4 frases: enxugar depois de ver no celular qual caminho o WhatsApp mostra.
-- Cópias de antes da restauração: cada uma tem 3–4 botões (voltar, baixar, apagar) — agrupar.
-- "Preparando… 120 de 300 fotos": barra de progresso.
-- Lista: a linha "Último backup" e o aviso "Instale o app" ficam empilhados no topo — juntar num
-  bloco só de "estado do aparelho".
-- Restaurar: prévia em tabela (backup × este celular) em vez de frase; "Restaurar este backup"
-  quebra em 2 linhas a 360 px.
-- O toast ("PCM importado…") cobre botões no fim da tela por 5 s.
+- **Lista**: "Último backup" e os avisos ("Instale o app…", "sem internet") num bloco só de estado
+  do aparelho (`ui/EstadoDoAparelho.tsx`). A linha de backup tem ícone e a 2ª linha "35 itens e
+  12 fotos ainda sem backup". O rodapé continua com o estado completo.
+- **Toast** ("PCM importado…") no topo, logo abaixo da barra: não cobre mais os botões do fim, e
+  só aparece na tela em que nasceu (não acompanha a troca de tela). A resposta ao "Atualizar"
+  ("Ainda salvando medidas…") aparece dentro da própria barra de baixo, perto do dedo.
+- **Ficha**: selo "PCM", nome da aba e selos de 13,5–14,4 px → 15,3 px; barra de progresso mais
+  grossa e com fundo visível ao sol (`--barra-fundo`). "Foto do equipamento" e "Foto da placa"
+  continuam em 2 linhas no botão (cabem em 360 px só sem o "Galeria" ao lado; ficou assim).
+- **Backup e exportar**: backup em destaque (borda azul, botão grande); planilha e fotos compactas
+  em "Outros arquivos"; "Restaurar um backup ›" como link no fim; ícones SVG (`ui/Icones.tsx`);
+  barra de progresso (`ui/Progresso.tsx`, também no Lendo/Guardando cópia/Restaurando); arquivo
+  pronto: "Pronto para baixar" (some depois do toque), "Backup de 26/10 14:30" e, embaixo, em
+  letra menor, "243 MB · nome-do-arquivo.json" (o tamanho no título quebrava a linha em 360 px);
+  depois de baixar, o aviso fica **embaixo** do botão (nada muda de lugar sob o dedo) em 2 linhas
+  - nota de "Falha no download"; "Preparar de novo" virou botão-texto a 16 px do "Baixar". Sem
+    backup nenhum, também mostra "N itens e M fotos ainda sem backup" (aqui e na lista).
+- **Restaurar**: prévia em tabela Backup × Este celular ("Dados até", equipamentos, itens medidos,
+  obs. de equipamento, fotos); o que o celular tem a mais fica em vermelho com ⚠; aviso de risco
+  mais curto; "Restaurar este backup" numa linha (botões grandes com 12 px de folga lateral).
+  Na linha "Dados até", se o celular mudou no mesmo minuto do backup, as duas datas aparecem com
+  segundos e a célula vermelha diz "mais novo" (senão as colunas pareciam iguais).
+  Cada cópia: título "Cópia de 25/10 17:11", "Restaurar esta cópia" (antes "Voltar para esta
+  cópia", que parecia navegação) e [Baixar | Apagar]
+  lado a lado; "Apagar" pede confirmação com "Não, manter a cópia" no lugar.
+- **Planilha .xlsx**: negrito e fundo nos cabeçalhos (cinza = PCM, azul-claro = colunas e abas do
+  app), bordas e quebra de texto nas 4 colunas até o último item da aba, "Diverge…" e divergências
+  em vermelho, cabeçalho congelado, linhas mais altas quando o texto quebra
+  (`exportar/formatoPlanilha.ts`, detalhes na skill `exportar-pcm`). Reimportação continua igual
+  (conferido com o PCM real: 0 de 3.073 células originais alteradas).
+- Revisão do `revisor-de-campo` (25/10): nada com perda de dado; aplicado: datas iguais na prévia
+  (segundos + "mais novo"), "Preparar de novo" longe do "Baixar", toast preso à tela,
+  "Pronto para baixar", tamanho fora do título, contagem sem backup, "Restaurar esta cópia" e erro
+  ao apagar cópia avisado.
+- Testes novos: `planilha.test.ts` (formatação lida do XML, painel congelado, zip igual,
+  reexportação), `exportar.spec.ts` (tabela da prévia, botão numa linha, barra de progresso,
+  `.xlsx` formatado no navegador), `importar.spec.ts` (toast no topo).
+
+Ficou para depois (opcional): "Medido" com um campo por linha na planilha (muda o texto
+exportado); manter a formatação original do PCM (exigiria editar o `.xls` binário).
+
+## Roteiro — conferência visual (no Android, ~10 min, sol e luva)
+
+Preparação: com internet, abrir o app → "Nova versão do app" → **Atualizar**. Medidas e fotos
+continuam. Fazer cada passo no **tema claro e no escuro** (botão "Tema" no fim da lista), **ao
+sol** e **de luva**.
+
+1. **Lista**: no topo, um bloco só com "Último backup…" (e "N itens e M fotos ainda sem backup")
+   e, se houver, a faixa amarela "Instale o app…". Dá para ler ao sol? Tocar no bloco → abre
+   "Backup e exportar".
+2. **Ficha**: o selo "PCM" e o valor do PCM ao lado de cada campo, o nome da aba e a barra de %
+   no cabeçalho se leem sem apertar os olhos? A barra de % aparece mesmo vazia?
+3. **Backup e exportar**: o backup é a primeira coisa e a mais destacada? "Preparar backup" → a
+   barra anda com "N de M fotos" → aparece "Backup de 26/10 14:30 · … MB" → **Baixar** → embaixo:
+   "✓ Baixado às…" e o caminho para mandar. O caminho é fácil de seguir com uma mão?
+4. "Preparar planilha" → Baixar → abrir no Excel (PC ou celular): cabeçalho em negrito com fundo,
+   bordas nas 4 colunas, texto quebrando dentro da célula, "Diverge…" em vermelho, abas Resumo e
+   Fora do PCM com cabeçalho; ao rolar, o cabeçalho fica parado. Se o Excel avisar "encontramos
+   um problema", **anote** (e use a planilha mesmo assim: os dados estão lá).
+5. "Restaurar um backup ›" (no fim) → escolher um backup → a tabela "Backup × Este celular" deixa
+   claro o que vai mudar? O vermelho aparece onde o celular tem mais? "Restaurar este backup" numa
+   linha só. **Cancelar** (não precisa restaurar).
+6. **Toast**: importar/trocar o PCM com a lista rolada até o fim — o aviso "PCM importado…"
+   aparece no topo e não cobre "Trocar o PCM"/"Tema".
+
+Anote o que ficou pequeno, apagado ao sol, difícil de achar ou de tocar de luva (tela e tema).

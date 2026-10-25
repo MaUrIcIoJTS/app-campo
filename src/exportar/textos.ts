@@ -69,6 +69,13 @@ export function dataHora(iso: string | undefined): string {
   return `${dois(d.getDate())}/${dois(d.getMonth() + 1)}/${d.getFullYear()} ${dois(d.getHours())}:${dois(d.getMinutes())}`;
 }
 
+/** `dd/mm hh:mm`, hora local (títulos curtos: "Backup de 26/10 14:30"). Vazio se inválida. */
+export function dataCurta(data: string | number | Date | undefined): string {
+  const d = data === undefined ? null : new Date(data);
+  if (!d || Number.isNaN(d.getTime())) return '';
+  return `${dois(d.getDate())}/${dois(d.getMonth() + 1)} ${dois(d.getHours())}:${dois(d.getMinutes())}`;
+}
+
 /** A mais recente das datas (ISO); undefined se não houver nenhuma. */
 export function maisRecente(datas: readonly (string | undefined)[]): string | undefined {
   let max: string | undefined;

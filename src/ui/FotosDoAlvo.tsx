@@ -18,6 +18,7 @@ import {
   useEstadoFotos,
   type Destino,
 } from './fotos.ts';
+import { IconeCamera } from './Icones.tsx';
 
 interface FotosNaTela {
   equipamentoId: string;
@@ -101,16 +102,6 @@ export function ErroAoLerFotos() {
     <p class="erro" role="alert">
       ⚠ Não consegui abrir as fotos. Feche e abra o app.
     </p>
-  );
-}
-
-/** Ícone de câmera (SVG: emoji depende da fonte do celular e pode virar um quadrado). */
-export function IconeCamera() {
-  return (
-    <svg class="icone" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path d="M3 8.5A1.5 1.5 0 0 1 4.5 7h2.7l1.8-2.6h6l1.8 2.6h2.7A1.5 1.5 0 0 1 21 8.5v10a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5z" />
-      <circle cx="12" cy="13.2" r="3.8" />
-    </svg>
   );
 }
 

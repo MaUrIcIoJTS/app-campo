@@ -47,9 +47,24 @@ e fica no precache. Código em `src/exportar/` (feito na Fase 4, 25/10/2026):
     "Fora do PCM" — nunca escreve na linha de outro item.
     Testado com a fixture (`tests/unit/planilha.test.ts`, `tests/e2e/exportar.spec.ts`) e conferido
     localmente com o PCM real (84 equipamentos, 717 itens, reimportação idêntica, 0 células alteradas).
-- Limitação: a versão gratuita do SheetJS **não grava fontes, bordas nem cores** (mantém abas,
-  textos, mesclagens, larguras, alturas e formato de número). Melhorar o visual = pós-processar o
-  `.xlsx` (sessão de aparência); manter 100% exigiria editar o `.xls` binário.
+- **Aparência** (`exportar/formatoPlanilha.ts`, 25/10): a versão gratuita do SheetJS não grava
+  fontes, bordas nem cores, então o `.xlsx` já gerado é aberto com o zip que vem no próprio
+  SheetJS (`XLSX.CFB.read/write`, sem dependência nova) e recebe:
+  - no `styles.xml`: fontes (negrito, vermelho, itálico), fundos (cinza = cabeçalho do PCM,
+    azul-claro = colunas e abas do app), borda fina e `xf` com quebra de texto;
+  - em cada aba: o atributo `s` nas células marcadas (`FormatoDaAba.celulas`) e o painel congelado
+    (`<pane state="frozen">`): abas do PCM até a 2ª linha do cabeçalho (só se ≤ 10 linhas), abas
+    do app até a linha 3;
+  - "Diverge…" e divergências > 0 em vermelho e negrito; células vazias das 4 colunas até o último
+    item da aba ganham borda (célula sem valor `{t:'z', z:'General'}`, que o SheetJS ignora ao ler);
+  - linha mais alta quando o texto quebra (`!rows[r].hpt`, estimativa por largura da coluna).
+  - Ao trocar o conteúdo de uma entrada do zip, atualize `size` (o gravador pula `size` 0). As abas
+    são `xl/worksheets/sheet<N>.xml` na ordem de `SheetNames`.
+  - Se a formatação falhar, sai a planilha sem formato (`console.error`); nunca impede exportar.
+    Os testes conferem o XML (JSZip) para não passar em silêncio, inclusive no E2E (navegador).
+  - Conferido com o PCM real em 25/10: reimportação idêntica (1ª e 2ª exportação), 0 de 3.073
+    células originais alteradas, mesclagens iguais, 6 linhas congeladas nas 6 abas.
+  - Ainda não preserva a formatação ORIGINAL do PCM (exigiria editar o `.xls` binário).
 
 ## 2. Backup completo (`.json`) e restauração
 
