@@ -139,10 +139,15 @@ test('backup offline → outro aparelho limpo → restaurar: medidas, observaç�
   await expect(page.getByRole('button', { name: 'Compartilhar' })).toHaveCount(0);
   const download = await baixar(page);
   expect(download.suggestedFilename()).toMatch(/^levantamento-backup-\d{4}-\d\d-\d\d-\d{4}\.json$/);
-  // Depois de baixar: onde está e como mandar pelo WhatsApp, com o nome do arquivo.
+  // Depois de baixar: onde está e como mandar pelo WhatsApp, com o nome do arquivo. Testado no
+  // Android em 25/10: o "clipe → Documento" do WhatsApp não lista .json; o caminho que funciona
+  // é sair pelo app de arquivos do celular (Downloads → Compartilhar → WhatsApp).
   const feito = page.getByRole('status').filter({ hasText: '✓ Baixado às' });
   await expect(feito).toContainText('Downloads');
   await expect(feito).toContainText(`“${download.suggestedFilename()}”`);
+  await expect(feito).toContainText('app de arquivos do celular');
+  await expect(feito).toContainText('Compartilhar → WhatsApp');
+  await expect(feito).not.toContainText('Documento');
   await expect(page.getByRole('link', { name: 'Baixar de novo' })).toBeVisible();
   const caminho = test.info().outputPath('backup.json');
   await download.saveAs(caminho);
@@ -241,7 +246,7 @@ test('PCM atualizado (.xlsx) offline: colunas na linha de cada item e reimporta 
   const xlsx = await download;
   expect(baixou).toBe(true);
   const aviso = secao.getByRole('status').filter({ hasText: 'não deixa compartilhar' });
-  await expect(aviso).toContainText('clipe → Documento');
+  await expect(aviso).toContainText('Compartilhar → WhatsApp');
   await expect(aviso).toContainText('Downloads');
   expect(xlsx.suggestedFilename()).toMatch(/^pcm-atualizado-\d{4}-\d\d-\d\d-\d{4}\.xlsx$/);
   const caminho = test.info().outputPath('pcm-atualizado.xlsx');

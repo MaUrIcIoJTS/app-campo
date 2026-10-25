@@ -20,7 +20,8 @@ const hora = (d: Date) =>
 /**
  * Arquivo já gerado: "Baixar" (link de verdade, caminho principal) e, fora do Android,
  * "Compartilhar" (se o navegador recusar o tipo, baixa na hora). Depois de baixar, a tela diz
- * onde o arquivo está e como mandar pelo WhatsApp.
+ * onde o arquivo está e como mandar pelo WhatsApp. Testado no Android (25/10): o "clipe →
+ * Documento" do WhatsApp não lista .json; o caminho que funciona é sair pelo app de arquivos.
  */
 export function ArquivoPronto({ arquivo, aoEnviar }: { arquivo: File; aoEnviar?: () => void }) {
   const url = useUrl(arquivo);
@@ -61,7 +62,9 @@ export function ArquivoPronto({ arquivo, aoEnviar }: { arquivo: File; aoEnviar?:
             ✓ Baixado às {hora(baixadoEm)} ({tamanho}): está em <strong>Downloads</strong>.
           </p>
           <p>
-            No WhatsApp: toque no clipe → <strong>Documento</strong> → escolha “{arquivo.name}”.
+            Para mandar: abra o app de arquivos do celular (Arquivos, Meus Arquivos) →{' '}
+            <strong>Downloads</strong> → segure “{arquivo.name}” →{' '}
+            <strong>Compartilhar → WhatsApp</strong>.
           </p>
           <p class="aviso-nota">
             Se o Chrome avisar “Falha no download”, libere espaço no celular e baixe de novo.
@@ -89,7 +92,8 @@ export function ArquivoPronto({ arquivo, aoEnviar }: { arquivo: File; aoEnviar?:
       </div>
       {!baixadoEm && (
         <p class="suave">
-          Depois de baixar, mande pelo WhatsApp: clipe → Documento → “{arquivo.name}”.
+          Depois de baixar, mande pelo app de arquivos do celular: Downloads → segure o arquivo →
+          Compartilhar → WhatsApp.
         </p>
       )}
     </div>

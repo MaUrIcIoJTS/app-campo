@@ -147,12 +147,14 @@ e fica no precache. Código em `src/exportar/` (feito na Fase 4, 25/10/2026):
 **O Chrome do Android NÃO compartilha `.xlsx`, `.json` nem `.zip` pelo Web Share**: só imagem,
 áudio, vídeo, PDF e texto (.txt/.csv), até 50 MB no total (`ShareServiceImpl.java` do Chromium).
 `canShare()` diz que sim, mas `share()` falha com `NotAllowedError` ("Permission denied").
-Decisão do usuário (25/10): **"Baixar" é o caminho principal** e o envio é pelo WhatsApp
-(Anexar → Documento → Downloads).
+Decisão do usuário (25/10): **"Baixar" é o caminho principal** e o envio é pelo app de arquivos
+do celular (Downloads → Compartilhar → WhatsApp).
 
 1. **Gere o arquivo antes**, com feedback ("Preparando…", tela acesa); depois mostre **Baixar**
    e, **fora do Android**, **Compartilhar**. Depois de baixar, diga onde está ("Downloads") e
-   como mandar ("clipe → Documento → escolha “nome-do-arquivo”"). O `navigator.share` precisa ser chamado direto do toque (no iOS a permissão
+   como mandar: "app de arquivos do celular → Downloads → segure “nome-do-arquivo” →
+   Compartilhar → WhatsApp". Testado no Android (25/10): o "clipe → Documento" do WhatsApp **não
+   lista .json**; pelo app de arquivos funcionou para .xlsx e .json. O `navigator.share` precisa ser chamado direto do toque (no iOS a permissão
    do gesto expira rápido — não gere o arquivo dentro do clique de compartilhar).
 2. **Baixar** é um `<a href={objectURL} download>` de verdade (revogar a URL ~60 s depois de sair).
 3. **Compartilhar**: `canShare` → `share({ files: [arquivo], title })`. `AbortError` (fechou a

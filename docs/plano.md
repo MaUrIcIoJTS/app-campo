@@ -13,14 +13,14 @@ Site: https://mauriciojts.github.io/app-campo/ (deploy automático a cada push n
 
 ## Estado das fases
 
-| Fase                                            | Situação                                                                   |
-| ----------------------------------------------- | -------------------------------------------------------------------------- |
-| 0. Repositório, CI, Pages                       | ✅ feito                                                                   |
-| 1. Banco, importação, lista, ficha (só leitura) | ✅ feito e **validado no celular em 24/10** (critérios 1 e 2)              |
-| 2. Ficha com medição                            | ✅ feito e **validado no celular em 24/10**                                |
-| 3. Fotos e desenhos SVG                         | ✅ desenhos validados (24/10); fotos feitas (24/10), **testar no celular** |
-| 4. Exportar, backup, restaurar, compartilhar    | ✅ feito (25/10), **testar no celular** (roteiro da fase 4)                |
-| 5. Ensaio geral (critérios 1–5 no Android)      | a fazer                                                                    |
+| Fase                                            | Situação                                                                                                                                        |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0. Repositório, CI, Pages                       | ✅ feito                                                                                                                                        |
+| 1. Banco, importação, lista, ficha (só leitura) | ✅ feito e **validado no celular em 24/10** (critérios 1 e 2)                                                                                   |
+| 2. Ficha com medição                            | ✅ feito e **validado no celular em 24/10**                                                                                                     |
+| 3. Fotos e desenhos SVG                         | ✅ desenhos validados (24/10); fotos feitas (24/10), **testar no celular**                                                                      |
+| 4. Exportar, backup, restaurar, compartilhar    | ✅ feito (25/10); exportar e enviar pelo WhatsApp **validado no celular em 25/10** (critério 4); falta restaurar em outro aparelho (critério 5) |
+| 5. Ensaio geral (critérios 1–5 no Android)      | a fazer                                                                                                                                         |
 
 Se atrasar: os desenhos SVG (fase 3) e o `.zip` de fotos (fase 4) podem ficar para depois, porque
 o backup `.json` já leva as fotos. **Nunca cortar:** gravação automática, backup e restauração.
@@ -168,8 +168,10 @@ na tela vazia, para o outro aparelho).
 
 - **Gerar antes, enviar depois**: cada arquivo tem "Preparar…" → "Preparando… 120 de 300 fotos"
   (tela acesa com Wake Lock) → nome e tamanho + **Baixar**. Depois do toque: "✓ Baixado às 17:02
-  (243 MB): está em Downloads. No WhatsApp: clipe → Documento → escolha “nome-do-arquivo”" e o
-  botão vira "Baixar de novo". O Chrome do Android **não compartilha** .json/.xlsx/.zip pelo Web
+  (243 MB): está em Downloads. Para mandar: app de arquivos do celular → Downloads → segure
+  “nome-do-arquivo” → Compartilhar → WhatsApp" e o botão vira "Baixar de novo". **Testado no
+  Android em 25/10**: o "clipe → Documento" do WhatsApp não lista o .json; pelo app de arquivos
+  (Compartilhar → WhatsApp) foram o .xlsx e o .json. O Chrome do Android **não compartilha** .json/.xlsx/.zip pelo Web
   Share (só imagem/áudio/vídeo/PDF/texto, até 50 MB): no Android só aparece "Baixar"; fora dele
   aparece também "Compartilhar" (recusado → baixa na hora). Decisão do usuário (25/10).
 - **Lembrete**: "Último backup: há 5 h · 35 itens e 12 fotos depois ›" no topo da lista; fica
@@ -351,10 +353,10 @@ e instalar ("Adicionar à tela inicial").
 4. Na tela aparece "✓ Baixado às …: está em Downloads" com o nome do arquivo, e o botão vira
    "Baixar de novo". (No Android não há "Compartilhar": o Chrome não compartilha .json.) Abrir o
    app "Arquivos"/"Downloads" do celular e conferir que o arquivo está lá com o tamanho certo.
-5. **WhatsApp, ainda em modo avião**: uma conversa (pode ser com você mesmo) → **clipe →
-   Documento** → achar `levantamento-backup-….json` (Downloads, "Recentes" ou "Procurar outros
-   documentos") → enviar. Fica com o reloginho; ao desligar o modo avião, envia. **Anote o caminho
-   exato que o WhatsApp mostrou** (para acertar o texto do app).
+5. **Ainda em modo avião**: app de arquivos do celular → **Downloads** → segurar
+   `levantamento-backup-….json` → **Compartilhar → WhatsApp** → uma conversa (pode ser com você
+   mesmo) → enviar. Fica com o reloginho; ao desligar o modo avião, envia. (O "clipe → Documento"
+   do WhatsApp não lista .json — validado em 25/10.)
 6. "Preparar planilha" → **Baixar** → mandar pelo WhatsApp do mesmo jeito. No PC: abrir no Excel;
    na linha de cada item medido, as colunas **Medido, Confere/Diverge, Observação, Data**; abas
    **Resumo** e **Fora do PCM** (tambores). Conferir 3–4 itens contra o que você mediu.
