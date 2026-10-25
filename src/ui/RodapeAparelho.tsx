@@ -1,4 +1,6 @@
+import { useEffect } from 'preact/hooks';
 import { useDados } from './dados.tsx';
+import { atualizarEspaco, useEstadoFotos } from './fotos.ts';
 import { rotas } from './rota.ts';
 import { NOME_TEMA, type Tema } from './tema.ts';
 
@@ -32,6 +34,8 @@ interface Props {
 /** Estado do aparelho e ações gerais, no fim da lista. */
 export function RodapeAparelho({ status, tema, trocarTema }: Props) {
   const { dados } = useDados();
+  const { espaco } = useEstadoFotos();
+  useEffect(() => void atualizarEspaco(), []);
   const imp = dados?.importacao;
   const { offline, persistente } = status;
   return (
@@ -47,6 +51,12 @@ export function RodapeAparelho({ status, tema, trocarTema }: Props) {
               ? 'Dados protegidos no aparelho'
               : 'Instale o app na tela inicial para proteger os dados'}
         </li>
+        {espaco && (
+          <li data-estado={espaco.nivel === 'ok' ? 'ok' : 'alerta'}>
+            Espaço para ~{espaco.fotosQueCabem.toLocaleString('pt-BR')}{' '}
+            {espaco.fotosQueCabem === 1 ? 'foto' : 'fotos'}
+          </li>
+        )}
       </ul>
       {imp && (
         <p class="suave">

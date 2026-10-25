@@ -49,6 +49,10 @@ export interface NotaEquipamento {
   atualizadaEm: string;
 }
 
+/**
+ * Foto já comprimida (JPEG ≤ 1600 px). `miniatura` e `daPlaca` são campos opcionais do valor
+ * (sem store nem índice novo, então sem nova versão): foto sem miniatura mostra o `blob`.
+ */
 export interface Foto {
   id: string;
   /** Id do item ou do equipamento. */
@@ -57,6 +61,10 @@ export interface Foto {
   criadaEm: string;
   largura: number;
   altura: number;
+  /** JPEG pequeno (≤ 320 px) para o cartão. */
+  miniatura?: Blob;
+  /** Foto da placa do motor/redutor. */
+  daPlaca?: boolean;
 }
 
 export interface Meta {

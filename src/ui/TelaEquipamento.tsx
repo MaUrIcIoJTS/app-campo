@@ -1,10 +1,13 @@
 import { useLayoutEffect } from 'preact/hooks';
 import { proximoEquipamento } from '../dominio/busca.ts';
+import { avisoDeEspaco } from '../dominio/fotos.ts';
 import { avisosDoItem } from '../dominio/medicao.ts';
 import { percentual, progressoItem, somarProgresso } from '../dominio/progresso.ts';
 import { CartaoItem, estadoDoItem, irParaItem } from './CartaoItem.tsx';
 import { useDados } from './dados.tsx';
 import { irAoProximoCampo } from './foco.ts';
+import { useEstadoFotos } from './fotos.ts';
+import { ErroAoLerFotos, FotosDoAlvo, IconeCamera, ProvedorFotos } from './FotosDoAlvo.tsx';
 import { esquecerRolagem, guardarRolagem, rolagemDaFicha } from './rolagem.ts';
 import { rotas, substituirPor, voltarPara } from './rota.ts';
 import { Topo } from './Topo.tsx';
@@ -18,6 +21,7 @@ interface Props {
 /** Ficha do equipamento: itens com os campos de medição, observações e "próximo". */
 export function TelaEquipamento({ id, abaFiltrada }: Props) {
   const { dados, erro, alterarMedicao, alterarNota } = useDados();
+  const { espaco } = useEstadoFotos();
   const eq = dados?.equipamentos.find((e) => e.id === id);
   const pronto = !!eq;
 
@@ -64,9 +68,14 @@ export function TelaEquipamento({ id, abaFiltrada }: Props) {
   const avisos = itens.reduce((s, i) => s + avisosDoItem(i, dados.medicoes.get(i.id)).length, 0);
   const pct = percentual(progresso);
   const proximoEq = proximoEquipamento(dados.equipamentos, id, abaFiltrada);
+  const fotos = [id, ...itens.map((i) => i.id)].reduce(
+    (s, alvo) => s + (dados.fotosPorAlvo.get(alvo) ?? 0),
+    0,
+  );
+  const avisoEspaco = avisoDeEspaco(espaco);
 
   return (
-    <>
+    <ProvedorFotos key={id} equipamentoId={id} itemIds={itens.map((i) => i.id)}>
       <Topo voltar={voltar} />
       <main class="tela ficha">
         <section class="cabecalho-eq">
@@ -85,8 +94,21 @@ export function TelaEquipamento({ id, abaFiltrada }: Props) {
             {avisos > 0 && (
               <span class="eq-aviso">⚠ {avisos === 1 ? '1 aviso' : `${avisos} avisos`}</span>
             )}
+            {fotos > 0 && (
+              <span class="eq-fotos">
+                <IconeCamera />
+                {fotos === 1 ? '1 foto' : `${fotos} fotos`}
+              </span>
+            )}
           </p>
           {eq.orfao && <span class="selo selo--alerta">Fora do PCM atual</span>}
+          {avisoEspaco && (
+            <p class="aviso aviso--bloco" role="status">
+              ⚠ {avisoEspaco}
+            </p>
+          )}
+          <ErroAoLerFotos />
+          <FotosDoAlvo alvoId={id} nome={eq.tag ?? eq.nome} rotulo="Foto do equipamento" comPlaca />
         </section>
 
         {itens.length > 2 && (
@@ -180,6 +202,6 @@ export function TelaEquipamento({ id, abaFiltrada }: Props) {
           </a>
         </nav>
       </main>
-    </>
+    </ProvedorFotos>
   );
 }

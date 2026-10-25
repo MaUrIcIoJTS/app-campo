@@ -1,5 +1,5 @@
-import { expect, test, type BrowserContext, type Page } from '@playwright/test';
-import { abrirFicha, cartao, esperarServiceWorker, importarFixture, linhas } from './apoio.ts';
+import { expect, test, type Page } from '@playwright/test';
+import { abrirFicha, cartao, fichaOffline, importarFixture, linhas, reabrir } from './apoio.ts';
 
 /** 20 medidas em 4 itens do XA-TC-01: [item, campo, valor digitado]. */
 const MEDIDAS: ReadonlyArray<readonly [string, string, string]> = [
@@ -27,25 +27,6 @@ const MEDIDAS: ReadonlyArray<readonly [string, string, string]> = [
 
 const campo = (page: Page, item: string, rotulo: string) =>
   cartao(page, item).getByRole('textbox', { name: rotulo });
-
-/** App instalado, em modo avião, com o PCM importado e a ficha do XA-TC-01 aberta. */
-async function fichaOffline(page: Page, context: BrowserContext) {
-  await page.goto('./');
-  await esperarServiceWorker(page);
-  await context.setOffline(true);
-  await page.reload();
-  await importarFixture(page);
-  await abrirFicha(page, 'XA-TC-01');
-}
-
-/** Abre o app de novo (offline) numa página nova e vai para a ficha do XA-TC-01. */
-async function reabrir(context: BrowserContext): Promise<Page> {
-  const page = await context.newPage();
-  await page.goto('./');
-  await expect(linhas(page)).toHaveCount(9);
-  await abrirFicha(page, 'XA-TC-01');
-  return page;
-}
 
 test('20 medidas, ✓/✗ e observações: fecha logo depois e reabre offline — tudo lá', async ({
   page,

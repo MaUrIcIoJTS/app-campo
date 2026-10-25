@@ -1,4 +1,4 @@
-import { expect, type Page } from '@playwright/test';
+import { expect, type BrowserContext, type Page } from '@playwright/test';
 
 export const FIXTURE = 'tests/fixtures/pcm-ficticio.xls';
 
@@ -28,4 +28,158 @@ export async function importarFixture(page: Page) {
 export async function abrirFicha(page: Page, tag: string) {
   await linhas(page).filter({ hasText: tag }).click();
   await expect(page.getByRole('heading', { level: 1, name: tag })).toBeVisible();
+}
+
+/** App instalado, em modo avião, com o PCM importado e a ficha do XA-TC-01 aberta. */
+export async function fichaOffline(page: Page, context: BrowserContext) {
+  await page.goto('./');
+  await esperarServiceWorker(page);
+  await context.setOffline(true);
+  await page.reload();
+  await importarFixture(page);
+  await abrirFicha(page, 'XA-TC-01');
+}
+
+/** Abre o app de novo (offline) numa página nova e vai para a ficha do XA-TC-01. */
+export async function reabrir(context: BrowserContext): Promise<Page> {
+  const page = await context.newPage();
+  await page.goto('./');
+  await expect(linhas(page)).toHaveCount(9);
+  await abrirFicha(page, 'XA-TC-01');
+  return page;
+}
+
+/**
+ * JPEG "de câmera" gerado no navegador: quatro quadrantes de cor (vermelho, verde / azul,
+ * amarelo) e ruído no meio para ter tamanho de foto real. `orientacao` grava a tag EXIF
+ * Orientation (6 = celular em pé: a imagem está deitada e o EXIF manda girar 90° horário).
+ */
+export async function jpegDeCamera(
+  page: Page,
+  largura: number,
+  altura: number,
+  orientacao?: number,
+): Promise<Buffer> {
+  const base64 = await page.evaluate(
+    async ([w, h]) => {
+      const c = document.createElement('canvas');
+      c.width = w;
+      c.height = h;
+      const ctx = c.getContext('2d')!;
+      const cores = ['#d00000', '#00a000', '#0000d0', '#e0e000'];
+      cores.forEach((cor, k) => {
+        ctx.fillStyle = cor;
+        ctx.fillRect((k % 2) * (w / 2), Math.floor(k / 2) * (h / 2), w / 2, h / 2);
+      });
+      for (let i = 0; i < (w * h) / 400; i++) {
+        ctx.fillStyle = `hsl(${(i * 37) % 360} 70% 50%)`;
+        ctx.fillRect(w * (0.25 + 0.5 * Math.random()), h * (0.25 + 0.5 * Math.random()), 6, 6);
+      }
+      const blob = await new Promise<Blob>((ok) => c.toBlob((b) => ok(b!), 'image/jpeg', 0.95));
+      const bytes = new Uint8Array(await blob.arrayBuffer());
+      let s = '';
+      for (let i = 0; i < bytes.length; i += 0x8000)
+        s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+      return btoa(s);
+    },
+    [largura, altura] as const,
+  );
+  const jpeg = Buffer.from(base64, 'base64');
+  return orientacao ? comOrientacaoExif(jpeg, orientacao) : jpeg;
+}
+
+/** Insere um bloco EXIF (APP1) só com a tag Orientation logo depois do início do JPEG. */
+function comOrientacaoExif(jpeg: Buffer, orientacao: number): Buffer {
+  // TIFF big-endian: cabeçalho, IFD0 com 1 entrada (0x0112 Orientation, SHORT, 1 valor).
+  const tiff = Buffer.from([
+    0x4d,
+    0x4d,
+    0x00,
+    0x2a,
+    0x00,
+    0x00,
+    0x00,
+    0x08,
+    0x00,
+    0x01,
+    0x01,
+    0x12,
+    0x00,
+    0x03,
+    0x00,
+    0x00,
+    0x00,
+    0x01,
+    0x00,
+    orientacao,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+  ]);
+  const exif = Buffer.concat([Buffer.from('Exif\0\0', 'latin1'), tiff]);
+  const tamanho = exif.length + 2;
+  const app1 = Buffer.concat([Buffer.from([0xff, 0xe1, tamanho >> 8, tamanho & 0xff]), exif]);
+  return Buffer.concat([jpeg.subarray(0, 2), app1, jpeg.subarray(2)]);
+}
+
+export interface FotoGravada {
+  alvoId: string;
+  tipo: string;
+  bytes: number;
+  largura: number;
+  altura: number;
+  /** Tamanho real do JPEG gravado (decodificado de novo). */
+  real: [number, number];
+  miniatura: [number, number] | null;
+  daPlaca: boolean;
+  /** Cor [r, g, b] perto do canto de cima à esquerda (confere a orientação). */
+  canto: [number, number, number];
+}
+
+/** O que está no store `fotos` do IndexedDB, lido direto (sem passar pelo app). */
+export function fotosNoBanco(page: Page): Promise<FotoGravada[]> {
+  return page.evaluate(async () => {
+    const db = await new Promise<IDBDatabase>((ok, erro) => {
+      const req = indexedDB.open('levantamento-pcm');
+      req.onsuccess = () => ok(req.result);
+      req.onerror = () => erro(req.error);
+    });
+    const fotos = await new Promise<
+      {
+        alvoId: string;
+        blob: Blob;
+        miniatura?: Blob;
+        largura: number;
+        altura: number;
+        daPlaca?: boolean;
+      }[]
+    >((ok) => {
+      const req = db.transaction('fotos').objectStore('fotos').getAll();
+      req.onsuccess = () => ok(req.result);
+    });
+    db.close();
+    return Promise.all(
+      fotos.map(async (f) => {
+        const img = await createImageBitmap(f.blob);
+        const mini = f.miniatura ? await createImageBitmap(f.miniatura) : null;
+        const c = new OffscreenCanvas(1, 1).getContext('2d')!;
+        c.drawImage(img, img.width * 0.05, img.height * 0.05, 1, 1, 0, 0, 1, 1);
+        const [r = 0, g = 0, b = 0] = c.getImageData(0, 0, 1, 1).data;
+        return {
+          alvoId: f.alvoId,
+          tipo: f.blob.type,
+          bytes: f.blob.size,
+          largura: f.largura,
+          altura: f.altura,
+          real: [img.width, img.height] as [number, number],
+          miniatura: mini ? ([mini.width, mini.height] as [number, number]) : null,
+          daPlaca: !!f.daPlaca,
+          canto: [r, g, b] as [number, number, number],
+        };
+      }),
+    );
+  });
 }

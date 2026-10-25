@@ -131,6 +131,9 @@ export async function semRecarregarDurante<T>(fn: () => Promise<T>): Promise<T> 
   }
 }
 
+/** Alguma operação crítica (foto gravando, importação) ainda não terminou. */
+export const emOperacaoCritica = () => operacoesCriticas > 0;
+
 /** Descarrega a fila e diz se é seguro recarregar o app (nada pendente, nada em andamento). */
 export async function prontoParaRecarregar(
   fila: FilaDeGravacao = filaDeGravacao,

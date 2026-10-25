@@ -8,7 +8,7 @@ import {
   type PreviaImportacao,
 } from '../db/repositorio.ts';
 import { registrosNoDiario } from '../db/edicao.ts';
-import { filaDeGravacao, semRecarregarDurante } from '../db/salvamento.ts';
+import { emOperacaoCritica, filaDeGravacao, semRecarregarDurante } from '../db/salvamento.ts';
 import { useDados } from './dados.tsx';
 import { rotas } from './rota.ts';
 import { Topo } from './Topo.tsx';
@@ -26,7 +26,7 @@ const ACEITA =
 
 const ERRO = {
   pendente:
-    'Ainda há medidas que não foram salvas no aparelho. Espere aparecer “✓ Salvo no aparelho” e tente de novo.',
+    'Ainda há medidas ou fotos sendo salvas no aparelho. Espere aparecer “✓ Salvo no aparelho” e tente de novo.',
   app: 'Uma parte do app não carregou. Abra o app uma vez com internet e tente de novo.',
   arquivo: 'Não consegui ler este arquivo. Ele abre no Excel? Tente salvar de novo como .xlsx.',
   vazio: 'Não achei equipamentos nesta planilha. Confira se é o arquivo do PCM.',
@@ -50,9 +50,10 @@ export function TelaImportar({ onImportado }: { onImportado: (mensagem: string) 
     setEstado({ etapa: 'lendo', nome: arquivo.name });
 
     // Medidas na fila entram no plano; se não gravaram, não dá para importar com segurança.
-    // O diário também: a importação remapeia ids e a entrada iria para um id velho.
+    // O diário também: a importação remapeia ids e a entrada iria para um id velho. Idem
+    // para uma foto ainda gravando (iria para o id velho do item).
     await filaDeGravacao.descarregar();
-    if (filaDeGravacao.pendentes() > 0 || registrosNoDiario().length > 0)
+    if (filaDeGravacao.pendentes() > 0 || registrosNoDiario().length > 0 || emOperacaoCritica())
       return erro(ERRO.pendente);
 
     let lerPcm: (dados: ArrayBuffer) => Pcm;
@@ -85,7 +86,7 @@ export function TelaImportar({ onImportado }: { onImportado: (mensagem: string) 
   async function confirmar(e: Previa) {
     setEstado({ etapa: 'gravando' });
     await filaDeGravacao.descarregar(); // de novo: pode ter chegado edição de outra janela
-    if (filaDeGravacao.pendentes() > 0 || registrosNoDiario().length > 0)
+    if (filaDeGravacao.pendentes() > 0 || registrosNoDiario().length > 0 || emOperacaoCritica())
       return erro(ERRO.pendente);
     try {
       await semRecarregarDurante(() =>

@@ -21,6 +21,8 @@ interface ContextoDados {
   /** Edição da medição: tela e diário na hora, IndexedDB em até ~300 ms. */
   alterarMedicao: (itemId: string, mudar: (atual: Medicao | undefined) => Medicao) => void;
   alterarNota: (equipamentoId: string, observacao: string) => void;
+  /** Foto gravada (+1) ou apagada (−1) no banco: lista e ficha atualizam a contagem. */
+  contarFoto: (alvoId: string, delta: 1 | -1) => void;
 }
 
 const Contexto = createContext<ContextoDados>({
@@ -29,6 +31,7 @@ const Contexto = createContext<ContextoDados>({
   recarregar: async () => {},
   alterarMedicao: () => {},
   alterarNota: () => {},
+  contarFoto: () => {},
 });
 
 /**
@@ -128,9 +131,22 @@ export function ProvedorDados({ children }: { children: ComponentChildren }) {
     [setDados],
   );
 
+  const contarFoto = useCallback(
+    (alvoId: string, delta: 1 | -1) => {
+      const d = atualRef.current;
+      if (!d) return;
+      const fotosPorAlvo = new Map(d.fotosPorAlvo);
+      const n = (fotosPorAlvo.get(alvoId) ?? 0) + delta;
+      if (n > 0) fotosPorAlvo.set(alvoId, n);
+      else fotosPorAlvo.delete(alvoId);
+      setDados({ ...d, fotosPorAlvo });
+    },
+    [setDados],
+  );
+
   const valor = useMemo(
-    () => ({ dados, erro, recarregar, alterarMedicao, alterarNota }),
-    [dados, erro, recarregar, alterarMedicao, alterarNota],
+    () => ({ dados, erro, recarregar, alterarMedicao, alterarNota, contarFoto }),
+    [dados, erro, recarregar, alterarMedicao, alterarNota, contarFoto],
   );
   return <Contexto.Provider value={valor}>{children}</Contexto.Provider>;
 }

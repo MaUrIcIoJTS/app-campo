@@ -13,14 +13,14 @@ Site: https://mauriciojts.github.io/app-campo/ (deploy automático a cada push n
 
 ## Estado das fases
 
-| Fase                                            | Situação                                                      |
-| ----------------------------------------------- | ------------------------------------------------------------- |
-| 0. Repositório, CI, Pages                       | ✅ feito                                                      |
-| 1. Banco, importação, lista, ficha (só leitura) | ✅ feito e **validado no celular em 24/10** (critérios 1 e 2) |
-| 2. Ficha com medição                            | ✅ feito e **validado no celular em 24/10**                   |
-| 3. Fotos e desenhos SVG                         | ◐ desenhos feitos e validados (24/10); **fotos: próxima**     |
-| 4. Exportar, backup, restaurar, compartilhar    | a fazer                                                       |
-| 5. Ensaio geral (critérios 1–5 no Android)      | a fazer                                                       |
+| Fase                                            | Situação                                                                   |
+| ----------------------------------------------- | -------------------------------------------------------------------------- |
+| 0. Repositório, CI, Pages                       | ✅ feito                                                                   |
+| 1. Banco, importação, lista, ficha (só leitura) | ✅ feito e **validado no celular em 24/10** (critérios 1 e 2)              |
+| 2. Ficha com medição                            | ✅ feito e **validado no celular em 24/10**                                |
+| 3. Fotos e desenhos SVG                         | ✅ desenhos validados (24/10); fotos feitas (24/10), **testar no celular** |
+| 4. Exportar, backup, restaurar, compartilhar    | a fazer                                                                    |
+| 5. Ensaio geral (critérios 1–5 no Android)      | a fazer                                                                    |
 
 Se atrasar: os desenhos SVG (fase 3) e o `.zip` de fotos (fase 4) podem ficar para depois, porque
 o backup `.json` já leva as fotos. **Nunca cortar:** gravação automática, backup e restauração.
@@ -87,32 +87,76 @@ Ver "Roteiro — fase 2" no fim deste documento.
   - tambor: rótulo "Ø ponta (redutor ou acoplamento)" (id `pontaAcoplamento` mantido);
   - motor: campo novo "Chaveta da ponta";
   - dicas "Vão livre entre fios" (malha) e "Por cima de 2 pernas opostas" (cabo de aço).
-- E2E: `setInputFiles` com JPEG grande → comprimido → recarregar → foto continua.
 
-### Fotos — já existe (sem tela ainda)
+### Fotos — como ficou (24/10)
 
-- Store `fotos` (`id`, índice `porAlvo`) e o tipo `Foto` em `db/esquema.ts` (blob, `alvoId` =
-  item ou equipamento, `criadaEm`, largura, altura) — **não precisa de migração**.
-- `salvarFoto` em `db/repositorio.ts`; `carregarDados` traz `fotosPorAlvo` (só a contagem, sem
-  carregar blobs); a lista já mostra "N fotos"; a importação conta e remapeia fotos.
-- `TemplateItem.fotoPlaca` (motor e redutor): botão "Foto da placa" em destaque.
+- **Onde**: "Foto do equipamento" no cabeçalho da ficha; "Foto da placa" (botão azul cheio)
+  logo abaixo dos desenhos no motor e no redutor (`TemplateItem.fotoPlaca`); "Tirar foto" em
+  cada cartão **antes da observação** (longe do "Próximo item"). Cada bloco tem "Galeria" ao
+  lado (várias de uma vez). Miniaturas 3 por linha (`loading="lazy"`); a da placa tem o selo
+  "Placa" — e se o item deixar de ser motor/redutor, ela aparece no bloco normal. Contagem no
+  cabeçalho da ficha e na lista, atualizada na hora (`contarFoto` em `ui/dados.tsx`).
+- **Câmera**: `<label>` + `<input type="file" accept="image/*" capture="environment">` (abre
+  direto a câmera traseira); "Galeria" é o mesmo input sem `capture` e com `multiple`. Nunca
+  `.click()`. Componentes em `ui/FotosDoAlvo.tsx`; ícone de câmera em SVG (emoji vira
+  quadrado em aparelho sem a fonte).
+- **Gravação** (`ui/fotos.ts`, `receberFotos`): **fila única, uma foto por vez no app
+  inteiro** (duas fotos de 50 MP decodificadas juntas derrubam a aba). `comprimirFoto`
+  (`ui/comprimir.ts`: `createImageBitmap` com `imageOrientation: 'from-image'`, alternativa
+  `<img>`; canvas ≤ 1600 px; JPEG 0,8; miniatura ≤ 320 px JPEG 0,7; a original sai da memória
+  antes de gerar os JPEGs) → `salvarFoto` (`durability: 'strict'`) → só então a miniatura
+  aparece e a contagem sobe. Cada foto é operação crítica desde que entra na fila
+  (`semRecarregarDurante`: o "Atualizar" e a importação esperam a leva inteira). Enquanto
+  isso: quadrado "Salvando…" no cartão e "Salvando foto…" no topo. O estado fica no módulo:
+  sair da ficha no meio não perde o "Salvando…".
+- **Fotos pendentes** (`ui/fotosPendentes.ts`, localStorage): tocar no botão anota uma
+  `camera`; a foto que chega vira uma anotação `foto` por arquivo, riscada só quando o banco
+  confirmar (ou o técnico descartar); cancelar a câmera risca a `camera`. Ao abrir o app, o que
+  sobrou (câmera ≤ 15 min, foto ≤ 24 h) vira aviso no cartão certo: "A foto não foi salva: o
+  app fechou antes de gravar (o Android costuma fechar o app com a câmera aberta). Tire de
+  novo…". Cobre: Android matando a aba com a câmera aberta, duas fotos seguidas, foto ainda
+  gravando com a câmera aberta em outro item e o técnico fechando o app no "Salvando…". A
+  ficha volta no mesmo lugar (`rolagem.ts`).
+- **Falhas** (aviso no cartão **e** "⚠ Foto não salva" no topo, em qualquer tela; tocar no
+  topo leva ao aviso): cota → "Celular sem espaço: N fotos não foram salvas…" (para as
+  próximas da leva); outro erro → "N fotos não foram salvas"; nos dois, o arquivo original fica
+  em memória e **"Tentar de novo (N)"** grava sem tirar de novo; "Descartar" desiste. Imagem que
+  o navegador não abre (HEIC da galeria) → "Não consegui abrir uma imagem. Tire a foto pela
+  câmera"; "Entendi" fecha.
+- **Ampliar**: `<dialog>` em tela cheia (o voltar do Android fecha). Tocar na foto amplia 2,5×
+  no ponto tocado e rola com um dedo (sem pinça); "Ampliar"/"Ver inteira" embaixo.
+- **Apagar**: "Apagar" fica **em cima** (longe de "Ampliar" e "Fechar", embaixo). A pergunta
+  "Apagar esta foto? Não dá para desfazer." aparece embaixo, com "Não, manter" na largura toda
+  no lugar dos botões de antes e "Sim, apagar" acima dele — nenhum toque repetido no mesmo
+  lugar apaga. Some da tela só depois que o banco confirmar.
+- **Espaço** (`navigator.storage.estimate()`, `dominio/fotos.ts`): ~500 KB por foto; aviso na
+  ficha abaixo de 200 fotos ("Pouco espaço no celular: cabem ~N fotos."), crítico abaixo de
+  30; rodapé da lista mostra "Espaço para ~N fotos".
+- **Banco**: `Foto` ganhou `miniatura?: Blob` e `daPlaca?: boolean` — campos opcionais do valor,
+  sem store/índice novo, então **sem nova versão**; foto sem miniatura mostra o blob grande
+  (testado). Novas: `apagarFoto`, `fotosDosAlvos` (blobs só do equipamento aberto).
+- **Importar** fica bloqueado enquanto uma foto grava (`emOperacaoCritica`).
+- Revisão do `revisor-de-campo` (24/10) aplicada: pendências por foto em localStorage (antes:
+  uma vaga só em sessionStorage), "Sim, apagar" longe do "Fechar", "⚠ Foto não salva" no topo,
+  fila única, fotos antes da observação, "Tentar de novo", placa visível sem o bloco de placa,
+  erro de leitura uma vez só, miniaturas lazy.
+- Testes: `tests/unit/fotos.test.ts` (dimensões, espaço, ids, pendências, banco,
+  `receberFotos`: uma por vez, sem espaço → "Tentar de novo", descartar, imagem ilegível,
+  apagar) e `tests/e2e/fotos.spec.ts` (JPEG de 12 MP com EXIF girado → gravado em pé 1200 ×
+  1600 → fechar e reabrir offline; 5 fotos em itens diferentes com câmera, galeria e placa →
+  lista e ficha contam sem recarregar → reabrir offline; apagar sem toque repetido perigoso;
+  "Salvando…" até o banco confirmar; celular cheio → topo → "Tentar de novo"; pouco espaço;
+  página recarregada com a câmera aberta; foto gravando + câmera em outro item; duas fotos
+  seguidas; fechar no "Salvando…").
+- Duas janelas abertas (app + aba do Chrome): a foto tirada numa só aparece na outra ao
+  reabrir (não perde nada; só a contagem da outra fica velha).
 
-### Fotos — cuidados (aprendidos nas fases 2 e 3)
+### Fotos — para a Fase 4
 
-- Foto **não** passa pelo diário (localStorage não guarda Blob e tem ~5 MB): comprimir e gravar
-  direto no IndexedDB numa transação, dentro de `semRecarregarDurante`; só mostrar a miniatura
-  como salva depois que o banco confirmar. Erro de cota → "Celular sem espaço" (`semEspaco`).
-- Atualizar `fotosPorAlvo` em memória (como `alterarMedicao` em `ui/dados.tsx`) para a lista e
-  a ficha mudarem sem recarregar. Miniaturas com `URL.createObjectURL`, revogar ao desmontar;
-  carregar blobs só das fotos do equipamento aberto.
-- O Android costuma recarregar a aba ao voltar da câmera: a ficha já volta onde parou
-  (`ui/rolagem.ts`); conferir no aparelho que a foto não se perde nesse caminho.
-- Apagar foto: confirmação na própria tela (alvo ≥ 48 px, longe do "Tirar foto").
-- E2E: o Preact redesenha depois do evento (espere com `expect`, não conte logo após clicar);
-  o click do Playwright num elemento `sticky` rola a página (use o "voltar" com `page.goBack()`);
-  app morto de verdade = `SIGKILL` no renderer (skill `testar-offline`).
-- Depois das fotos vem a **Fase 4** (backup, restaurar e exportar — nunca cortar). Lembrar que
-  `conferencia` agora pode ser `'naoTem'` (regra na skill `exportar-pcm`).
+- Backup `.json`: levar `blob` **e** `miniatura` (base64) e `daPlaca`; na restauração, foto
+  sem miniatura funciona (mostra o blob). Exportar `.zip`: dá para nomear as da placa
+  (`…_placa_1.jpg`).
+- Lembrar que `conferencia` agora pode ser `'naoTem'` (regra na skill `exportar-pcm`).
 
 ## Fase 4 — exportar e backup
 
@@ -168,3 +212,44 @@ horário) — medida sumida vira teste antes da correção.
 3. Conferir ao sol, tema claro e escuro: letras e nomes legíveis e iguais aos campos da ficha.
 4. Conferir se cada desenho mostra o que você mede de verdade em campo (fresado, LD/LE, Ø do
    cabo, malha, eixo vazado). O que estiver errado ou confuso: anote qual desenho e o porquê.
+
+## Roteiro — fotos (no Android, ~20 min)
+
+Preparação: com internet, abrir o app instalado → "Nova versão do app" → **Atualizar**.
+Conferir que as medidas antigas continuam. No rodapé da lista, anotar "Espaço para ~N fotos".
+
+1. **Modo avião ligado.** Abrir o app pelo ícone e uma transportadora com motor e redutor.
+2. **Foto do equipamento** (no topo da ficha): tem que abrir **direto a câmera traseira**.
+   Tirar e confirmar (✓ da câmera). Volta para a ficha no mesmo lugar; aparece "Salvando…"
+   e logo depois a miniatura; no topo "✓ Salvo no aparelho"; no cabeçalho "1 foto".
+3. **De luva**, no motor: **"Foto da placa"** (botão azul cheio). Tirar 1 foto da placa.
+   A miniatura tem o selo "Placa". Tocar nela: abre em tela cheia. Tocar em cima dos dados da
+   placa: amplia ali; arrastar com um dedo e ler potência/rotação. "Ver inteira", "Fechar".
+   Abrir de novo e usar o **voltar do Android**: só a foto fecha, a ficha continua.
+4. **5 itens diferentes**: "Tirar foto" no tapete, num rolete, num mancal, no redutor e no
+   motor. Voltar à lista: a linha mostra "N fotos" sem recarregar. Abrir a ficha de novo.
+5. **Galeria**: fora do app, tirar 2 fotos com a câmera do celular. No app, "Galeria" de um
+   item e escolher as 2 de uma vez: aparecem 2 miniaturas.
+6. **Apagar**: abrir uma foto → "Apagar" (em cima) → tem que perguntar embaixo. Tocar onde
+   estava o "Fechar": é o "Não, manter" (continua). "Apagar" → "Sim, apagar": some e a
+   contagem diminui.
+7. **Fechar à força** (recentes → arrastar o app) e reabrir em modo avião: todas as fotos,
+   a da placa e as contagens estão lá. Depois: tirar uma foto e fechar o app **enquanto
+   aparece "Salvando…"** — ao reabrir, ou a foto está lá, ou o cartão avisa "A foto não foi
+   salva" (nunca some calada).
+8. **Android recarregando ao voltar da câmera**: abrir antes vários apps pesados (jogo,
+   YouTube, Maps) para encher a memória. Digitar uma medida, tocar "Tirar foto", ficar 1–2 min
+   na câmera e tirar a foto. Duas saídas aceitáveis:
+   - a página não recarregou: a foto aparece normalmente;
+   - a página recarregou (pisca, "Abrindo…"): a ficha volta no mesmo item, a medida digitada
+     está lá e o cartão diz **"A foto não foi salva: o app fechou antes de gravar… Tire de
+     novo"** (e o topo, "⚠ Foto não salva").
+     Repetir umas 5 vezes e anotar quantas recarregaram. Se for frequente, o caminho seguro é a
+     câmera do celular + "Galeria".
+9. **Foto que não abre**: se o celular salvar fotos em HEIC/HEIF, escolher uma pela
+   "Galeria": tem que aparecer "Não consegui abrir uma imagem…" (nada some).
+10. Repetir 2–3 **ao sol**, tema claro e escuro: miniaturas, "Salvando…" e botões visíveis.
+
+Anote: foto que sumiu (com horário e item), câmera que não abriu, quantas vezes a página
+recarregou no passo 8, o que ficou pequeno ou difícil de luva. Foto sumida vira teste antes
+da correção.

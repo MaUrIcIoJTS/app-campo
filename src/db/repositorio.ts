@@ -221,6 +221,26 @@ export async function salvarNota(nota: NotaEquipamento): Promise<void> {
   await (await banco()).put('notas', nota);
 }
 
+/**
+ * Grava uma foto e só resolve depois que o banco confirmar. Foto não passa pelo diário (é
+ * única e grande): `durability: 'strict'` pede ao navegador para gravar no disco antes.
+ */
 export async function salvarFoto(foto: Foto): Promise<void> {
-  await (await banco()).put('fotos', foto);
+  const tx = (await banco()).transaction('fotos', 'readwrite', { durability: 'strict' });
+  tx.done.catch(() => {}); // se abortar (banco cheio), o erro vem pelo await abaixo
+  await tx.store.put(foto);
+  await tx.done;
+}
+
+export async function apagarFoto(id: string): Promise<void> {
+  await (await banco()).delete('fotos', id);
+}
+
+/** Fotos (com os blobs) dos alvos pedidos — só as do equipamento aberto. */
+export async function fotosDosAlvos(alvoIds: readonly string[]): Promise<Foto[]> {
+  const tx = (await banco()).transaction('fotos');
+  const indice = tx.store.index('porAlvo');
+  const listas = await Promise.all(alvoIds.map((id) => indice.getAll(id)));
+  await tx.done;
+  return listas.flat();
 }

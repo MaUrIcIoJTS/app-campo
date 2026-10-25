@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   criarFilaDeGravacao,
+  emOperacaoCritica,
   prontoParaRecarregar,
   semEspaco,
   semRecarregarDurante,
@@ -139,8 +140,10 @@ describe('robustez da fila (revisão de campo)', () => {
     let liberar!: () => void;
     const operacao = semRecarregarDurante(() => new Promise<void>((r) => (liberar = r)));
     expect(await prontoParaRecarregar(ok)).toBe(false);
+    expect(emOperacaoCritica()).toBe(true); // ex.: foto gravando — a importação espera
     liberar();
     await operacao;
     expect(await prontoParaRecarregar(ok)).toBe(true);
+    expect(emOperacaoCritica()).toBe(false);
   });
 });

@@ -1164,3 +1164,260 @@ input[type='search']::-webkit-search-cancel-button {
   fill: var(--primaria-texto);
   stroke: none;
 }
+
+/* ---- Fotos -------------------------------------------------------------------- */
+
+.icone {
+  flex: none;
+  width: 1.3em;
+  height: 1.3em;
+  margin-right: 6px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linejoin: round;
+}
+
+.eq-fotos {
+  display: inline-flex;
+  align-items: center;
+}
+
+.eq-fotos .icone {
+  width: 1.2em;
+  height: 1.2em;
+  margin-right: 4px;
+}
+
+.fotos {
+  margin-top: 12px;
+}
+
+.fotos-titulo {
+  margin: 0 0 6px;
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+/* 3 por linha em 360 px (~90 px cada): dá para ver o que é e acertar com a luva. */
+.fotos-grade {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.miniatura {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  padding: 0;
+  overflow: hidden;
+  border: 2px solid var(--borda);
+  border-radius: 8px;
+  background: var(--trilho);
+  cursor: pointer;
+}
+
+.miniatura img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.miniatura--salvando {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-style: dashed;
+  color: var(--texto);
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: default;
+}
+
+.miniatura-selo {
+  position: absolute;
+  left: 4px;
+  bottom: 4px;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: var(--primaria);
+  color: var(--primaria-texto);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.fotos-acoes {
+  display: flex;
+  gap: 8px;
+}
+
+.fotos-acoes > .fotos-tirar,
+.fotos-acoes > .botao--grande {
+  flex: 1 1 auto;
+  width: auto;
+}
+
+.fotos-galeria {
+  flex: none;
+  padding: 0 14px;
+}
+
+.fotos-acoes > .botao--grande + .fotos-galeria {
+  min-height: 56px;
+}
+
+.fotos-aviso p {
+  margin: 0 0 10px;
+}
+
+/* Fotos do cartão: um respiro antes da observação (longe dos campos e do "Próximo item"). */
+.item .fotos:not(.fotos--placa) {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--borda);
+}
+
+.botao--perigo {
+  border-color: var(--erro);
+  background: var(--erro);
+  color: var(--superficie);
+}
+
+.botao--perigo-contorno {
+  border-color: var(--erro);
+  color: var(--erro);
+}
+
+.botao:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Foto ampliada: tela cheia, botões embaixo (alcance do polegar). */
+html:has(.foto-dialogo[open]) {
+  overflow: hidden;
+}
+
+.foto-dialogo {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: var(--fundo);
+  color: var(--texto);
+}
+
+.foto-dialogo[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.foto-dialogo::backdrop {
+  background: rgb(0 0 0 / 0.85);
+}
+
+.foto-dialogo-topo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: max(8px, env(safe-area-inset-top)) var(--espaco) 8px;
+  background: var(--superficie);
+  border-bottom: 2px solid var(--borda);
+}
+
+.foto-dialogo-titulo {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.foto-dialogo-data {
+  display: block;
+  color: var(--texto-suave);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.foto-dialogo-topo .botao {
+  flex: none;
+  padding: 0 12px;
+}
+
+.foto-area {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  background: #000;
+}
+
+.foto-grande {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  cursor: zoom-in;
+}
+
+/* Ampliada: 2,5× a largura da tela; rola com um dedo (sem pinça, que é difícil de luva). */
+.foto-area--zoom .foto-grande {
+  width: 250%;
+  max-width: none;
+  height: auto;
+  cursor: zoom-out;
+}
+
+.foto-dialogo-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px var(--espaco) max(12px, env(safe-area-inset-bottom));
+  background: var(--superficie);
+  border-top: 2px solid var(--borda);
+}
+
+.foto-dialogo-acoes > .botao {
+  flex: 1 1 0;
+  min-height: 56px;
+  padding: 0 8px;
+}
+
+.foto-confirmar {
+  flex-direction: column;
+}
+
+.foto-confirmar > p {
+  margin: 0;
+  font-weight: 800;
+}
+
+.foto-confirmar > .botao {
+  flex: none;
+  width: 100%;
+}
+
+/* Afasta o "Sim, apagar" do "Não, manter" (este no lugar dos botões de antes). */
+.foto-confirmar > .foto-manter {
+  margin-top: 12px;
+}
+
+.fotos-aviso-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.fotos-aviso-acoes > .botao {
+  flex: 1 1 auto;
+}

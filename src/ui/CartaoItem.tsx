@@ -12,6 +12,7 @@ import { TEMPLATES } from '../dominio/templates/registro.ts';
 import { CampoMedicao } from './CampoMedicao.tsx';
 import { DesenhosDoItem } from './DesenhosDoItem.tsx';
 import { irAoProximoCampo } from './foco.ts';
+import { FotosDoAlvo } from './FotosDoAlvo.tsx';
 
 export const idDoCartao = (itemId: string) => `item-${itemId}`;
 
@@ -75,6 +76,10 @@ export function CartaoItem({ item, medicao, proximo, onMedicao }: Props) {
       )}
       {item.orfao && <span class="selo selo--alerta">Fora do PCM atual</span>}
       <DesenhosDoItem ids={template.desenhos} />
+      {/* Motor e redutor: a placa é a primeira coisa a registrar (modelo, série, redução). */}
+      {template.fotoPlaca && (
+        <FotosDoAlvo alvoId={item.id} nome={item.nome} rotulo="Foto da placa" placa />
+      )}
 
       <div class="campos">
         {template.campos.map((c) => (
@@ -95,6 +100,14 @@ export function CartaoItem({ item, medicao, proximo, onMedicao }: Props) {
           ⚠ {a}
         </p>
       ))}
+
+      {/* Antes da observação: longe do "Próximo item" (toque mais comum). */}
+      <FotosDoAlvo
+        alvoId={item.id}
+        nome={item.nome}
+        rotulo="Tirar foto"
+        comPlaca={!template.fotoPlaca}
+      />
 
       <label class="campo-med-rotulo obs-rotulo" for={idObs}>
         Observação do item
