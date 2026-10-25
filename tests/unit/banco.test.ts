@@ -192,6 +192,28 @@ describe('importação', () => {
     expect(dados.medicoes.get(item.id)?.valores).toEqual({ largura: '658' });
   });
 
+  it('registro recusado na hora pelo IndexedDB no meio da gravação: nada muda', async () => {
+    // put() com chave inválida lança na hora e o IndexedDB NÃO aborta sozinho: sem o abort
+    // explícito, os clear() de equipamentos/itens feitos antes seriam gravados.
+    const pcm = lerPcm(readFileSync(FIXTURE));
+    await importar(pcm, 'imp-1');
+    const { item } = await itemPorNome('XA-TC-01', 'TAPETE');
+    await salvarMedicao(medicao(item.id, '658'));
+    const antes = await carregarDados();
+
+    const previa = await previaImportacao(pcm, 'imp-2');
+    const estragado = {
+      ...previa,
+      plano: {
+        ...previa.plano,
+        itens: [...previa.plano.itens, { ...previa.plano.itens[0]!, id: undefined as never }],
+      },
+    };
+    const imp = { ...antes.importacao!, id: 'imp-2', arquivo: new Blob(['x']) };
+    await expect(gravarImportacao(imp, estragado)).rejects.toThrow();
+    expect(await carregarDados()).toEqual(antes);
+  });
+
   it('guarda um retrato das medições antes de cada importação (mantém os 5 últimos)', async () => {
     const pcm = lerPcm(readFileSync(FIXTURE));
     await importar(pcm, 'imp-1');

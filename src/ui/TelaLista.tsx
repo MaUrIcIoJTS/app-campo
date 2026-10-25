@@ -5,6 +5,7 @@ import { avisosDoItem } from '../dominio/medicao.ts';
 import { percentual, progressoItem, somarProgresso, type Progresso } from '../dominio/progresso.ts';
 import type { Dados } from '../db/repositorio.ts';
 import { useDados } from './dados.tsx';
+import { LinhaBackup } from './LinhaBackup.tsx';
 import { rotas } from './rota.ts';
 import { AlertaAparelho, type StatusAparelho } from './RodapeAparelho.tsx';
 import { Topo } from './Topo.tsx';
@@ -104,6 +105,10 @@ export function TelaLista({ filtros, onFiltros, rodape, status }: Props) {
             <a class="botao botao--grande" href={rotas.importar}>
               Importar PCM
             </a>
+            <p class="suave">Trocando de celular? Restaure o backup do outro aparelho.</p>
+            <a class="botao botao--secundario botao--largo" href={rotas.restaurar}>
+              Restaurar backup
+            </a>
           </section>
           {rodape}
         </main>
@@ -116,6 +121,7 @@ export function TelaLista({ filtros, onFiltros, rodape, status }: Props) {
       {topo}
       <main class="tela">
         <AlertaAparelho status={status} />
+        <LinhaBackup dados={dados} />
         <div class="filtros">
           <div class="busca">
             <input

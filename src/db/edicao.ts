@@ -46,7 +46,7 @@ const ehTexto = (v: unknown): v is string => typeof v === 'string';
 const ehObjeto = (v: unknown): v is Record<string, unknown> =>
   typeof v === 'object' && v !== null && !Array.isArray(v);
 
-function ehMedicao(r: unknown): r is Medicao {
+export function ehMedicao(r: unknown): r is Medicao {
   return (
     ehObjeto(r) &&
     ehTexto(r.itemId) &&
@@ -57,7 +57,7 @@ function ehMedicao(r: unknown): r is Medicao {
   );
 }
 
-function ehNota(r: unknown): r is NotaEquipamento {
+export function ehNota(r: unknown): r is NotaEquipamento {
   return (
     ehObjeto(r) && ehTexto(r.equipamentoId) && ehTexto(r.observacao) && ehTexto(r.atualizadaEm)
   );

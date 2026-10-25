@@ -6,7 +6,10 @@ import { ProvedorDados } from './ui/dados.tsx';
 import { RodapeAparelho, type StatusAparelho } from './ui/RodapeAparelho.tsx';
 import { rotas, useRota, voltarPara } from './ui/rota.ts';
 import { TelaEquipamento } from './ui/TelaEquipamento.tsx';
+import { TelaExportar } from './ui/TelaExportar.tsx';
 import { TelaImportar } from './ui/TelaImportar.tsx';
+import { TelaRestaurar } from './ui/TelaRestaurar.tsx';
+import { useRestaurando } from './exportar/restaurar.ts';
 import { TelaLista, type Filtros } from './ui/TelaLista.tsx';
 import { useTema } from './ui/tema.ts';
 
@@ -17,6 +20,8 @@ export function App() {
     updateServiceWorker,
   } = useRegisterSW();
   const rota = useRota();
+  // Restaurando: só a tela de restaurar (sair e medir agora seria apagado pela restauração).
+  const restaurando = useRestaurando();
   const [tema, trocarTema] = useTema();
   const [filtros, setFiltros] = useState<Filtros>({ termo: '', aba: '' });
   const [aviso, setAviso] = useState<string | null>(null);
@@ -55,6 +60,10 @@ export function App() {
             voltarPara(rotas.lista);
           }}
         />
+      ) : rota.tela === 'exportar' ? (
+        <TelaExportar />
+      ) : restaurando || rota.tela === 'restaurar' ? (
+        <TelaRestaurar />
       ) : rota.tela === 'equipamento' ? (
         <TelaEquipamento id={rota.id} abaFiltrada={filtros.aba} />
       ) : (

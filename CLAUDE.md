@@ -27,7 +27,8 @@ Toda a documentação, a interface e as mensagens são em **português do Brasil
    - Reimportar o PCM nunca apaga medição/foto (dados do PCM e do usuário ficam separados).
    - Restaurar backup gera antes um backup automático do estado atual.
 2. **Nada de rede em runtime.** Sem CDN, sem `fetch`, sem fontes externas. Tudo entra no
-   build e no precache do service worker (inclusive SheetJS e JSZip, que carregam sob demanda).
+   build e no precache do service worker (inclusive o SheetJS, que carrega sob demanda; o zip
+   de fotos é gerado por código próprio — o JSZip só é usado nos testes).
    O ESLint bloqueia `fetch`/`XMLHttpRequest` em `src/`.
 3. **Nunca commitar dados reais do cliente.** O GitHub Pages é público.
    - `dados/` e planilhas (`.xls`, `.xlsx`, `.csv`…) ficam fora do git (`.gitignore` + hook + CI).

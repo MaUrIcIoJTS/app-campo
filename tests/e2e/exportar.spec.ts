@@ -1,0 +1,363 @@
+import { devices, expect, test, type Browser, type Download, type Page } from '@playwright/test';
+import JSZip from 'jszip';
+import { readFileSync, writeFileSync } from 'node:fs';
+import * as XLSX from 'xlsx';
+import { lerPcm } from '../../src/dominio/pcm/parser.ts';
+import {
+  abrirFicha,
+  cartao,
+  esperarServiceWorker,
+  fichaOffline,
+  FIXTURE,
+  jpegDeCamera,
+  linhas,
+} from './apoio.ts';
+
+const arquivo = (buffer: Buffer, name: string) => ({ name, mimeType: 'image/jpeg', buffer });
+const camera = (page: Page, item: string) => cartao(page, item).getByLabel(/Tirar foto/);
+const semRolagemLateral = async (page: Page) =>
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
+
+/** Medidas, ✓/✗, "Não tem", observações e 2 fotos (uma da placa) no XA-TC-01. */
+async function preencher(page: Page) {
+  const tapete = cartao(page, 'TAPETE');
+  await tapete.getByRole('textbox', { name: 'Largura' }).fill('660');
+  await tapete.getByRole('textbox', { name: 'Centro a centro LD' }).fill('12450');
+  await tapete.getByRole('button', { name: 'Lonas: diverge' }).click();
+  await tapete.getByRole('textbox', { name: 'Observação do item' }).fill('Emenda "nova" no LD');
+  await cartao(page, 'TAMBOR 1')
+    .getByRole('button', { name: 'Ø ponta (redutor ou acoplamento): não tem' })
+    .click();
+  await page.getByRole('textbox', { name: 'Observação do equipamento' }).fill('Proteção solta');
+  const jpeg = await jpegDeCamera(page, 2000, 1500);
+  await camera(page, 'TAPETE').setInputFiles(arquivo(jpeg, 'a.jpg'));
+  await expect(page.locator('.eq-fotos').getByText('1 foto')).toBeVisible();
+  await cartao(page, 'MOTOR')
+    .getByLabel(/Foto da placa/)
+    .setInputFiles(arquivo(jpeg, 'b.jpg'));
+  await expect(page.locator('.eq-fotos').getByText('2 fotos')).toBeVisible();
+  await expect(page.getByText('✓ Salvo no aparelho')).toBeVisible();
+}
+
+interface Estado {
+  medicoes: unknown[];
+  notas: unknown[];
+  fotos: Record<string, unknown>[];
+}
+
+/** O que está no IndexedDB (medições, notas e fotos com o SHA-256 dos bytes), lido direto. */
+function estadoDoBanco(page: Page): Promise<Estado> {
+  return page.evaluate(async () => {
+    const db = await new Promise<IDBDatabase>((ok, erro) => {
+      const req = indexedDB.open('levantamento-pcm');
+      req.onsuccess = () => ok(req.result);
+      req.onerror = () => erro(req.error);
+    });
+    const todos = <T>(store: string) =>
+      new Promise<T[]>((ok) => {
+        const req = db.transaction(store).objectStore(store).getAll();
+        req.onsuccess = () => ok(req.result as T[]);
+      });
+    const sha = async (b?: Blob) =>
+      b
+        ? [...new Uint8Array(await crypto.subtle.digest('SHA-256', await b.arrayBuffer()))]
+            .map((x) => x.toString(16).padStart(2, '0'))
+            .join('')
+        : null;
+    const [medicoes, notas, fotos] = await Promise.all([
+      todos('medicoes'),
+      todos('notas'),
+      todos<{ blob: Blob; miniatura?: Blob } & Record<string, unknown>>('fotos'),
+    ]);
+    db.close();
+    return {
+      medicoes,
+      notas,
+      fotos: await Promise.all(
+        fotos.map(async ({ blob, miniatura, ...resto }) => ({
+          ...resto,
+          tipo: blob.type,
+          bytes: blob.size,
+          sha: await sha(blob),
+          miniatura: await sha(miniatura),
+        })),
+      ),
+    };
+  });
+}
+
+/** Toca em "Baixar" (o único visível) e devolve o download. */
+async function baixar(page: Page, onde = page.locator('main')): Promise<Download> {
+  const download = page.waitForEvent('download');
+  await onde.getByRole('link', { name: 'Baixar', exact: true }).click();
+  return download;
+}
+
+async function irParaBackup(page: Page) {
+  await page.getByRole('link', { name: /‹ Lista/ }).click();
+  await expect(linhas(page)).toHaveCount(9);
+  await page.getByRole('link', { name: /Backup ›/ }).click();
+  await expect(page.getByRole('heading', { name: 'Backup e exportar' })).toBeVisible();
+}
+
+/** Outro celular: contexto novo, sem nada; instala o app com internet e liga o modo avião. */
+async function outroAparelho(browser: Browser) {
+  const contexto = await browser.newContext({
+    ...devices['Galaxy S9+'],
+    viewport: { width: 360, height: 740 },
+    locale: 'pt-BR',
+    serviceWorkers: 'allow',
+    baseURL: test.info().project.use.baseURL,
+  });
+  const page = await contexto.newPage();
+  await page.goto('./');
+  await esperarServiceWorker(page);
+  await contexto.setOffline(true);
+  await page.reload();
+  await expect(page.getByText('Nenhum PCM neste aparelho')).toBeVisible();
+  return { contexto, page };
+}
+
+test('backup offline → outro aparelho limpo → restaurar: medidas, observações e fotos iguais (até os bytes)', async ({
+  page,
+  context,
+  browser,
+}) => {
+  await fichaOffline(page, context);
+  await preencher(page);
+  const antes = await estadoDoBanco(page);
+  expect(antes.fotos).toHaveLength(2);
+  expect(antes.medicoes).toHaveLength(2);
+
+  await page.getByRole('link', { name: /‹ Lista/ }).click();
+  await expect(page.locator('.linha-backup')).toHaveText(/Nenhum backup ainda/);
+  await page.getByRole('link', { name: /Backup ›/ }).click();
+  await semRolagemLateral(page);
+  await page.getByRole('button', { name: 'Preparar backup' }).click();
+  // Android: o Chrome não compartilha .json, então só "Baixar".
+  await expect(page.getByRole('link', { name: 'Baixar', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Compartilhar' })).toHaveCount(0);
+  const download = await baixar(page);
+  expect(download.suggestedFilename()).toMatch(/^levantamento-backup-\d{4}-\d\d-\d\d-\d{4}\.json$/);
+  // Depois de baixar: onde está e como mandar pelo WhatsApp, com o nome do arquivo.
+  const feito = page.getByRole('status').filter({ hasText: '✓ Baixado às' });
+  await expect(feito).toContainText('Downloads');
+  await expect(feito).toContainText(`“${download.suggestedFilename()}”`);
+  await expect(page.getByRole('link', { name: 'Baixar de novo' })).toBeVisible();
+  const caminho = test.info().outputPath('backup.json');
+  await download.saveAs(caminho);
+  const json = JSON.parse(readFileSync(caminho, 'utf8'));
+  expect(json).toMatchObject({ formato: 'levantamento-pcm-backup', versao: 1 });
+  expect(json.resumo).toMatchObject({ equipamentos: 9, medicoes: 2, notas: 1, fotos: 2 });
+  await semRolagemLateral(page);
+
+  // "Último backup" na tela inicial.
+  await page.getByRole('link', { name: /‹ Lista/ }).click();
+  await expect(page.locator('.linha-backup')).toHaveText(/Último backup: agora há pouco/);
+
+  // Fotos em .zip: nomes com TAG e item, bytes iguais aos do banco (sem recomprimir).
+  await page.getByRole('link', { name: /Backup ›/ }).click();
+  await page.getByRole('button', { name: 'Preparar fotos' }).click();
+  const zipBaixado = await baixar(page, page.locator('section', { hasText: 'Fotos (.zip)' }));
+  expect(zipBaixado.suggestedFilename()).toMatch(/^fotos-\d{4}-\d\d-\d\d-\d{4}\.zip$/);
+  const zip = await JSZip.loadAsync(readFileSync(await zipBaixado.path()), { checkCRC32: true });
+  expect(Object.keys(zip.files)).toEqual(['XA-TC-01_TAPETE_1.jpg', 'XA-TC-01_MOTOR_PLACA_1.jpg']);
+  const { createHash } = await import('node:crypto');
+  const shaZip = await Promise.all(
+    Object.values(zip.files).map(async (f) =>
+      createHash('sha256')
+        .update(await f.async('nodebuffer'))
+        .digest('hex'),
+    ),
+  );
+  expect(shaZip.sort()).toEqual(antes.fotos.map((f) => f.sha).sort());
+
+  // Outro celular, limpo e em modo avião: restaurar pela tela vazia.
+  const outro = await outroAparelho(browser);
+  const p2 = outro.page;
+  await p2.getByRole('link', { name: 'Restaurar backup' }).click();
+  await p2.locator('input[type=file]').setInputFiles(caminho);
+  await expect(
+    p2.getByText(/9 equipamentos, 2 itens medidos, 1 observação de equipamento, 2 fotos/),
+  ).toBeVisible();
+  await expect(p2.getByText('Este celular está vazio.')).toBeVisible();
+  await semRolagemLateral(p2);
+  await p2.getByRole('button', { name: 'Restaurar este backup' }).click();
+  await expect(p2.getByText(/✓ Backup restaurado/)).toBeVisible();
+  await expect(p2.getByText('Cópia de antes da restauração')).toHaveCount(0); // estava vazio
+  await p2.getByRole('link', { name: 'Ir para a lista' }).click();
+  await expect(linhas(p2)).toHaveCount(9);
+
+  expect(await estadoDoBanco(p2)).toEqual(antes);
+  await abrirFicha(p2, 'XA-TC-01');
+  const tapete = cartao(p2, 'TAPETE');
+  await expect(tapete.getByRole('textbox', { name: 'Largura' })).toHaveValue('660');
+  await expect(tapete.getByRole('textbox', { name: 'Observação do item' })).toHaveValue(
+    'Emenda "nova" no LD',
+  );
+  await expect(p2.getByRole('textbox', { name: 'Observação do equipamento' })).toHaveValue(
+    'Proteção solta',
+  );
+  await expect(tapete.getByRole('button', { name: 'Ampliar foto 1 de 1' })).toBeVisible();
+  await expect(p2.locator('.eq-fotos').getByText('2 fotos')).toBeVisible();
+  await outro.contexto.close();
+});
+
+test('PCM atualizado (.xlsx) offline: colunas na linha de cada item e reimporta sem perder nada', async ({
+  page,
+  context,
+}) => {
+  // Android: canShare diz que sim, share recusa o .xlsx (NotAllowedError). Na 1ª vez, cancela.
+  // Fora do Android (iPhone) aparece "Compartilhar". Aqui o navegador recusa o .xlsx
+  // (NotAllowedError, como faria o Chrome do Android); na 1ª vez, o técnico cancela.
+  await context.addInitScript(() => {
+    let vez = 0;
+    Object.defineProperty(Navigator.prototype, 'userAgent', {
+      get: () => 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15',
+    });
+    Object.assign(navigator, {
+      canShare: () => true,
+      share: () =>
+        Promise.reject(new DOMException('x', vez++ === 0 ? 'AbortError' : 'NotAllowedError')),
+    });
+  });
+  await fichaOffline(page, context);
+  await preencher(page);
+  await irParaBackup(page);
+  await page.getByRole('button', { name: 'Preparar planilha' }).click();
+  const secao = page.locator('section', { hasText: 'PCM atualizado (.xlsx)' });
+  await expect(secao.getByText(/^pcm-atualizado-.*\.xlsx$/)).toBeVisible();
+  await semRolagemLateral(page);
+
+  // Cancelar a folha de compartilhar não é erro e não baixa nada.
+  let baixou = false;
+  page.on('download', () => (baixou = true));
+  await secao.getByRole('button', { name: 'Compartilhar' }).click();
+  await expect(secao.getByText(/não deixa compartilhar/)).toHaveCount(0);
+  expect(baixou).toBe(false);
+  // Recusado pelo navegador: baixa na hora e explica como mandar pelo WhatsApp.
+  const download = page.waitForEvent('download');
+  await secao.getByRole('button', { name: 'Compartilhar' }).click();
+  const xlsx = await download;
+  expect(baixou).toBe(true);
+  const aviso = secao.getByRole('status').filter({ hasText: 'não deixa compartilhar' });
+  await expect(aviso).toContainText('clipe → Documento');
+  await expect(aviso).toContainText('Downloads');
+  expect(xlsx.suggestedFilename()).toMatch(/^pcm-atualizado-\d{4}-\d\d-\d\d-\d{4}\.xlsx$/);
+  const caminho = test.info().outputPath('pcm-atualizado.xlsx');
+  await xlsx.saveAs(caminho);
+
+  // Lido de volta: as 4 colunas na linha do item, abas novas, e o mesmo PCM para o parser.
+  const bytes = readFileSync(caminho);
+  const wb = XLSX.read(bytes);
+  expect(wb.SheetNames).toEqual(['AREA 1', 'SECAGEM E CLASSIFICAÇÃO', 'Resumo', 'Fora do PCM']);
+  const area1 = XLSX.utils.sheet_to_json<string[]>(wb.Sheets['AREA 1']!, {
+    header: 1,
+    defval: '',
+    raw: false,
+  });
+  const cab = area1.findIndex((l) => /^EQUIPAMENTOS PARA INSP/.test(l[0]!));
+  const col = area1[cab]!.indexOf('Medido');
+  expect(area1[cab]!.slice(col)).toEqual(['Medido', 'Confere/Diverge', 'Observação', 'Data']);
+  const tapete = area1.find((l) => l[1] === 'TAPETE')!;
+  expect(tapete.slice(col, col + 3)).toEqual([
+    'Largura: 660 mm (Δ −0,4); Centro a centro LD: 12450 mm',
+    'Diverge: Lonas',
+    'Emenda "nova" no LD (1 foto)',
+  ]);
+  expect(tapete[col + 3]).toMatch(/^\d\d\/\d\d\/\d{4} \d\d:\d\d$/);
+  const fora = XLSX.utils.sheet_to_json<string[]>(wb.Sheets['Fora do PCM']!, {
+    header: 1,
+    defval: '',
+  });
+  expect(fora[3]!.slice(3, 5)).toEqual([
+    'TAMBOR 1',
+    'Ø ponta (redutor ou acoplamento): não se aplica',
+  ]);
+  expect(lerPcm(bytes)).toEqual(lerPcm(readFileSync(FIXTURE)));
+
+  // Subir o PCM atualizado no app: mesmos 9 equipamentos e as medidas continuam.
+  await page.getByRole('link', { name: /‹ Lista/ }).click();
+  await page.getByRole('link', { name: 'Trocar o PCM' }).click();
+  await page.locator('input[type=file]').setInputFiles(caminho);
+  await expect(page.getByText(/Nada será apagado/)).toBeVisible();
+  await expect(page.getByText(/mudou de linha|mudaram de linha|Fora do PCM atual/)).toHaveCount(0);
+  await page.getByRole('button', { name: 'Trocar o PCM (9 equipamentos)' }).click();
+  await expect(linhas(page)).toHaveCount(9);
+  await expect(page.getByText('Fora do PCM atual')).toHaveCount(0);
+  await abrirFicha(page, 'XA-TC-01');
+  await expect(cartao(page, 'TAPETE').getByRole('textbox', { name: 'Largura' })).toHaveValue('660');
+  await expect(page.locator('.eq-fotos').getByText('2 fotos')).toBeVisible();
+});
+
+test('restaurar: backup inválido não apaga nada; o válido guarda antes uma cópia automática', async ({
+  page,
+  context,
+}) => {
+  await fichaOffline(page, context);
+  const largura = () => cartao(page, 'TAPETE').getByRole('textbox', { name: 'Largura' });
+  await largura().fill('660');
+  await expect(page.getByText('✓ Salvo no aparelho')).toBeVisible();
+  await irParaBackup(page);
+  await page.getByRole('button', { name: 'Preparar backup' }).click();
+  const caminho = test.info().outputPath('backup.json');
+  await (await baixar(page)).saveAs(caminho);
+
+  // Depois do backup, o técnico continua medindo.
+  await page.getByRole('link', { name: /‹ Lista/ }).click();
+  await abrirFicha(page, 'XA-TC-01');
+  await largura().fill('999');
+  await expect(page.getByText('✓ Salvo no aparelho')).toBeVisible();
+  const antes = await estadoDoBanco(page);
+  await irParaBackup(page);
+  await page.getByRole('link', { name: 'Restaurar backup…' }).click();
+
+  // Arquivo cortado (download interrompido) e arquivo que não é backup: recusados.
+  const texto = readFileSync(caminho, 'utf8');
+  const cortado = test.info().outputPath('cortado.json');
+  writeFileSync(cortado, texto.slice(0, Math.floor(texto.length * 0.6)));
+  await page.locator('input[type=file]').setInputFiles(cortado);
+  await expect(page.getByRole('alert')).toHaveText(/incompleto.*Nada foi alterado/);
+  await page.locator('input[type=file]').setInputFiles(FIXTURE);
+  await expect(page.getByRole('alert')).toHaveText(/não é um backup do app.*Nada foi alterado/);
+  await semRolagemLateral(page);
+  expect(await estadoDoBanco(page)).toEqual(antes);
+  await expect(page.getByText('Cópia de antes da restauração')).toHaveCount(0);
+
+  // O válido: mostra o que entra e o que será trocado; guarda a cópia e restaura.
+  // O celular tem medida mais nova que o backup: aviso vermelho e 2ª confirmação, com o
+  // "Não" no lugar do botão tocado (tocar duas vezes no mesmo lugar não restaura).
+  await page.locator('input[type=file]').setInputFiles(caminho);
+  await expect(page.getByRole('alert')).toHaveText(/dados que o backup não tem/);
+  const restaurar = page.getByRole('button', { name: 'Restaurar este backup' });
+  const lugar = (await restaurar.boundingBox())!;
+  await restaurar.click();
+  const nao = page.getByRole('button', { name: 'Não, manter os dados deste celular' });
+  expect((await nao.boundingBox())!.y).toBeCloseTo(lugar.y, 0);
+  await page.getByRole('button', { name: 'Sim, trocar tudo pelo backup' }).click();
+  await expect(page.getByText(/✓ Backup restaurado/)).toBeVisible();
+  const copia = page.locator('section', { hasText: 'Cópia de antes da restauração' });
+  await expect(copia).toBeVisible();
+  const baixada = await baixar(page, copia);
+  expect(baixada.suggestedFilename()).toMatch(
+    /^levantamento-backup-antes-de-restaurar-\d{4}-\d\d-\d\d-\d{4}\.json$/,
+  );
+  const daCopia = JSON.parse(readFileSync(await baixada.path(), 'utf8'));
+  expect(daCopia.medicoes).toEqual(antes.medicoes); // a medida de 999 está na cópia
+
+  await page.getByRole('link', { name: 'Ir para a lista' }).click();
+  await abrirFicha(page, 'XA-TC-01');
+  await expect(largura()).toHaveValue('660');
+
+  // A cópia continua guardada no app depois de recarregar, e dá para voltar a ela.
+  await page.goto('./#/restaurar');
+  await page.reload();
+  await page.getByRole('button', { name: 'Voltar para esta cópia' }).click();
+  await expect(page.getByText('Este celular tem agora')).toBeVisible(); // sem risco: sem 2º passo
+  await page.getByRole('button', { name: 'Restaurar este backup' }).click();
+  await expect(page.getByText(/✓ Backup restaurado/)).toBeVisible();
+  expect(await estadoDoBanco(page)).toEqual(antes); // o 999 voltou
+  await expect(page.getByText('Cópias de antes das restaurações')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Voltar para esta cópia' })).toHaveCount(2);
+  await semRolagemLateral(page);
+});

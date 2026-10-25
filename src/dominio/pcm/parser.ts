@@ -14,29 +14,41 @@ import { limpar, normalizar, slug } from '../texto.ts';
 import { parseNumero } from '../numeros.ts';
 import { detectarTipo } from '../templates/detectar.ts';
 import { extrairTag } from './tag.ts';
+import { MARCA_ABA_DO_APP } from './exportado.ts';
 
 export type Linha = readonly unknown[];
 
 const COL = { equipamento: 0, item: 1, especificacao: 2, quantidade: 3 } as const;
 const LINHA_DADOS_PADRAO = 6;
 
-/** Lê o arquivo (bytes do .xls/.xlsx) e devolve todas as abas. */
+/** Lê o arquivo (bytes do .xls/.xlsx) e devolve todas as abas (menos as criadas pelo app). */
 export function lerPcm(dados: ArrayBuffer | Uint8Array): Pcm {
   const wb = XLSX.read(dados, { type: 'array', cellDates: false, cellStyles: false });
   return {
-    abas: wb.SheetNames.map((nome) => {
+    abas: wb.SheetNames.flatMap((nome) => {
       const ws = wb.Sheets[nome];
-      const linhas = ws
-        ? XLSX.utils.sheet_to_json<unknown[]>(ws, {
-            header: 1,
-            defval: '',
-            raw: false,
-            blankrows: true,
-          })
-        : [];
-      return parseAba(nome, linhas);
+      const linhas = ws ? linhasDaAba(ws) : [];
+      return abaDoApp(linhas) ? [] : [parseAba(nome, linhas)];
     }),
   };
+}
+
+/**
+ * Linhas da aba como texto, do jeito que o parser lê. Índice da linha/coluna é relativo ao
+ * início do intervalo da aba (`!ref`) — o exportador usa a mesma conta para achar a célula.
+ */
+export function linhasDaAba(ws: XLSX.WorkSheet): Linha[] {
+  return XLSX.utils.sheet_to_json<unknown[]>(ws, {
+    header: 1,
+    defval: '',
+    raw: false,
+    blankrows: true,
+  });
+}
+
+/** Aba "Resumo"/"Fora do PCM" de um PCM exportado pelo app: não é do PCM. */
+export function abaDoApp(linhas: readonly Linha[]): boolean {
+  return normalizar(linhas[0]?.[0]).startsWith(normalizar(MARCA_ABA_DO_APP));
 }
 
 /** Interpreta as linhas de uma aba (já convertidas em matriz de texto). */
@@ -102,12 +114,18 @@ export function parseAba(nomeAba: string, linhas: readonly Linha[]): AbaPcm {
   return { nome: nomeAba, equipamentos, avisos };
 }
 
-/** Primeira linha de dados: logo após o cabeçalho de 2 linhas, ou null se não achar. */
-function acharInicioDados(linhas: readonly Linha[]): number | null {
+/** Linha do cabeçalho "EQUIPAMENTOS PARA INSPEÇÃO", ou null se não achar. */
+export function linhaDoCabecalho(linhas: readonly Linha[]): number | null {
   for (let i = 0; i < Math.min(linhas.length, 30); i++) {
-    if (/^EQUIPAMENTOS? PARA INSP/.test(normalizar(linhas[i]?.[COL.equipamento]))) return i + 2;
+    if (/^EQUIPAMENTOS? PARA INSP/.test(normalizar(linhas[i]?.[COL.equipamento]))) return i;
   }
   return null;
+}
+
+/** Primeira linha de dados: logo após o cabeçalho de 2 linhas, ou null se não achar. */
+function acharInicioDados(linhas: readonly Linha[]): number | null {
+  const cabecalho = linhaDoCabecalho(linhas);
+  return cabecalho === null ? null : cabecalho + 2;
 }
 
 /**

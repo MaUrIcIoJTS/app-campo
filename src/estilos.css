@@ -1421,3 +1421,102 @@ html:has(.foto-dialogo[open]) {
 .fotos-aviso-acoes > .botao {
   flex: 1 1 auto;
 }
+
+/* ===== Fase 4: backup e exportar (polimento visual fica para a sessão de aparência) ===== */
+
+.linha-backup {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: var(--toque);
+  margin-bottom: var(--espaco);
+  padding: 8px var(--espaco);
+  border: 2px solid var(--borda);
+  border-radius: var(--raio);
+  background: var(--superficie);
+  color: var(--texto);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.linha-backup[data-alerta] {
+  border-color: var(--aviso-texto);
+  background: var(--aviso-fundo);
+  color: var(--aviso-texto);
+}
+
+.linha-backup-acao {
+  color: var(--primaria);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.linha-backup[data-alerta] .linha-backup-acao {
+  color: inherit;
+}
+
+.secao-titulo {
+  margin: 0 0 8px;
+  font-size: 1.15rem;
+}
+
+.preparando {
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+}
+
+.arquivo-nome {
+  overflow-wrap: anywhere;
+}
+
+.arquivo-pronto + .botao {
+  margin-top: 8px;
+}
+
+.ok {
+  color: var(--ok);
+  font-weight: 700;
+}
+
+.aviso--feito {
+  border: 2px solid var(--ok);
+  background: var(--superficie);
+  color: var(--texto);
+  font-weight: 500;
+}
+
+.aviso--feito p {
+  margin: 0 0 8px;
+}
+
+.aviso--feito p:first-child {
+  color: var(--ok);
+  font-weight: 700;
+}
+
+.aviso--feito p:last-child {
+  margin-bottom: 0;
+}
+
+.aviso-nota {
+  font-size: 0.95rem;
+}
+
+.aviso--perigo {
+  border: 2px solid var(--erro);
+  background: var(--superficie);
+  color: var(--erro);
+}
+
+.linha-backup-depois {
+  font-weight: 500;
+}
+
+.copia + .copia {
+  margin-top: var(--espaco);
+  padding-top: var(--espaco);
+  border-top: 2px solid var(--trilho);
+}

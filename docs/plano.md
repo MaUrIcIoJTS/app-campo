@@ -19,7 +19,7 @@ Site: https://mauriciojts.github.io/app-campo/ (deploy automático a cada push n
 | 1. Banco, importação, lista, ficha (só leitura) | ✅ feito e **validado no celular em 24/10** (critérios 1 e 2)              |
 | 2. Ficha com medição                            | ✅ feito e **validado no celular em 24/10**                                |
 | 3. Fotos e desenhos SVG                         | ✅ desenhos validados (24/10); fotos feitas (24/10), **testar no celular** |
-| 4. Exportar, backup, restaurar, compartilhar    | a fazer                                                                    |
+| 4. Exportar, backup, restaurar, compartilhar    | ✅ feito (25/10), **testar no celular** (roteiro da fase 4)                |
 | 5. Ensaio geral (critérios 1–5 no Android)      | a fazer                                                                    |
 
 Se atrasar: os desenhos SVG (fase 3) e o `.zip` de fotos (fase 4) podem ficar para depois, porque
@@ -151,18 +151,98 @@ Ver "Roteiro — fase 2" no fim deste documento.
 - Duas janelas abertas (app + aba do Chrome): a foto tirada numa só aparece na outra ao
   reabrir (não perde nada; só a contagem da outra fica velha).
 
-### Fotos — para a Fase 4
+### Fotos — para a Fase 4 (feito em 25/10)
 
 - Backup `.json`: levar `blob` **e** `miniatura` (base64) e `daPlaca`; na restauração, foto
   sem miniatura funciona (mostra o blob). Exportar `.zip`: dá para nomear as da placa
   (`…_placa_1.jpg`).
 - Lembrar que `conferencia` agora pode ser `'naoTem'` (regra na skill `exportar-pcm`).
 
-## Fase 4 — exportar e backup
+## Fase 4 — exportar, backup, restaurar (feita em 25/10)
 
-Regras completas na skill `exportar-pcm` (colunas, nomes de arquivo, aba "Fora do PCM",
-aba "Resumo", backup JSON com fotos em base64, restauração com backup automático antes,
-`.zip` de fotos, Web Share com o arquivo gerado ANTES do toque, download como alternativa).
+Regras completas na skill `exportar-pcm`. Tela **"Backup e exportar"** (`#/exportar`, pela linha
+"Último backup: há X · Backup ›" no topo da lista) e **"Restaurar backup"** (`#/restaurar`, também
+na tela vazia, para o outro aparelho).
+
+### Como ficou
+
+- **Gerar antes, enviar depois**: cada arquivo tem "Preparar…" → "Preparando… 120 de 300 fotos"
+  (tela acesa com Wake Lock) → nome e tamanho + **Baixar**. Depois do toque: "✓ Baixado às 17:02
+  (243 MB): está em Downloads. No WhatsApp: clipe → Documento → escolha “nome-do-arquivo”" e o
+  botão vira "Baixar de novo". O Chrome do Android **não compartilha** .json/.xlsx/.zip pelo Web
+  Share (só imagem/áudio/vídeo/PDF/texto, até 50 MB): no Android só aparece "Baixar"; fora dele
+  aparece também "Compartilhar" (recusado → baixa na hora). Decisão do usuário (25/10).
+- **Lembrete**: "Último backup: há 5 h · 35 itens e 12 fotos depois ›" no topo da lista; fica
+  amarelo com mudanças depois do último backup há mais de 4 h (ou nenhum backup com dados) e,
+  nesse caso, aparece também no fim da ficha (quem vai de "Próximo equipamento" não passa pela
+  lista).
+- **Planilha** (`exportar/planilha.ts`): parte do arquivo original; 4 colunas depois da última
+  usada (Medido, Confere/Diverge, Observação, Data); "Não tem" → "não se aplica"; ✓ sem valor →
+  "conforme PCM"; abas "Resumo" e "Fora do PCM" (tambores e órfãos). **Reimportar o .xlsx no app
+  dá o mesmo PCM** (pedido do usuário): abas do app marcadas na A1 e ignoradas pelo parser,
+  reexportar reaproveita as colunas. Conferido com o PCM real: 84 equipamentos, 717 itens nas
+  linhas certas, reimportação idêntica (1ª e 2ª exportação), 0 células originais alteradas.
+  Limite: SheetJS gratuito não grava fontes/bordas/cores (fica para a sessão de aparência).
+- **Backup .json** (`exportar/backup.ts`, `lerBackup.ts`): formato na skill (cabeçalho com
+  `resumo` no começo, fotos por último, uma por linha, blob + miniatura em base64, `daPlaca`).
+  Gerado em pedaços de Blob (nunca uma string gigante); lido em fatias de 1 MB, um registro por
+  vez. Leva também o que ainda está só no diário (banco cheio).
+- **Restaurar** (`exportar/restaurar.ts`): sem `accept` no seletor (o Android esconde .json do
+  WhatsApp) e com a dica de onde achar o arquivo; valida tudo (não é backup, cortado, versão mais
+  nova — inclusive tipo de item desconhecido —, registro estragado, contagens); prévia "o que
+  entra × o que será trocado"; se o celular tem algo que o backup não tem (medida mais nova, mais
+  itens ou fotos), **aviso vermelho e 2ª confirmação** com o "Não" no lugar do botão tocado.
+  Bloqueia como a importação. **Durante a restauração o app mostra só essa tela** (sem "‹ Lista",
+  o voltar do Android não sai). **Cópia automática** do estado atual gravada **na mesma transação**
+  da restauração (se falhar, nada muda, nem as cópias); ficam as **2 últimas**
+  (`meta.copiaAntesDeRestaurar:<data>`), cada uma com "Voltar para esta cópia", Baixar e "Apagar
+  esta cópia" (com confirmação). A transação confere a "impressão" dos dados (cada medição/nota
+  com seu `atualizadaEm`, ids das fotos e importações): se algo mudou desde a cópia (outra janela),
+  aborta. Outra janela aberta recarrega sozinha depois.
+- **Revisão do `revisor-de-campo` (25/10)**: 2 riscos de perda de dado corrigidos com teste antes
+  (medir durante a restauração era apagado — reproduzido no navegador; a única cópia era trocada
+  antes de a restauração dar certo). Atritos corrigidos: prévia que compara, retorno do "Baixar",
+  texto do WhatsApp com o nome do arquivo, só "Baixar" no Android, lembrete por mudanças, lembrete
+  no fim da ficha, dica de onde achar o arquivo, tela acesa, trava contra toque duplo, "voltar para
+  a cópia" em um toque, tipo desconhecido = versão mais nova. Ficou de fora: avisar antes de baixar
+  se faltar espaço (a estimativa do navegador não é o espaço livre do celular; o texto pós-download
+  explica "Falha no download").
+- **Bug achado nos testes e corrigido** (`db/repositorio.ts`, `tudoOuNada`): um `put()` recusado na
+  hora pelo IndexedDB não aborta a transação sozinho — na restauração os `clear()` seriam gravados
+  (aparelho vazio); na importação, idem. Agora toda gravação em várias stores aborta em qualquer
+  erro. Testes em `backup.test.ts` e `banco.test.ts` (falham sem a correção).
+- **Fotos .zip** (`exportar/zip.ts`): zip STORE próprio, as fotos entram por referência (o JSZip
+  montaria tudo na memória e ficou só nos testes). Nomes `XA-TC-01_MOTOR_1.jpg`, `_GERAL_`,
+  `_MOTOR_PLACA_1`, sem TAG = nome do equipamento; nunca repete.
+
+### Medição (Chromium, CPU 4× mais lenta, 300 fotos de ~600 KB = 182 MB)
+
+| Etapa                                      | Tempo  | Heap JS (pico) |
+| ------------------------------------------ | ------ | -------------- |
+| Gerar backup → arquivo de **243 MB**       | 14,9 s | 3 MB           |
+| Gerar zip das fotos                        | 3,5 s  | 3 MB           |
+| Gerar planilha                             | 0,4 s  | 6 MB           |
+| Ler e validar o backup (outro aparelho)    | 5,5 s  | 21 MB          |
+| Gravar a restauração                       | 0,3 s  | 15 MB          |
+| Restaurar por cima, com cópia de 300 fotos | 16,4 s | 10 MB          |
+
+Com 400 fotos (243 MB de fotos): backup de **324 MB** em 19,6 s; ler 7,5 s; restaurar por cima
+com cópia 20,5 s; heap JS ≤ 19 MB em todas as etapas.
+
+Os Blobs ficam no processo principal do navegador: no Android, só 1% da RAM fica em memória e o
+resto vai para arquivo temporário (até 6% do armazenamento). Restaurar por cima de 300 fotos pede
+espaço livre temporário de ~1 GB (cópia + fotos novas + antigas até o fim); sem espaço, nada muda.
+Tempos de celular real: medir no roteiro.
+
+### Testes
+
+`tests/unit/backup.test.ts` (ida e volta com bytes, fatias de 1 byte a 64 KB, inválidos,
+cortado em vários pontos, atomicidade, cópia automática, diário no backup), `planilha.test.ts`
+(.xls e .xlsx: colunas, células originais, reimportação igual, reexportação, órfãos, linha
+errada), `exportar.test.ts` (textos, nomes, zip lido pelo JSZip) e `tests/e2e/exportar.spec.ts`
+(backup offline → outro contexto limpo → restaurar igual até os bytes + zip; .xlsx lido de volta,
+"Compartilhar" recusado → baixa, reimportar no app; restaurar inválido não mexe em nada e o
+válido guarda a cópia).
 
 ## Notas operacionais
 
@@ -253,3 +333,81 @@ Conferir que as medidas antigas continuam. No rodapé da lista, anotar "Espaço 
 Anote: foto que sumiu (com horário e item), câmera que não abriu, quantas vezes a página
 recarregou no passo 8, o que ficou pequeno ou difícil de luva. Foto sumida vira teste antes
 da correção.
+
+## Roteiro — fase 4: exportar, enviar e restaurar (critérios 4 e 5, ~25 min)
+
+Precisa: o celular de campo com medidas e fotos, **um segundo celular Android** (ou de um colega)
+e o WhatsApp. Preparação: com internet, abrir o app nos dois → "Nova versão do app" →
+**Atualizar**. No segundo celular, se o app ainda não estiver instalado: abrir o site com internet
+e instalar ("Adicionar à tela inicial").
+
+**Celular de campo (critério 4)**
+
+1. **Modo avião ligado.** Abrir o app. No topo da lista: "Nenhum backup ainda" (amarelo) ou
+   "Último backup: há …". Tocar a linha ("Backup ›").
+2. "Preparar backup": aparece "Preparando… N de M fotos" e depois o nome e o tamanho. **Anotar o
+   tempo e o tamanho.**
+3. **"Baixar"**: o Chrome avisa o download. Voltar à lista: "Último backup: agora há pouco".
+4. Na tela aparece "✓ Baixado às …: está em Downloads" com o nome do arquivo, e o botão vira
+   "Baixar de novo". (No Android não há "Compartilhar": o Chrome não compartilha .json.) Abrir o
+   app "Arquivos"/"Downloads" do celular e conferir que o arquivo está lá com o tamanho certo.
+5. **WhatsApp, ainda em modo avião**: uma conversa (pode ser com você mesmo) → **clipe →
+   Documento** → achar `levantamento-backup-….json` (Downloads, "Recentes" ou "Procurar outros
+   documentos") → enviar. Fica com o reloginho; ao desligar o modo avião, envia. **Anote o caminho
+   exato que o WhatsApp mostrou** (para acertar o texto do app).
+6. "Preparar planilha" → **Baixar** → mandar pelo WhatsApp do mesmo jeito. No PC: abrir no Excel;
+   na linha de cada item medido, as colunas **Medido, Confere/Diverge, Observação, Data**; abas
+   **Resumo** e **Fora do PCM** (tambores). Conferir 3–4 itens contra o que você mediu.
+7. "Preparar fotos" → Baixar → abrir o `.zip` no gerenciador de arquivos: nomes como
+   `XA-TC-01_MOTOR_1.jpg` (com a TAG real) e as fotos abrem.
+8. **PCM atualizado de volta no app**: lista → "Trocar o PCM" → escolher o `pcm-atualizado-….xlsx`
+   em Downloads → a prévia diz "Nada será apagado" e **não** fala em "mudaram de linha" nem
+   "Fora do PCM atual" → trocar → medidas e fotos continuam nas fichas.
+
+**Segundo celular (critério 5)**
+
+9. **Modo avião ligado** depois de receber o backup no WhatsApp (tocar no documento para baixar)
+   ou no Drive (baixar para o celular).
+10. Abrir o app: "Nenhum PCM neste aparelho" → **"Restaurar backup"** → "Escolher arquivo do
+    backup" → achar o `.json` (Downloads; do WhatsApp: "Recentes" ou a pasta
+    WhatsApp/Media/WhatsApp Documents). "Lendo… %" → a prévia mostra data, PCM e os números
+    (equipamentos, itens medidos, observações, fotos) e "Este celular está vazio".
+11. **"Restaurar este backup"** → "✓ Backup restaurado" → "Ir para a lista": mesmos equipamentos
+    e %. Abrir 3 fichas: medidas, ✓/✗, "Não tem", observações e fotos iguais; abrir uma foto da
+    placa em tela cheia e ler. **Anotar o tempo de "Lendo" e de "Restaurando".**
+12. Fechar o app à força e reabrir (modo avião): tudo continua.
+
+**Proteções (no segundo celular)**
+
+13. Medir um campo novo (ex.: Largura = 999). Restaurar o mesmo backup de novo: a prévia avisa
+    **em vermelho** "Este celular tem dados que o backup não tem…" → "Restaurar este backup" →
+    no lugar do botão aparece "Não, manter os dados deste celular" (tocar duas vezes no mesmo
+    lugar não restaura) → "Sim, trocar tudo pelo backup" → aparece **"Cópia de antes da
+    restauração"**; a Largura volta ao valor do backup. **"Voltar para esta cópia"** → restaurar:
+    o 999 volta e agora há 2 cópias.
+14. Durante "Guardando cópia… / Restaurando…", tentar o **voltar do Android**: a tela não sai.
+15. Na tela de restaurar, escolher a planilha `.xlsx` (arquivo errado): "Este arquivo não é um
+    backup do app… Nada foi alterado." — e nada mudou.
+
+Anote: tempos e tamanho, onde o arquivo foi parar, o que não apareceu no seletor de arquivos,
+qualquer diferença entre os dois celulares (com o item e o campo). Dado diferente ou sumido vira
+teste antes da correção.
+
+## Ideias para a sessão de aparência e usabilidade
+
+Anotadas na Fase 4 (sem mexer agora):
+
+- **Planilha**: bordas finas, negrito nos títulos, quebra de texto e largura certa nas 4 colunas
+  novas; "Diverge" em vermelho; congelar o cabeçalho (pós-processar o `.xlsx`: `styles.xml`).
+- **Backup e exportar**: tela comprida (4 cartões). Backup em destaque no topo; planilha e fotos
+  mais compactas; restaurar como link no fim.
+- Arquivo pronto: o nome longo quebra em 2 linhas — mostrar "Backup de 26/10 14:30 · 243 MB" e
+  o nome em letra menor. Ícones de baixar/compartilhar nos botões. O bloco "✓ Baixado às…" tem
+  4 frases: enxugar depois de ver no celular qual caminho o WhatsApp mostra.
+- Cópias de antes da restauração: cada uma tem 3–4 botões (voltar, baixar, apagar) — agrupar.
+- "Preparando… 120 de 300 fotos": barra de progresso.
+- Lista: a linha "Último backup" e o aviso "Instale o app" ficam empilhados no topo — juntar num
+  bloco só de "estado do aparelho".
+- Restaurar: prévia em tabela (backup × este celular) em vez de frase; "Restaurar este backup"
+  quebra em 2 linhas a 360 px.
+- O toast ("PCM importado…") cobre botões no fim da tela por 5 s.

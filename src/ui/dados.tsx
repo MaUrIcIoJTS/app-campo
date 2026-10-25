@@ -10,9 +10,15 @@ import {
   registrarNota,
 } from '../db/edicao.ts';
 import type { Medicao } from '../db/esquema.ts';
-import { carregarDados, type Dados } from '../db/repositorio.ts';
+import {
+  carregarDados,
+  marcarUltimoBackup,
+  type Dados,
+  type UltimoBackup,
+} from '../db/repositorio.ts';
 import { filaDeGravacao } from '../db/salvamento.ts';
 import { novaNota } from '../dominio/medicao.ts';
+import { CHAVE_RESTAURADO } from '../exportar/restaurar.ts';
 
 interface ContextoDados {
   dados: Dados | null;
@@ -23,6 +29,8 @@ interface ContextoDados {
   alterarNota: (equipamentoId: string, observacao: string) => void;
   /** Foto gravada (+1) ou apagada (−1) no banco: lista e ficha atualizam a contagem. */
   contarFoto: (alvoId: string, delta: 1 | -1) => void;
+  /** Backup baixado/compartilhado agora: "Último backup: agora há pouco". */
+  marcarBackup: (ultimo: UltimoBackup) => Promise<void>;
 }
 
 const Contexto = createContext<ContextoDados>({
@@ -32,6 +40,7 @@ const Contexto = createContext<ContextoDados>({
   alterarMedicao: () => {},
   alterarNota: () => {},
   contarFoto: () => {},
+  marcarBackup: async () => {},
 });
 
 /**
@@ -90,6 +99,8 @@ export function ProvedorDados({ children }: { children: ComponentChildren }) {
   // diário. Sem isto, a próxima edição aqui gravaria o item inteiro sem o campo dela.
   useEffect(() => {
     const deOutraJanela = (e: StorageEvent) => {
+      // A outra janela restaurou um backup: tudo mudou.
+      if (e.key === CHAVE_RESTAURADO) return void recarregar();
       const chave = chaveDoDiario(e.key);
       const d = atualRef.current;
       if (!chave || !e.newValue || !d) return;
@@ -107,7 +118,7 @@ export function ProvedorDados({ children }: { children: ComponentChildren }) {
     };
     window.addEventListener('storage', deOutraJanela);
     return () => window.removeEventListener('storage', deOutraJanela);
-  }, [setDados]);
+  }, [setDados, recarregar]);
 
   const alterarMedicao = useCallback(
     (itemId: string, mudar: (m: Medicao | undefined) => Medicao) => {
@@ -144,9 +155,18 @@ export function ProvedorDados({ children }: { children: ComponentChildren }) {
     [setDados],
   );
 
+  const marcarBackup = useCallback(
+    async (ultimo: UltimoBackup) => {
+      await marcarUltimoBackup(ultimo);
+      const d = atualRef.current;
+      if (d) setDados({ ...d, ultimoBackup: ultimo });
+    },
+    [setDados],
+  );
+
   const valor = useMemo(
-    () => ({ dados, erro, recarregar, alterarMedicao, alterarNota, contarFoto }),
-    [dados, erro, recarregar, alterarMedicao, alterarNota, contarFoto],
+    () => ({ dados, erro, recarregar, alterarMedicao, alterarNota, contarFoto, marcarBackup }),
+    [dados, erro, recarregar, alterarMedicao, alterarNota, contarFoto, marcarBackup],
   );
   return <Contexto.Provider value={valor}>{children}</Contexto.Provider>;
 }

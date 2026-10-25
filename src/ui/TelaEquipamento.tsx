@@ -5,6 +5,7 @@ import { avisosDoItem } from '../dominio/medicao.ts';
 import { percentual, progressoItem, somarProgresso } from '../dominio/progresso.ts';
 import { CartaoItem, estadoDoItem, irParaItem } from './CartaoItem.tsx';
 import { useDados } from './dados.tsx';
+import { LinhaBackup } from './LinhaBackup.tsx';
 import { irAoProximoCampo } from './foco.ts';
 import { useEstadoFotos } from './fotos.ts';
 import { ErroAoLerFotos, FotosDoAlvo, IconeCamera, ProvedorFotos } from './FotosDoAlvo.tsx';
@@ -167,6 +168,8 @@ export function TelaEquipamento({ id, abaFiltrada }: Props) {
         </section>
 
         <nav class="fim-ficha" aria-label="Próximo">
+          {/* Quem vai de ficha em ficha não passa pela lista: o lembrete aparece aqui também. */}
+          <LinhaBackup dados={dados} soAtrasado />
           {proximoEq ? (
             <a
               class="botao botao--grande botao--proximo"

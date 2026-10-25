@@ -1,11 +1,18 @@
 import { useEffect, useState } from 'preact/hooks';
 
 /** Rotas por hash: funcionam offline e no subcaminho do GitHub Pages sem config de servidor. */
-export type Rota = { tela: 'lista' } | { tela: 'importar' } | { tela: 'equipamento'; id: string };
+export type Rota =
+  | { tela: 'lista' }
+  | { tela: 'importar' }
+  | { tela: 'exportar' }
+  | { tela: 'restaurar' }
+  | { tela: 'equipamento'; id: string };
 
 export function lerRota(hash: string): Rota {
   const [, tela, param] = hash.replace(/^#\/?/, '').match(/^([^/]*)\/?(.*)$/) ?? [];
   if (tela === 'importar') return { tela: 'importar' };
+  if (tela === 'exportar') return { tela: 'exportar' };
+  if (tela === 'restaurar') return { tela: 'restaurar' };
   if (tela === 'equipamento' && param)
     return { tela: 'equipamento', id: decodeURIComponent(param) };
   return { tela: 'lista' };
@@ -14,6 +21,8 @@ export function lerRota(hash: string): Rota {
 export const rotas = {
   lista: '#/',
   importar: '#/importar',
+  exportar: '#/exportar',
+  restaurar: '#/restaurar',
   equipamento: (id: string) => `#/equipamento/${encodeURIComponent(id)}`,
 };
 
