@@ -29,7 +29,15 @@ import {
   type Estilo,
   type FormatoDaAba,
 } from './formatoPlanilha.ts';
-import { dataHora, maisRecente, textoConferencia, textoMedido, textoObservacao } from './textos.ts';
+import {
+  dataHora,
+  maisRecente,
+  nosTambores,
+  textoConferencia,
+  textoMedido,
+  textoObservacao,
+  type NosTambores,
+} from './textos.ts';
 
 export interface DadosDaPlanilha {
   /** Bytes do arquivo do PCM como foi importado. */
@@ -163,15 +171,32 @@ export function gerarPlanilha(d: DadosDaPlanilha): ResultadoPlanilha {
     lista.push(f.criadaEm);
     fotosPorAlvo.set(f.alvoId, lista);
   }
-  const temDado = (id: string) => d.medicoes.has(id) || fotosPorAlvo.has(id);
+  const itensPorEq = new Map<string, ItemDb[]>();
+  for (const i of d.itens) {
+    const lista = itensPorEq.get(i.equipamentoId) ?? [];
+    lista.push(i);
+    itensPorEq.set(i.equipamentoId, lista);
+  }
+  // Linhas MANCAL/ROLAMENTO/BUCHA: o que foi anotado nos tambores do mesmo equipamento.
+  const dosTambores = new Map<string, NosTambores>();
+  for (const itens of itensPorEq.values()) {
+    const tambores = itens.filter((i) => i.tipo === 'tambor').sort((a, b) => a.ordem - b.ordem);
+    if (tambores.length === 0) continue;
+    for (const linha of itens) {
+      const t = nosTambores(linha, tambores, d.medicoes);
+      if (t) dosTambores.set(linha.id, t);
+    }
+  }
+  const temDado = (id: string) => d.medicoes.has(id) || fotosPorAlvo.has(id) || dosTambores.has(id);
   const colunas = (item: ItemDb) => {
     const m = d.medicoes.get(item.id);
     const fotos = fotosPorAlvo.get(item.id) ?? [];
+    const tambores = dosTambores.get(item.id) ?? null;
     return [
-      textoMedido(item, m),
-      textoConferencia(item, m),
+      textoMedido(item, m, tambores),
+      textoConferencia(item, m, tambores),
       textoObservacao(m?.observacao, fotos.length),
-      dataHora(maisRecente([m?.atualizadaEm, ...fotos])),
+      dataHora(maisRecente([m?.atualizadaEm, ...fotos, tambores?.atualizadaEm])),
     ];
   };
 
@@ -264,12 +289,6 @@ export function gerarPlanilha(d: DadosDaPlanilha): ResultadoPlanilha {
   const nomeLivre = (nome: string) => (wb.SheetNames.includes(nome) ? `${nome} (app)` : nome);
 
   // Resumo por equipamento, na ordem da lista.
-  const itensPorEq = new Map<string, ItemDb[]>();
-  for (const i of d.itens) {
-    const lista = itensPorEq.get(i.equipamentoId) ?? [];
-    lista.push(i);
-    itensPorEq.set(i.equipamentoId, lista);
-  }
   const resumo: (string | number)[][] = [
     [marca],
     [],
@@ -315,7 +334,11 @@ export function gerarPlanilha(d: DadosDaPlanilha): ResultadoPlanilha {
   foraDoPcm.sort((a, b) => ordem(a)[0] - ordem(b)[0] || ordem(a)[1] - ordem(b)[1]);
   const fora: string[][] = [
     [marca],
-    ['Itens medidos que não estão nas linhas do PCM (tambores e itens que saíram do PCM).'],
+    [
+      'Itens medidos que não estão nas linhas do PCM (tambores e itens que saíram do PCM). ' +
+        'O mancal, o rolamento e a bucha dos tambores também vão para as linhas MANCAL, ' +
+        'ROLAMENTO e BUCHA do PCM.',
+    ],
     ['Aba', 'TAG', 'Equipamento', 'Item', ...COLUNAS_DO_APP],
   ];
   for (const { aba, eq, item } of foraDoPcm)

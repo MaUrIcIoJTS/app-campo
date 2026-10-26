@@ -94,6 +94,13 @@ const CAMPO_DO_TAMBOR: ReadonlyArray<readonly [RegExp, string]> = [
   [/^BUCHA/, 'bucha'],
 ];
 
+/** Campo do tambor que corresponde a uma linha MANCAL/ROLAMENTO/BUCHA do PCM; null nas outras. */
+export function campoDoTambor(linha: Pick<ItemPcm, 'tipo' | 'nome'>): string | null {
+  if (linha.tipo !== 'mancal') return null;
+  const nome = normalizar(linha.nome);
+  return CAMPO_DO_TAMBOR.find(([re]) => re.test(nome))?.[1] ?? null;
+}
+
 /**
  * O que o técnico já anotou nos tambores para uma linha MANCAL/ROLAMENTO/BUCHA do PCM
  * ("Tambor 1: SNA 515 · Tambor 2: SNA 515"), para ele conferir a linha da planilha sem
@@ -104,9 +111,7 @@ export function anotadoNosTambores(
   tambores: readonly Pick<ItemPcm, 'id' | 'nome'>[],
   valores: (itemId: string) => Readonly<Record<string, string>> | undefined,
 ): string | null {
-  if (linha.tipo !== 'mancal') return null;
-  const nome = normalizar(linha.nome);
-  const campo = CAMPO_DO_TAMBOR.find(([re]) => re.test(nome))?.[1];
+  const campo = campoDoTambor(linha);
   if (!campo) return null;
   const partes = tambores.flatMap((t) => {
     const v = valores(t.id)?.[campo]?.trim();
@@ -116,4 +121,4 @@ export function anotadoNosTambores(
 }
 
 /** "TAMBOR 1" → "Tambor 1" (o nome do PCM vem em maiúsculas). */
-const rotuloDoTambor = (nome: string) => nome.charAt(0) + nome.slice(1).toLowerCase();
+export const rotuloDoTambor = (nome: string) => nome.charAt(0) + nome.slice(1).toLowerCase();

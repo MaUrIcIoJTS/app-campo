@@ -21,7 +21,8 @@ Site: https://mauriciojts.github.io/app-campo/ (deploy automático a cada push n
 | 3. Fotos e desenhos SVG                         | ✅ desenhos validados (24/10); fotos feitas (24/10), **testar no celular**                                                                      |
 | 4. Exportar, backup, restaurar, compartilhar    | ✅ feito (25/10); exportar e enviar pelo WhatsApp **validado no celular em 25/10** (critério 4); falta restaurar em outro aparelho (critério 5) |
 | Aparência e usabilidade em campo                | ✅ feito (25/10): telas de backup e restaurar, estado do aparelho, toast, letras pequenas, `.xlsx` formatado; **conferir no celular**           |
-| Visual novo (Material 3) e ficha em guias       | ✅ feito, mesclado e publicado (26/10, `58d01ce`). **Conferir no celular** com o roteiro abaixo                                                 |
+| Visual novo (Material 3) e ficha em guias       | ✅ feito, publicado (26/10, `58d01ce`) e **validado no celular em 26/10** ("funcionou corretamente")                                            |
+| Mancal dos tambores nas linhas do PCM           | ✅ feito (26/10), **não publicado**: a planilha preenche MANCAL/ROLAMENTO/BUCHA com o anotado nos tambores                                      |
 | 5. Ensaio geral (critérios 1–5 no Android)      | a fazer                                                                                                                                         |
 
 Se atrasar: os desenhos SVG (fase 3) e o `.zip` de fotos (fase 4) podem ficar para depois, porque
@@ -508,8 +509,32 @@ desenho de cada guia no alto. Nada do protótipo foi copiado: ele tem dados reai
   - a planilha exportada reimporta igual, com 0 de 3.073 células alteradas.
 
 **Publicação**: o branch `visual-novo` foi mesclado na `main` em 26/10, a pedido do usuário, e
-publicado no mesmo dia (`58d01ce`, deploy verde e conferido offline). Agora falta o roteiro abaixo
-no celular. Se algo piorar ao sol, volte só o que piorou.
+publicado no mesmo dia (`58d01ce`, deploy verde e conferido offline). O usuário fez o roteiro abaixo
+no celular em 26/10: "funcionou corretamente".
+
+## Mancal dos tambores nas linhas do PCM (26/10)
+
+Decisão do usuário (26/10): a planilha exportada preenche as linhas MANCAL, ROLAMENTO e BUCHA do
+PCM com o que foi anotado nos tambores do mesmo equipamento. Só a exportação mudou; app, banco,
+backup e importação ficaram iguais.
+
+- **Medido**: o que foi anotado na própria linha e, no fim,
+  `Nos tambores: Tambor 1: SNA 515 · Tambor 2: SNA 516`. "Não tem" → "não se aplica"; ✓ sem valor
+  → "conforme PCM".
+- **Confere/Diverge**: um ✗ no campo do tambor faz a linha divergir (`Diverge: Tambor 2`, em
+  vermelho); só ✓ → "Confere".
+- **Data**: a mais recente, contando os tambores que têm algo naquele campo.
+- Linha sem nada anotado nela mesma sai preenchida se algum tambor tiver o campo.
+- **Duas linhas do mesmo tipo** no equipamento (11 casos no PCM real): o nome da linha não diz
+  qual é o tambor, então as duas levam todos os tambores, como a dica "Nos tambores" da tela.
+- O tambor continua inteiro na aba "Fora do PCM"; a nota da aba avisa que o mancal, o rolamento e
+  a bucha também vão para as linhas do PCM.
+- Conferência com o PCM real (só contagens, valores inventados nos 45 tambores): as 71 linhas
+  MANCAL/ROLAMENTO/BUCHA dos equipamentos com tambor saem preenchidas; 0 de 3.073 células
+  originais alteradas; a planilha reimporta igual.
+
+Código: `nosTambores` em `src/exportar/textos.ts` (regra da linha → campo do tambor em
+`campoDoTambor`, `src/dominio/guias.ts`); teste em `tests/unit/planilha.test.ts`.
 
 ### Roteiro — visual novo no celular (~10 min, sol e luva, claro e escuro)
 

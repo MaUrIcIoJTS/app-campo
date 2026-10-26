@@ -1,54 +1,124 @@
 /** Textos das colunas que o app acrescenta ao PCM (puro: sem DOM, sem banco). */
 import type { Medicao } from '../db/esquema.ts';
+import { campoDoTambor, rotuloDoTambor } from '../dominio/guias.ts';
 import { deltaDoCampo } from '../dominio/medicao.ts';
 import { formatarDelta } from '../dominio/numeros.ts';
-import { TEMPLATES } from '../dominio/templates/registro.ts';
+import { TEMPLATES, type CampoTemplate } from '../dominio/templates/registro.ts';
 import type { ItemPcm } from '../dominio/tipos.ts';
+
+/** Valor de um campo: como digitado (com unidade e Δ), "não se aplica" ou "conforme PCM". */
+function valorDoCampo(c: CampoTemplate, item: ItemPcm, m: Medicao): string | null {
+  const marca = m.conferencia[c.id];
+  const valor = (m.valores[c.id] ?? '').trim();
+  if (marca === 'naoTem') return 'não se aplica';
+  if (valor) {
+    let t = valor;
+    if (c.tipo === 'numero' && c.unidade) t += ` ${c.unidade}`;
+    const delta = deltaDoCampo(c, item, valor);
+    if (delta !== null) t += ` (Δ ${formatarDelta(delta)})`;
+    return t;
+  }
+  return marca === 'confere' ? 'conforme PCM' : null;
+}
+
+/** O que os tambores trazem para uma linha MANCAL/ROLAMENTO/BUCHA do PCM (ver `nosTambores`). */
+export interface NosTambores {
+  /** "Nos tambores: Tambor 1: SNA 515 · Tambor 2: não se aplica"; vazio se só houver ✗ sem valor. */
+  texto: string;
+  /** Tambores marcados ✗ neste campo ("Tambor 2"). */
+  divergem: string[];
+  /** Algum tambor marcado ✓ neste campo. */
+  conferem: boolean;
+  /** A medição mais recente entre os tambores que têm algo neste campo. */
+  atualizadaEm: string | undefined;
+}
+
+/**
+ * O que foi anotado nos tambores (valor, "Não tem", ✓/✗) no campo que corresponde a uma linha
+ * MANCAL/ROLAMENTO/BUCHA do PCM. null nas outras linhas ou se nenhum tambor tem nada nesse
+ * campo. O app não sabe de qual tambor é cada linha: se o PCM tem duas linhas do mesmo tipo,
+ * as duas levam todos os tambores.
+ */
+export function nosTambores(
+  linha: ItemPcm,
+  tambores: readonly ItemPcm[],
+  medicoes: ReadonlyMap<string, Medicao>,
+): NosTambores | null {
+  const id = campoDoTambor(linha);
+  const campo = TEMPLATES.tambor.campos.find((c) => c.id === id);
+  if (!campo) return null;
+  const partes: string[] = [];
+  const divergem: string[] = [];
+  const datas: string[] = [];
+  let conferem = false;
+  for (const t of tambores) {
+    const m = medicoes.get(t.id);
+    if (!m) continue;
+    const valor = valorDoCampo(campo, t, m);
+    const marca = m.conferencia[campo.id];
+    if (valor === null && !marca) continue;
+    const rotulo = rotuloDoTambor(t.nome);
+    if (valor !== null) partes.push(`${rotulo}: ${valor}`);
+    if (marca === 'diverge') divergem.push(rotulo);
+    if (marca === 'confere') conferem = true;
+    datas.push(m.atualizadaEm);
+  }
+  if (datas.length === 0) return null;
+  return {
+    texto: partes.length > 0 ? `Nos tambores: ${partes.join(' · ')}` : '',
+    divergem,
+    conferem,
+    atualizadaEm: maisRecente(datas),
+  };
+}
 
 /**
  * Coluna "Medido": `rótulo: valor unidade (Δ)` dos campos preenchidos, separados por `; `.
  * Valor como o técnico digitou. "Não tem" → "não se aplica"; ✓ sem valor → "conforme PCM".
- * Valor de um campo que o template não tem mais também sai (nunca some dado).
+ * Valor de um campo que o template não tem mais também sai (nunca some dado). Numa linha
+ * MANCAL/ROLAMENTO/BUCHA, o que foi anotado nos tambores vem no fim.
  */
-export function textoMedido(item: ItemPcm, m: Medicao | undefined): string {
-  if (!m) return '';
-  const campos = TEMPLATES[item.tipo].campos;
+export function textoMedido(
+  item: ItemPcm,
+  m: Medicao | undefined,
+  tambores: NosTambores | null = null,
+): string {
   const partes: string[] = [];
-  for (const c of campos) {
-    const marca = m.conferencia[c.id];
-    const valor = (m.valores[c.id] ?? '').trim();
-    if (marca === 'naoTem') {
-      partes.push(`${c.rotulo}: não se aplica`);
-    } else if (valor) {
-      let t = `${c.rotulo}: ${valor}`;
-      if (c.tipo === 'numero' && c.unidade) t += ` ${c.unidade}`;
-      const delta = deltaDoCampo(c, item, valor);
-      if (delta !== null) t += ` (Δ ${formatarDelta(delta)})`;
-      partes.push(t);
-    } else if (marca === 'confere') {
-      partes.push(`${c.rotulo}: conforme PCM`);
+  if (m) {
+    const campos = TEMPLATES[item.tipo].campos;
+    for (const c of campos) {
+      const valor = valorDoCampo(c, item, m);
+      if (valor !== null) partes.push(`${c.rotulo}: ${valor}`);
+    }
+    const conhecidos = new Set(campos.map((c) => c.id));
+    for (const [id, valor] of Object.entries(m.valores)) {
+      if (!conhecidos.has(id) && valor.trim()) partes.push(`${id}: ${valor.trim()}`);
     }
   }
-  const conhecidos = new Set(campos.map((c) => c.id));
-  for (const [id, valor] of Object.entries(m.valores)) {
-    if (!conhecidos.has(id) && valor.trim()) partes.push(`${id}: ${valor.trim()}`);
-  }
+  if (tambores?.texto) partes.push(tambores.texto);
   return partes.join('; ');
 }
 
 /**
  * Coluna "Confere/Diverge": "Diverge: Largura, Lonas" se algum campo foi marcado ✗;
  * "Confere" se só há ✓; vazio se nada foi marcado. "Não tem" não conta nem como um nem outro.
+ * Numa linha MANCAL/ROLAMENTO/BUCHA, os ✓/✗ dos tambores também contam ("Diverge: Tambor 2").
  */
-export function textoConferencia(item: ItemPcm, m: Medicao | undefined): string {
-  if (!m) return '';
+export function textoConferencia(
+  item: ItemPcm,
+  m: Medicao | undefined,
+  tambores: NosTambores | null = null,
+): string {
+  const conferencia: Medicao['conferencia'] = m?.conferencia ?? {};
   const campos = TEMPLATES[item.tipo].campos;
   const rotulo = new Map(campos.map((c) => [c.id, c.rotulo]));
-  const ordem = [...campos.map((c) => c.id), ...Object.keys(m.conferencia)];
-  const divergentes = [...new Set(ordem)].filter((id) => m.conferencia[id] === 'diverge');
-  if (divergentes.length > 0)
-    return `Diverge: ${divergentes.map((id) => rotulo.get(id) ?? id).join(', ')}`;
-  return Object.values(m.conferencia).includes('confere') ? 'Confere' : '';
+  const ordem = [...campos.map((c) => c.id), ...Object.keys(conferencia)];
+  const divergentes = [...new Set(ordem)]
+    .filter((id) => conferencia[id] === 'diverge')
+    .map((id) => rotulo.get(id) ?? id);
+  divergentes.push(...(tambores?.divergem ?? []));
+  if (divergentes.length > 0) return `Diverge: ${divergentes.join(', ')}`;
+  return Object.values(conferencia).includes('confere') || tambores?.conferem ? 'Confere' : '';
 }
 
 const fotos = (n: number) => (n === 1 ? '1 foto' : `${n} fotos`);

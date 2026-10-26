@@ -76,7 +76,7 @@ function cenario(arquivo: string) {
     fotos,
     geradoEm: new Date('2026-10-26T15:00:00Z'),
   };
-  return { original, dados, equipamentos, itens, tapete, motor, tambor, tela, eq };
+  return { original, dados, equipamentos, itens, tapete, motor, tambor, tela, eq, item };
 }
 
 /** Linhas como texto (igual ao parser) e posição das colunas do app numa aba. */
@@ -210,6 +210,102 @@ describe.each(FIXTURES)('PCM atualizado a partir de %s', (arquivo) => {
       tambor.nome,
       'Ø do tambor: 400 mm',
     ]);
+  });
+
+  it('linhas MANCAL/ROLAMENTO/BUCHA levam o que foi anotado nos tambores', () => {
+    const { dados, tambor, item } = cenario(arquivo);
+    const tambor2 = item('XA-TC-01', 'TAMBOR 2');
+    const mancal = item('XA-TC-01', 'MANCAL');
+    const elevador = item('XA-EC-01', 'TAMBOR 1');
+    const medicao = (
+      itemId: string,
+      valores: Medicao['valores'],
+      conferencia: Medicao['conferencia'],
+      atualizadaEm: string,
+    ): [string, Medicao] => [
+      itemId,
+      { itemId, valores, conferencia, observacao: '', atualizadaEm },
+    ];
+    const medicoes = new Map([
+      ...dados.medicoes,
+      medicao(
+        tambor.id,
+        { diametro: '400', mancal: 'SNA 515', rolamento: '22215 K' },
+        { mancal: 'confere', rolamento: 'confere' },
+        '2026-10-26T13:40:00.000Z',
+      ),
+      medicao(
+        tambor2.id,
+        { mancal: 'SNA 516' },
+        { mancal: 'diverge', bucha: 'naoTem', rolamento: 'diverge' },
+        '2026-10-26T13:45:00.000Z',
+      ),
+      medicao(mancal.id, { codigo: 'SNA 515' }, { codigo: 'confere' }, '2026-10-26T13:50:00.000Z'),
+      medicao(elevador.id, { mancal: 'SNA 520' }, {}, '2026-10-26T14:10:00.000Z'),
+    ]);
+    const r = gerarPlanilha({ ...dados, medicoes });
+    const wb = XLSX.read(r.bytes);
+    const a1 = aba(wb, 'AREA 1');
+    const hora = (iso: string) => {
+      const d = new Date(iso);
+      const dois = (n: number) => String(n).padStart(2, '0');
+      return `${dois(d.getDate())}/10/2026 ${dois(d.getHours())}:${dois(d.getMinutes())}`;
+    };
+
+    // O que foi anotado na própria linha vem antes; um ✗ no tambor faz a linha divergir.
+    expect(a1.doApp(mancal.linha!)).toEqual([
+      'Código gravado: SNA 515; Nos tambores: Tambor 1: SNA 515 · Tambor 2: SNA 516',
+      'Diverge: Tambor 2',
+      '',
+      hora('2026-10-26T13:50:00.000Z'),
+    ]);
+    // Linha sem medição própria sai preenchida; ✗ sem valor só aparece em Confere/Diverge.
+    expect(a1.doApp(item('XA-TC-01', 'ROLAMENTO').linha!)).toEqual([
+      'Nos tambores: Tambor 1: 22215 K',
+      'Diverge: Tambor 2',
+      '',
+      hora('2026-10-26T13:45:00.000Z'),
+    ]);
+    // "Não tem" no tambor; a data é só a dos tambores que têm algo neste campo.
+    expect(a1.doApp(item('XA-TC-01', 'BUCHA').linha!)).toEqual([
+      'Nos tambores: Tambor 2: não se aplica',
+      '',
+      '',
+      hora('2026-10-26T13:45:00.000Z'),
+    ]);
+    // Duas linhas de mancal no equipamento: o app não sabe qual é de qual tambor, as duas levam.
+    for (const nome of ['MANCAL DE CIMA', 'MANCAL DE BAIXO'])
+      expect(a1.doApp(item('XA-EC-01', nome).linha!).slice(0, 2)).toEqual([
+        'Nos tambores: Tambor 1: SNA 520',
+        '',
+      ]);
+    // Equipamento sem nada anotado nos tambores: a linha MANCAL continua vazia.
+    expect(a1.doApp(item('XA-TC-02', 'MANCAL').linha!)).toEqual(['', '', '', '']);
+
+    // Os tambores continuam inteiros em "Fora do PCM" (nada sai de lá).
+    const fora = XLSX.utils.sheet_to_json<string[]>(wb.Sheets['Fora do PCM']!, {
+      header: 1,
+      defval: '',
+    });
+    expect(fora[1]![0]).toMatch(/também vão para as linhas MANCAL, ROLAMENTO e BUCHA/);
+    expect(fora.slice(3).map((l) => [l[1], l[3], l[4], l[5]])).toEqual([
+      [
+        'XA-TC-01',
+        'TAMBOR 1',
+        'Ø do tambor: 400 mm; Mancal (código gravado): SNA 515; Rolamento: 22215 K',
+        'Confere',
+      ],
+      [
+        'XA-TC-01',
+        'TAMBOR 2',
+        'Mancal (código gravado): SNA 516; Bucha: não se aplica',
+        'Diverge: Mancal (código gravado), Rolamento',
+      ],
+      ['XA-EC-01', 'TAMBOR 1', 'Mancal (código gravado): SNA 520', ''],
+    ]);
+    // tapete, motor, tela + MANCAL, ROLAMENTO e BUCHA do XA-TC-01 + as 2 do XA-EC-01
+    expect(r.itensNoPcm).toBe(8);
+    expect(r.itensForaDoPcm).toBe(3);
   });
 });
 
