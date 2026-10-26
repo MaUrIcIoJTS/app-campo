@@ -1,0 +1,96 @@
+/* PROTÓTIPO (fora do app): estilos novos do croqui, nos tokens do app. */
+
+/* Letra da cota no desenho: vazia = falta, cheia = medida, cinza = sem acesso. */
+.desenho-svg .letra {
+  cursor: pointer;
+}
+
+.desenho-svg .letra-toque {
+  fill: transparent;
+}
+
+.desenho-svg .letra-fundo {
+  fill: var(--superficie);
+  stroke: var(--desenho);
+  stroke-width: 2.5;
+}
+
+.desenho-svg .letra text {
+  fill: var(--desenho);
+  font-weight: 700;
+  stroke: none;
+}
+
+.desenho-svg .letra--medida .letra-fundo {
+  fill: var(--desenho);
+}
+
+.desenho-svg .letra--medida text {
+  fill: var(--desenho-texto);
+}
+
+.desenho-svg .letra--semAcesso .letra-fundo {
+  fill: var(--texto-suave);
+  stroke: var(--texto-suave);
+}
+
+.desenho-svg .letra--semAcesso text {
+  fill: var(--superficie);
+}
+
+.desenho-svg .cota path {
+  stroke: var(--desenho);
+  stroke-width: 2.5;
+}
+
+/* A mesma letra ao lado do nome do campo. */
+.letra-campo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  margin-inline-end: 0.5rem;
+  border: 2.5px solid var(--desenho);
+  border-radius: 50%;
+  color: var(--desenho);
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+.letra-campo--medida {
+  background: var(--desenho);
+  color: var(--desenho-texto);
+}
+
+.letra-campo--semAcesso {
+  background: var(--texto-suave);
+  border-color: var(--texto-suave);
+  color: var(--superficie);
+}
+
+.croqui-extras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-block-start: 0.5rem;
+}
+
+.croqui-perimetro {
+  margin-block-start: 0.75rem;
+}
+
+.croqui-contagem {
+  color: var(--texto-suave);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* "≈ Estimado" e "Medi o perímetro": do tamanho do texto, não da linha inteira. */
+.croqui-extras .opcao--chip {
+  flex: 0 0 auto;
+}
+
+.croqui-extras:empty {
+  display: none;
+}

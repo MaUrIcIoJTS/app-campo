@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Protótipo: croqui, claro e escuro</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 16px;
+        background: #8a8f98;
+        font-family: system-ui, sans-serif;
+      }
+      .par {
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+      }
+      figure {
+        margin: 0;
+      }
+      figcaption {
+        color: #fff;
+        font-weight: 600;
+        margin-block-end: 6px;
+      }
+      iframe {
+        display: block;
+        inline-size: 360px;
+        border: 0;
+        background: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="par">
+      <figure>
+        <figcaption>Claro · 360 px</figcaption>
+        <iframe data-tema="claro"></iframe>
+      </figure>
+      <figure>
+        <figcaption>Escuro · 360 px</figcaption>
+        <iframe data-tema="escuro"></iframe>
+      </figure>
+    </div>
+    <script type="module">
+      const forma = new URLSearchParams(location.search).get('forma') ?? 'aero';
+      const prontos = [...document.querySelectorAll('iframe')].map(
+        (f) =>
+          new Promise((ok) => {
+            f.addEventListener('load', () => {
+              // espera o Preact desenhar e mede a página inteira
+              setTimeout(() => {
+                f.style.blockSize = `${f.contentDocument.documentElement.scrollHeight}px`;
+                ok();
+              }, 600);
+            });
+            f.src = `./index.html?forma=${forma}&tema=${f.dataset.tema}`;
+          }),
+      );
+      Promise.all(prontos).then(() => document.body.setAttribute('data-pronto', ''));
+    </script>
+  </body>
+</html>
