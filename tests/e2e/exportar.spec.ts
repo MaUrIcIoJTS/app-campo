@@ -37,7 +37,7 @@ async function preencher(page: Page) {
     .getByLabel(/Foto da placa/)
     .setInputFiles(arquivo(jpeg, 'b.jpg'));
   await expect(page.locator('.eq-fotos').getByText('2 fotos')).toBeVisible();
-  await expect(page.getByText('✓ Salvo no aparelho')).toBeVisible();
+  await expect(page.getByText('Salvo no aparelho', { exact: true })).toBeVisible();
 }
 
 interface Estado {
@@ -95,9 +95,9 @@ async function baixar(page: Page, onde = page.locator('main')): Promise<Download
 }
 
 async function irParaBackup(page: Page) {
-  await page.getByRole('link', { name: /‹ Lista/ }).click();
+  await page.getByRole('link', { name: 'Lista', exact: true }).click();
   await expect(linhas(page)).toHaveCount(9);
-  await page.getByRole('link', { name: /Backup ›/ }).click();
+  await page.getByRole('link', { name: /Último backup|Nenhum backup/ }).click();
   await expect(page.getByRole('heading', { name: 'Backup e exportar' })).toBeVisible();
 }
 
@@ -130,11 +130,11 @@ test('backup offline → outro aparelho limpo → restaurar: medidas, observaç�
   expect(antes.fotos).toHaveLength(2);
   expect(antes.medicoes).toHaveLength(2);
 
-  await page.getByRole('link', { name: /‹ Lista/ }).click();
+  await page.getByRole('link', { name: 'Lista', exact: true }).click();
   // Um bloco só de estado do aparelho no topo da lista, com o último backup dentro.
   const estado = page.getByRole('region', { name: 'Estado do aparelho' });
   await expect(estado.locator('.linha-backup')).toHaveText(/Nenhum backup ainda/);
-  await page.getByRole('link', { name: /Backup ›/ }).click();
+  await page.getByRole('link', { name: /Último backup|Nenhum backup/ }).click();
   await semRolagemLateral(page);
   await page.getByRole('button', { name: 'Preparar backup' }).click();
   // Android: o Chrome não compartilha .json, então só "Baixar".
@@ -147,7 +147,7 @@ test('backup offline → outro aparelho limpo → restaurar: medidas, observaç�
   // Depois de baixar: onde está e como mandar pelo WhatsApp, com o nome do arquivo. Testado no
   // Android em 25/10: o "clipe → Documento" do WhatsApp não lista .json; o caminho que funciona
   // é sair pelo app de arquivos do celular (Downloads → Compartilhar → WhatsApp).
-  const feito = page.getByRole('status').filter({ hasText: '✓ Baixado às' });
+  const feito = page.getByRole('status').filter({ hasText: 'Baixado às' });
   await expect(feito).toContainText('Downloads');
   await expect(feito).toContainText('segure o arquivo');
   await expect(feito).toContainText('app de arquivos do celular');
@@ -168,11 +168,11 @@ test('backup offline → outro aparelho limpo → restaurar: medidas, observaç�
   await semRolagemLateral(page);
 
   // "Último backup" na tela inicial.
-  await page.getByRole('link', { name: /‹ Lista/ }).click();
+  await page.getByRole('link', { name: 'Lista', exact: true }).click();
   await expect(estado.locator('.linha-backup')).toHaveText(/Último backup: agora há pouco/);
 
   // Fotos em .zip: nomes com TAG e item, bytes iguais aos do banco (sem recomprimir).
-  await page.getByRole('link', { name: /Backup ›/ }).click();
+  await page.getByRole('link', { name: /Último backup|Nenhum backup/ }).click();
   await page.getByRole('button', { name: 'Preparar fotos' }).click();
   const zipBaixado = await baixar(page, page.locator('section', { hasText: 'Fotos (.zip)' }));
   expect(zipBaixado.suggestedFilename()).toMatch(/^fotos-\d{4}-\d\d-\d\d-\d{4}\.zip$/);
@@ -206,7 +206,7 @@ test('backup offline → outro aparelho limpo → restaurar: medidas, observaç�
   const restaurar = p2.getByRole('button', { name: 'Restaurar este backup' });
   expect(await linhasDoTexto(restaurar)).toBe(1);
   await restaurar.click();
-  await expect(p2.getByText(/✓ Backup restaurado/)).toBeVisible();
+  await expect(p2.getByText(/Backup restaurado/)).toBeVisible();
   await expect(p2.getByText('Cópia de antes da restauração')).toHaveCount(0); // estava vazio
   await p2.getByRole('link', { name: 'Ir para a lista' }).click();
   await expect(linhas(p2)).toHaveCount(9);
@@ -306,7 +306,7 @@ test('PCM atualizado (.xlsx) offline: colunas na linha de cada item e reimporta 
   expect(lerPcm(bytes)).toEqual(lerPcm(readFileSync(FIXTURE)));
 
   // Subir o PCM atualizado no app: mesmos 9 equipamentos e as medidas continuam.
-  await page.getByRole('link', { name: /‹ Lista/ }).click();
+  await page.getByRole('link', { name: 'Lista', exact: true }).click();
   await page.getByRole('link', { name: 'Trocar o PCM' }).click();
   await page.locator('input[type=file]').setInputFiles(caminho);
   await expect(page.getByText(/Nada será apagado/)).toBeVisible();
@@ -326,17 +326,17 @@ test('restaurar: backup inválido não apaga nada; o válido guarda antes uma c�
   await fichaOffline(page, context);
   const largura = () => cartao(page, 'TAPETE').getByRole('textbox', { name: 'Largura' });
   await largura().fill('660');
-  await expect(page.getByText('✓ Salvo no aparelho')).toBeVisible();
+  await expect(page.getByText('Salvo no aparelho', { exact: true })).toBeVisible();
   await irParaBackup(page);
   await page.getByRole('button', { name: 'Preparar backup' }).click();
   const caminho = test.info().outputPath('backup.json');
   await (await baixar(page)).saveAs(caminho);
 
   // Depois do backup, o técnico continua medindo.
-  await page.getByRole('link', { name: /‹ Lista/ }).click();
+  await page.getByRole('link', { name: 'Lista', exact: true }).click();
   await abrirFicha(page, 'XA-TC-01');
   await largura().fill('999');
-  await expect(page.getByText('✓ Salvo no aparelho')).toBeVisible();
+  await expect(page.getByText('Salvo no aparelho', { exact: true })).toBeVisible();
   const antes = await estadoDoBanco(page);
   await irParaBackup(page);
   await page.getByRole('link', { name: 'Restaurar um backup' }).click();
@@ -376,7 +376,7 @@ test('restaurar: backup inválido não apaga nada; o válido guarda antes uma c�
     await page.evaluate(({ x, y }) => document.elementFromPoint(x, y)?.textContent, ponto),
   ).toBe('Não, manter os dados deste celular');
   await page.getByRole('button', { name: 'Sim, trocar tudo pelo backup' }).click();
-  await expect(page.getByText(/✓ Backup restaurado/)).toBeVisible();
+  await expect(page.getByText(/Backup restaurado/)).toBeVisible();
   const copia = page.locator('section', { hasText: 'Cópia de antes da restauração' });
   await expect(copia).toBeVisible();
   const baixada = await baixar(page, copia);
@@ -396,7 +396,7 @@ test('restaurar: backup inválido não apaga nada; o válido guarda antes uma c�
   await page.getByRole('button', { name: 'Restaurar esta cópia' }).click();
   await expect(page.getByText('Tudo neste celular será trocado')).toBeVisible(); // sem risco: sem 2º passo
   await page.getByRole('button', { name: 'Restaurar este backup' }).click();
-  await expect(page.getByText(/✓ Backup restaurado/)).toBeVisible();
+  await expect(page.getByText(/Backup restaurado/)).toBeVisible();
   expect(await estadoDoBanco(page)).toEqual(antes); // o 999 voltou
   await expect(page.getByText('Cópias de antes das restaurações')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Restaurar esta cópia' })).toHaveCount(2);

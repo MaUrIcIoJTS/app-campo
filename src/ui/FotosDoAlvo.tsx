@@ -18,7 +18,7 @@ import {
   useEstadoFotos,
   type Destino,
 } from './fotos.ts';
-import { IconeCamera } from './Icones.tsx';
+import { IconeCamera, IconeErro, IconeGaleria } from './Icones.tsx';
 
 interface FotosNaTela {
   equipamentoId: string;
@@ -100,7 +100,8 @@ export function ErroAoLerFotos() {
   if (!erroAoLer) return null;
   return (
     <p class="erro" role="alert">
-      ⚠ Não consegui abrir as fotos. Feche e abra o app.
+      <IconeErro />
+      Não consegui abrir as fotos. Feche e abra o app.
     </p>
   );
 }
@@ -169,7 +170,10 @@ export function FotosDoAlvo({ alvoId, nome, rotulo, placa = false, comPlaca = fa
       )}
       {falha && (
         <div class="aviso aviso--bloco fotos-aviso" role="alert">
-          <p>⚠ {textoDaFalha(falha)}</p>
+          <p>
+            <IconeErro />
+            {textoDaFalha(falha)}
+          </p>
           <div class="fotos-aviso-acoes">
             {falha.refazer.length > 0 && (
               <button
@@ -211,7 +215,8 @@ export function FotosDoAlvo({ alvoId, nome, rotulo, placa = false, comPlaca = fa
             void receberFotos(destino, arquivos, abertura, contarFoto)
           }
         >
-          Galeria
+          <IconeGaleria />
+          <span class="fotos-galeria-texto">Galeria</span>
         </BotaoFoto>
       </div>
       {aberta && (
@@ -398,7 +403,8 @@ function FotoAmpliada({
           <p>Apagar esta foto? Não dá para desfazer.</p>
           {erro && (
             <p class="erro" role="alert">
-              ⚠ {erro}
+              <IconeErro />
+              {erro}
             </p>
           )}
           <button

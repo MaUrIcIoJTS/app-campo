@@ -21,6 +21,7 @@ Site: https://mauriciojts.github.io/app-campo/ (deploy automático a cada push n
 | 3. Fotos e desenhos SVG                         | ✅ desenhos validados (24/10); fotos feitas (24/10), **testar no celular**                                                                      |
 | 4. Exportar, backup, restaurar, compartilhar    | ✅ feito (25/10); exportar e enviar pelo WhatsApp **validado no celular em 25/10** (critério 4); falta restaurar em outro aparelho (critério 5) |
 | Aparência e usabilidade em campo                | ✅ feito (25/10): telas de backup e restaurar, estado do aparelho, toast, letras pequenas, `.xlsx` formatado; **conferir no celular**           |
+| Visual novo (Material 3), branch `visual-novo`  | ✅ feito (26/10), **não publicado**: entra depois do campo, com o teste no celular abaixo                                                       |
 | 5. Ensaio geral (critérios 1–5 no Android)      | a fazer                                                                                                                                         |
 
 Se atrasar: os desenhos SVG (fase 3) e o `.zip` de fotos (fase 4) podem ficar para depois, porque
@@ -443,6 +444,47 @@ contraste já estava alto (texto secundário ~10:1 nos dois temas) e nenhum alvo
 
 Ficou para depois (opcional): "Medido" com um campo por linha na planilha (muda o texto
 exportado); manter a formatação original do PCM (exigiria editar o `.xls` binário).
+
+## Visual novo: Material 3 (branch `visual-novo`, 26/10, não publicado)
+
+Feito com a skill `impeccable` depois da reclamação "tudo em negrito, molduras e caixas pesadas".
+Na rodada de direção, o usuário escolheu o **padrão da categoria**: Material 3 do Android, na régua
+dos apps do Google (Arquivos, Keep, Configurações). Produto em `PRODUCT.md`, sistema visual em
+`DESIGN.md`. **Só aparência**: nada em banco, gravação, backup, restauração nem importação (as
+duas revisões conferiram no diff).
+
+- Tokens do Google M3 (`src/estilos.css`): fundo `#f0f4f9`/`#131314`, cartões sem moldura (raio
+  20), Roboto do sistema em 400/500, botões em pílula (preenchido, tonal, texto), campos
+  preenchidos com linha inferior, ícones SVG (`src/ui/Icones.tsx`) no lugar de ✓ ✗ ⚠ ‹ › ▸ ▾ ↓.
+- O campo vence a especificação (revisão de campo): azul, verde e vermelho no tom 30 (≥ 9:1 ao
+  sol), anel de 1 px nos botões tonais no tema claro, linha de 2 px escura no campo vazio, chips
+  marcados preenchidos, "Salvo no aparelho" verde, voltar com área de 64 × 56.
+- Revisão final da skill: ship, depois de 2 rodadas de correção. A diferença entre 400 e 500
+  (Roboto) só se vê no celular, porque as capturas usam a fonte do Linux.
+- Testes: os textos sem glifo ("Salvo no aparelho", "Diverge", "Foto não salva"…) e os seletores
+  foram ajustados; 288 unitários e 36 E2E passam.
+
+**Para publicar** (depois do campo): fazer o roteiro abaixo com o branch rodando no PC, aprovar,
+mesclar `visual-novo` na `main` e fazer push. Se algo piorar ao sol, volte só o que piorou.
+
+### Roteiro — visual novo no celular (~10 min, sol e luva, claro e escuro)
+
+Para ver no celular antes de publicar, use o build local: no PC, `git switch visual-novo`, depois
+`npm run build && npm run preview -- --host` e, no celular, na mesma rede, abra
+`http://<ip-do-pc>:4173`. É outra origem: os dados de campo **não** aparecem ali, e sem HTTPS o modo offline não liga (a conferência é só visual, com o PC servindo). Importe a planilha
+fictícia ou uma cópia.
+
+1. Lista: o bloco "Último backup ›" e a faixa amarela separados; busca e filtro de aba em pílula.
+2. Ficha ao sol: o campo de medida **vazio** aparece (fundo cinza e linha escura embaixo)? O
+   rótulo, o "PCM 660,4 mm" e o Δ se leem? A seta de voltar (canto superior esquerdo) pega de
+   primeira com luva?
+3. ✓/✗: circulares de 52 px; marcado = cheio. "Não tem" e opções marcadas ficam azuis cheios,
+   fáceis de distinguir do desmarcado?
+4. "Salvo no aparelho" verde; enquanto grava, "Salvando…" neutro com as setas girando.
+5. Peso das letras: títulos em médio (500), texto normal (400). Ficou menos "grosseiro"?
+6. Backup e exportar, Restaurar: mesmas ações de hoje, no visual novo.
+
+Anote o que ficou pior que a versão de hoje (com a tela e o tema). Isso volta antes de publicar.
 
 ## Roteiro — conferência visual (no Android, ~10 min, sol e luva)
 

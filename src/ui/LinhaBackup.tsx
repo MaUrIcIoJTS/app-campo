@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import type { Dados } from '../db/repositorio.ts';
 import { haQuantoTempo } from '../exportar/textos.ts';
-import { IconeBackup } from './Icones.tsx';
+import { IconeAvancar, IconeBackup } from './Icones.tsx';
 import { rotas } from './rota.ts';
 
 /** Com mudanças depois do último backup, quanto tempo até a linha ficar em destaque. */
@@ -54,8 +54,8 @@ export function textoPendencia(p: Pendencia): string | null {
 }
 
 /**
- * "Último backup: há 5 h" e, embaixo, "35 itens e 12 fotos ainda sem backup" — leva à tela de
- * backup. Fica em destaque (amarelo) quando há o que salvar há mais de 4 h. `soAtrasado`: só
+ * "Último backup: há 5 h" e, embaixo, "35 itens e 12 fotos ainda sem backup", com a seta — a linha
+ * inteira leva à tela de backup. Fica em destaque (amarelo) quando há o que salvar há mais de 4 h. `soAtrasado`: só
  * aparece em destaque (fim da ficha, para quem vai de equipamento em equipamento sem passar
  * pela lista).
  */
@@ -67,12 +67,16 @@ export function LinhaBackup({ dados, soAtrasado = false }: { dados: Dados; soAtr
   const pendente = textoPendencia(p);
   return (
     <a class="linha-backup" data-alerta={p.atrasado || undefined} href={rotas.exportar}>
-      <IconeBackup />
+      <span class="icone-fundo">
+        <IconeBackup />
+      </span>
       <span class="linha-backup-texto">
         {ultimo ? `Último backup: ${haQuantoTempo(ultimo.em, agora)}` : 'Nenhum backup ainda'}
         {pendente && <span class="linha-backup-depois">{pendente}</span>}
       </span>
-      <span class="linha-backup-acao">Backup ›</span>
+      <span class="linha-backup-acao">
+        <IconeAvancar />
+      </span>
     </a>
   );
 }

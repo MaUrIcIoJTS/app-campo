@@ -46,7 +46,9 @@ test('20 medidas, ✓/✗ e observações: fecha logo depois e reabre offline �
   // Na tela, na hora: Δ, aviso LD ≠ LE e item divergente.
   await expect(tapete.getByText('Δ −2 mm')).toBeVisible();
   await expect(tapete.getByText(/LD e LE diferentes: 30 mm/)).toBeVisible();
-  await expect(tapete.getByText('✗ Diverge')).toBeVisible();
+  await expect(tapete.getByText('Diverge')).toBeVisible();
+  // Diverge não depende só da cor: o selo tem o ícone ✗ desenhado.
+  await expect(tapete.locator('.item-estado--diverge svg')).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
 
   await page.close(); // "fechar à força", sem esperar o "Salvo no aparelho"
@@ -70,12 +72,12 @@ test('20 medidas, ✓/✗ e observações: fecha logo depois e reabre offline �
   await expect(reaberta.getByRole('textbox', { name: 'Observação do equipamento' })).toHaveValue(
     'Esticador no fim do curso',
   );
-  await expect(reaberta.getByText('✗ 1 diverge')).toBeVisible();
+  await expect(reaberta.getByText('1 diverge')).toBeVisible();
 
   // A lista mostra o progresso sem precisar recarregar.
   await reaberta.getByRole('link', { name: /Lista/ }).first().click();
   const linha = linhas(reaberta).filter({ hasText: 'XA-TC-01' });
-  await expect(linha.getByText('✗ 1 diverge')).toBeVisible();
+  await expect(linha.getByText('1 diverge')).toBeVisible();
   await expect(linha.locator('.eq-pct')).not.toHaveText('0%');
 });
 
@@ -211,7 +213,7 @@ test('banco cheio ao reabrir: a medida do diário aparece e não some na ediçã
   });
   await fichaOffline(page, context);
   await campo(page, 'TAPETE', 'Largura').fill('658,4');
-  await expect(page.getByText('✓ Salvo no aparelho')).toBeVisible();
+  await expect(page.getByText('Salvo no aparelho', { exact: true })).toBeVisible();
 
   await page.evaluate(() => localStorage.setItem('teste:banco-cheio', '1'));
   await page.reload(); // agora com o banco cheio (continua na ficha)
@@ -231,7 +233,7 @@ test('banco cheio ao reabrir: a medida do diário aparece e não some na ediçã
   await expect(campo(livre, 'TAPETE', 'Largura')).toHaveValue('658,4');
   await expect(campo(livre, 'TAPETE', 'Lonas')).toHaveValue('2');
   await expect(campo(livre, 'TAPETE', 'Comprimento')).toHaveValue('23');
-  await expect(livre.getByText('✓ Salvo no aparelho')).toBeVisible();
+  await expect(livre.getByText('Salvo no aparelho', { exact: true })).toBeVisible();
 });
 
 test('app aberto em duas janelas: uma não apaga a medida da outra', async ({ page, context }) => {
@@ -242,8 +244,8 @@ test('app aberto em duas janelas: uma não apaga a medida da outra', async ({ pa
   await expect(campo(outra, 'TAPETE', 'Largura')).toHaveValue('658,4'); // chegou na outra
   await campo(outra, 'TAPETE', 'Lonas').fill('2');
   await expect(campo(page, 'TAPETE', 'Lonas')).toHaveValue('2');
-  await expect(page.getByText('✓ Salvo no aparelho')).toBeVisible();
-  await expect(outra.getByText('✓ Salvo no aparelho')).toBeVisible();
+  await expect(page.getByText('Salvo no aparelho', { exact: true })).toBeVisible();
+  await expect(outra.getByText('Salvo no aparelho', { exact: true })).toBeVisible();
   await page.close();
   await outra.close();
 

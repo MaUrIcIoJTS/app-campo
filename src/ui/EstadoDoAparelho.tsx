@@ -1,5 +1,6 @@
 import type { Dados } from '../db/repositorio.ts';
 import { LinhaBackup } from './LinhaBackup.tsx';
+import { IconeAviso } from './Icones.tsx';
 
 export interface StatusAparelho {
   offline: boolean;
@@ -26,7 +27,8 @@ export function EstadoDoAparelho({ status, dados }: { status: StatusAparelho; da
       {dados && <LinhaBackup dados={dados} />}
       {problemas.map((p) => (
         <p key={p} class="estado-aviso" role="status">
-          ⚠ {p}
+          <IconeAviso />
+          <span>{p}</span>
         </p>
       ))}
     </section>

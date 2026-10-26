@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="description" content="Levantamento de medidas de equipamentos em campo, offline." />
-    <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f0f4f9" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#131314" media="(prefers-color-scheme: dark)" />
     <meta name="color-scheme" content="light dark" />
     <!-- iOS: abre em tela cheia quando adicionado à tela inicial -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -17,6 +17,21 @@
     <title>Levantamento PCM</title>
   </head>
   <body>
+    <!--
+      THESIS: Material 3 do Android na régua dos apps do Google (Arquivos, Keep, Configurações):
+      a ferramenta some atrás da tarefa. Recusa molduras escuras de 2 px, caixa dentro de caixa e
+      negrito em tudo.
+      OWN-WORLD: superfícies tonais (fundo #f0f4f9, cartões brancos raio 20), azul Google #0842a0
+      só em ação e seleção; botões em pílula, tonais e preenchidos; campos preenchidos com linha
+      inferior; Roboto do sistema em 400/500; ícones SVG de traço 2 px; verde/vermelho/âmbar só
+      para estado.
+      STORY: o técnico vê onde está, o que falta e a próxima ação, mede de luva ao sol e confia
+      que está salvo.
+      FIRST VIEWPORT: barra superior com voltar e chip "Salvo no aparelho"; título grande; cartão
+      do item com nome fixo no topo, campos com PCM à direita e ✓/✗ circulares de 52 px.
+      FORM: padrão da categoria (canon), escolhido pelo usuário; seed abd2506c.
+      FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+    -->
     <div id="app"></div>
     <noscript>Ative o JavaScript para usar o Levantamento PCM.</noscript>
     <script type="module" src="/src/main.tsx"></script>

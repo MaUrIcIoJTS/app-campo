@@ -26,7 +26,7 @@ export class ErroAoPreparar extends Error {
 }
 
 export const MENSAGEM_FOTO_GRAVANDO =
-  'Uma foto ainda está sendo salva (ou outra operação está em andamento). Espere aparecer “✓ Salvo no aparelho” e tente de novo.';
+  'Uma foto ainda está sendo salva (ou outra operação está em andamento). Espere aparecer “Salvo no aparelho” e tente de novo.';
 
 /** Retrato do aparelho para exportar: banco + o que o diário tem de mais novo. */
 export async function retratoParaExportar(): Promise<TudoDoBanco> {

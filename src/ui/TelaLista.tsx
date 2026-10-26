@@ -8,6 +8,14 @@ import { useDados } from './dados.tsx';
 import { rotas } from './rota.ts';
 import { EstadoDoAparelho, type StatusAparelho } from './EstadoDoAparelho.tsx';
 import { Topo } from './Topo.tsx';
+import {
+  IconeArquivo,
+  IconeAviso,
+  IconeBuscar,
+  IconeCamera,
+  IconeDiverge,
+  IconeRestaurar,
+} from './Icones.tsx';
 
 export interface Filtros {
   termo: string;
@@ -102,10 +110,12 @@ export function TelaLista({ filtros, onFiltros, rodape, status }: Props) {
             <h2>Nenhum PCM neste aparelho</h2>
             <p>Importe a planilha do PCM (.xls ou .xlsx). Ela fica só neste celular.</p>
             <a class="botao botao--grande" href={rotas.importar}>
+              <IconeArquivo />
               Importar PCM
             </a>
             <p class="suave">Trocando de celular? Restaure o backup do outro aparelho.</p>
             <a class="botao botao--secundario botao--largo" href={rotas.restaurar}>
+              <IconeRestaurar />
               Restaurar backup
             </a>
           </section>
@@ -122,6 +132,7 @@ export function TelaLista({ filtros, onFiltros, rodape, status }: Props) {
         <EstadoDoAparelho status={status} dados={dados} />
         <div class="filtros">
           <div class="busca">
+            <IconeBuscar />
             <input
               type="search"
               class="campo"
@@ -145,7 +156,7 @@ export function TelaLista({ filtros, onFiltros, rodape, status }: Props) {
                 aria-label="Limpar busca"
                 onClick={() => onFiltros({ ...filtros, termo: '' })}
               >
-                ×
+                <IconeDiverge />
               </button>
             )}
           </div>
@@ -199,9 +210,24 @@ export function TelaLista({ filtros, onFiltros, rodape, status }: Props) {
                         <span style={{ width: `${pct}%` }} />
                       </span>
                       <span class="eq-pct">{pct}%</span>
-                      {fotos > 0 && <span>{fotos === 1 ? '1 foto' : `${fotos} fotos`}</span>}
-                      {diverg > 0 && <span class="eq-diverge">✗ {diverg} diverge</span>}
-                      {(r?.avisos ?? 0) > 0 && <span class="eq-aviso">⚠ aviso</span>}
+                      {fotos > 0 && (
+                        <span class="eq-fotos">
+                          <IconeCamera />
+                          {fotos === 1 ? '1 foto' : `${fotos} fotos`}
+                        </span>
+                      )}
+                      {diverg > 0 && (
+                        <span class="eq-diverge">
+                          <IconeDiverge />
+                          {diverg} diverge
+                        </span>
+                      )}
+                      {(r?.avisos ?? 0) > 0 && (
+                        <span class="eq-aviso">
+                          <IconeAviso />
+                          aviso
+                        </span>
+                      )}
                       {eq.orfao && <span class="selo selo--alerta">Fora do PCM atual</span>}
                     </span>
                   </a>

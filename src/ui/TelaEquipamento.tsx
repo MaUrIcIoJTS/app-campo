@@ -3,13 +3,22 @@ import { proximoEquipamento } from '../dominio/busca.ts';
 import { avisoDeEspaco } from '../dominio/fotos.ts';
 import { avisosDoItem } from '../dominio/medicao.ts';
 import { percentual, progressoItem, somarProgresso } from '../dominio/progresso.ts';
-import { CartaoItem, estadoDoItem, irParaItem } from './CartaoItem.tsx';
+import { CartaoItem, estadoDoItem, irParaItem, SeloDoItem } from './CartaoItem.tsx';
 import { useDados } from './dados.tsx';
 import { LinhaBackup } from './LinhaBackup.tsx';
 import { irAoProximoCampo } from './foco.ts';
 import { useEstadoFotos } from './fotos.ts';
 import { ErroAoLerFotos, FotosDoAlvo, ProvedorFotos } from './FotosDoAlvo.tsx';
-import { IconeCamera } from './Icones.tsx';
+import {
+  IconeAvancar,
+  IconeAviso,
+  IconeCamera,
+  IconeDiverge,
+  IconeErro,
+  IconeExpandir,
+  IconeLista,
+  IconeVoltar,
+} from './Icones.tsx';
 import { esquecerRolagem, guardarRolagem, rolagemDaFicha } from './rolagem.ts';
 import { rotas, substituirPor, voltarPara } from './rota.ts';
 import { Topo } from './Topo.tsx';
@@ -55,7 +64,8 @@ export function TelaEquipamento({ id, abaFiltrada }: Props) {
         <main class="tela">
           {erro ? (
             <p class="erro" role="alert">
-              ⚠ {erro}
+              <IconeErro />
+              {erro}
             </p>
           ) : (
             <p class="suave">{dados ? 'Equipamento não encontrado.' : 'Abrindo…'}</p>
@@ -81,20 +91,27 @@ export function TelaEquipamento({ id, abaFiltrada }: Props) {
       <Topo voltar={voltar} />
       <main class="tela ficha">
         <section class="cabecalho-eq">
-          <p class="eq-aba">{eq.aba}</p>
           <h1 class="titulo-tela">{eq.tag ?? eq.nome}</h1>
           {eq.tag && <p class="cabecalho-nome">{eq.nome}</p>}
+          <p class="cabecalho-apoio">
+            {eq.aba} · {itens.length === 1 ? '1 item' : `${itens.length} itens`}
+          </p>
           <p class="ficha-progresso">
             <span class="barra" aria-hidden="true">
               <span style={{ width: `${pct}%` }} />
             </span>
             <span class="eq-pct">{pct}%</span>
-            <span>{itens.length === 1 ? '1 item' : `${itens.length} itens`}</span>
             {progresso.divergencias > 0 && (
-              <span class="eq-diverge">✗ {progresso.divergencias} diverge</span>
+              <span class="eq-diverge">
+                <IconeDiverge />
+                {progresso.divergencias} diverge
+              </span>
             )}
             {avisos > 0 && (
-              <span class="eq-aviso">⚠ {avisos === 1 ? '1 aviso' : `${avisos} avisos`}</span>
+              <span class="eq-aviso">
+                <IconeAviso />
+                {avisos === 1 ? '1 aviso' : `${avisos} avisos`}
+              </span>
             )}
             {fotos > 0 && (
               <span class="eq-fotos">
@@ -106,7 +123,8 @@ export function TelaEquipamento({ id, abaFiltrada }: Props) {
           {eq.orfao && <span class="selo selo--alerta">Fora do PCM atual</span>}
           {avisoEspaco && (
             <p class="aviso aviso--bloco" role="status">
-              ⚠ {avisoEspaco}
+              <IconeAviso />
+              {avisoEspaco}
             </p>
           )}
           <ErroAoLerFotos />
@@ -115,7 +133,11 @@ export function TelaEquipamento({ id, abaFiltrada }: Props) {
 
         {itens.length > 2 && (
           <details class="indice">
-            <summary class="indice-resumo">Ir para item…</summary>
+            <summary class="indice-resumo">
+              <IconeLista />
+              <span>Ir para item…</span>
+              <IconeExpandir />
+            </summary>
             <ol class="indice-lista">
               {itens.map((i) => {
                 const estado = estadoDoItem(i, dados.medicoes.get(i.id));
@@ -131,7 +153,7 @@ export function TelaEquipamento({ id, abaFiltrada }: Props) {
                       }}
                     >
                       <span class="indice-nome">{i.nome}</span>
-                      <span class={`item-estado ${estado.classe}`}>{estado.texto}</span>
+                      <SeloDoItem estado={estado} />
                     </button>
                   </li>
                 );
@@ -181,7 +203,10 @@ export function TelaEquipamento({ id, abaFiltrada }: Props) {
                 substituirPor(rotas.equipamento(proximoEq.id));
               }}
             >
-              <span>Próximo equipamento ›</span>
+              <span class="botao-linha">
+                Próximo equipamento
+                <IconeAvancar />
+              </span>
               <span class="botao-sub">
                 {proximoEq.tag ?? proximoEq.nome}
                 {proximoEq.aba !== eq.aba && ` · ${proximoEq.aba}`}
@@ -202,7 +227,8 @@ export function TelaEquipamento({ id, abaFiltrada }: Props) {
               voltarPara(rotas.lista);
             }}
           >
-            ‹ Voltar para a lista
+            <IconeVoltar />
+            Voltar para a lista
           </a>
         </nav>
       </main>

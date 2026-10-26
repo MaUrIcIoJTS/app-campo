@@ -31,7 +31,7 @@ import { comTelaAcesa } from './telaAcesa.ts';
 
 export const MENSAGEM_RESTAURAR = {
   pendente:
-    'Ainda há medidas ou fotos sendo salvas no aparelho. Espere aparecer “✓ Salvo no aparelho” e tente de novo (se aparecer “⚠ Celular sem espaço”, libere espaço antes). Nada foi alterado.',
+    'Ainda há medidas ou fotos sendo salvas no aparelho. Espere aparecer “Salvo no aparelho” e tente de novo (se aparecer “Celular sem espaço”, libere espaço antes). Nada foi alterado.',
   mudou:
     'As medidas mudaram enquanto o app restaurava (o app está aberto em outra janela?). Nada foi alterado. Feche a outra janela e tente de novo.',
   semEspaco:

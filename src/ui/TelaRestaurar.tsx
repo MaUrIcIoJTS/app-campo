@@ -21,6 +21,7 @@ import { useDados } from './dados.tsx';
 import { Progresso } from './Progresso.tsx';
 import { rotas } from './rota.ts';
 import { Topo } from './Topo.tsx';
+import { IconeAviso, IconeErro, IconeFeito } from './Icones.tsx';
 
 type Estado =
   | { etapa: 'escolher' }
@@ -167,7 +168,8 @@ export function TelaRestaurar() {
         {estado.etapa === 'feito' && (
           <section class="cartao">
             <p class="ok" role="status">
-              ✓ Backup restaurado: {resumoDoBackup(estado.lido)}.
+              <IconeFeito />
+              Backup restaurado: {resumoDoBackup(estado.lido)}.
             </p>
             <a class="botao botao--grande" href={rotas.lista}>
               Ir para a lista
@@ -178,7 +180,8 @@ export function TelaRestaurar() {
         {estado.etapa === 'erro' && (
           <section class="cartao">
             <p class="erro" role="alert">
-              ⚠ {estado.mensagem}
+              <IconeErro />
+              {estado.mensagem}
             </p>
             <BotaoBackup onEscolher={escolheu} rotulo="Escolher outro arquivo" />
           </section>
@@ -230,7 +233,11 @@ function CopiaGuardada({
   return (
     <div class="copia">
       <CabecalhoArquivo titulo={`Cópia de ${dataCurta(copia.criadaEm)}`} arquivo={arquivo} />
-      <button type="button" class="botao botao--grande botao--largo" onClick={onVoltar}>
+      <button
+        type="button"
+        class="botao botao--secundario botao--grande botao--largo"
+        onClick={onVoltar}
+      >
         Restaurar esta cópia
       </button>
       {apagando ? (
@@ -278,7 +285,8 @@ function CopiaGuardada({
       )}
       {erroAoApagar && (
         <p class="erro" role="alert">
-          ⚠ Não consegui apagar a cópia. Ela continua guardada.
+          <IconeErro />
+          Não consegui apagar a cópia. Ela continua guardada.
         </p>
       )}
       {baixadoEm && <AvisoBaixado em={baixadoEm} />}
@@ -409,7 +417,7 @@ function Previa({
                 <td>{l.backup}</td>
                 {temAqui && (
                   <td class={l.mais ? 'mais' : undefined}>
-                    {l.mais && <span aria-hidden="true">⚠ </span>}
+                    {l.mais && <IconeAviso />}
                     {l.aqui}
                     {l.mais && (
                       <span class="mais-nota">
@@ -425,7 +433,10 @@ function Previa({
       </div>
       {risco ? (
         <div class="aviso aviso--bloco aviso--perigo" role="alert">
-          <p>⚠ Este celular tem dados que o backup não tem (em vermelho).</p>
+          <p>
+            <IconeAviso />
+            Este celular tem dados que o backup não tem (em vermelho).
+          </p>
           <p>Restaurar troca tudo: o que foi feito depois de {dataBackup} fica só na cópia.</p>
         </div>
       ) : temAqui ? (

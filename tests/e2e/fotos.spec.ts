@@ -36,7 +36,7 @@ test('foto grande da câmera: grava em pé com no máximo 1600 px e continua lá
   await expect(tapete.getByRole('button', { name: 'Ampliar foto 1 de 1' })).toBeVisible();
   await expect(tapete.getByText('1 foto', { exact: true })).toBeVisible();
   await expect(page.locator('.eq-fotos').getByText('1 foto')).toBeVisible(); // cabeçalho da ficha
-  await expect(page.getByText('✓ Salvo no aparelho')).toBeVisible();
+  await expect(page.getByText('Salvo no aparelho', { exact: true })).toBeVisible();
 
   const [f, ...resto] = await fotosNoBanco(page);
   expect(resto).toEqual([]);
@@ -97,7 +97,7 @@ test('5 fotos em itens diferentes (câmera, galeria e placa): lista e ficha cont
   const redutor = cartao(page, 'REDUTOR');
   await expect(redutor.getByRole('button', { name: 'Ampliar foto da placa 1' })).toBeVisible();
   await expect(redutor.locator('.miniatura-selo')).toHaveText('Placa');
-  await expect(page.getByText('✓ Salvo no aparelho')).toBeVisible();
+  await expect(page.getByText('Salvo no aparelho', { exact: true })).toBeVisible();
 
   // Lista: "5 fotos" na linha do equipamento, sem recarregar.
   await page.goBack();
@@ -209,7 +209,7 @@ test('"Salvando foto…" até o banco confirmar: a miniatura só aparece depois'
 
   await expect(tapete.getByRole('button', { name: 'Ampliar foto 1 de 1' })).toBeVisible();
   await expect(tapete.getByText('Salvando…')).toBeHidden();
-  await expect(page.getByText('✓ Salvo no aparelho')).toBeVisible();
+  await expect(page.getByText('Salvo no aparelho', { exact: true })).toBeVisible();
   expect(await fotosNoBanco(page)).toHaveLength(1);
 });
 
@@ -241,11 +241,11 @@ test('celular cheio: avisa no cartão e no topo, nada aparece como salvo; libero
   expect(await fotosNoBanco(page)).toHaveLength(0);
   // As medidas seguem gravando, mas o topo não diz "✓ Salvo" com foto pendente.
   await tapete.getByRole('textbox', { name: 'Largura' }).fill('658');
-  await expect(page.getByRole('button', { name: '⚠ Foto não salva' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Foto não salva' })).toBeVisible();
 
   // Da lista, o topo leva de volta ao aviso.
   await page.goBack();
-  await page.getByRole('button', { name: '⚠ Foto não salva' }).click();
+  await page.getByRole('button', { name: 'Foto não salva' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'XA-TC-01' })).toBeVisible();
   await expect(cartao(page, 'TAPETE').getByRole('alert')).toBeInViewport();
 
@@ -256,7 +256,7 @@ test('celular cheio: avisa no cartão e no topo, nada aparece como salvo; libero
     cartao(page, 'TAPETE').getByRole('button', { name: 'Ampliar foto 1 de 1' }),
   ).toBeVisible();
   await expect(page.getByRole('alert')).toHaveCount(0);
-  await expect(page.getByText('✓ Salvo no aparelho')).toBeVisible();
+  await expect(page.getByText('Salvo no aparelho', { exact: true })).toBeVisible();
   await expect(cartao(page, 'TAPETE').getByRole('textbox', { name: 'Largura' })).toHaveValue('658');
   expect(await fotosNoBanco(page)).toHaveLength(1);
 });
@@ -271,7 +271,7 @@ test('pouco espaço no celular: aviso na ficha e no rodapé da lista', async ({ 
   await importarFixture(page);
   await expect(page.getByText('Espaço para ~40 fotos')).toHaveAttribute('data-estado', 'alerta');
   await abrirFicha(page, 'XA-TC-01');
-  await expect(page.getByText('⚠ Pouco espaço no celular: cabem ~40 fotos.')).toBeVisible();
+  await expect(page.getByText('Pouco espaço no celular: cabem ~40 fotos.')).toBeVisible();
 });
 
 test('Android recarregou a página ao voltar da câmera: o cartão avisa que a foto não foi salva', async ({
@@ -292,10 +292,10 @@ test('Android recarregou a página ao voltar da câmera: o cartão avisa que a f
   await expect(aviso).toContainText('A foto não foi salva: o app fechou antes de gravar');
   await expect(aviso).toBeInViewport(); // a ficha voltou onde estava
   await expect(page.getByRole('alert')).toHaveCount(1); // só no item da foto
-  await expect(page.getByRole('button', { name: '⚠ Foto não salva' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Foto não salva' })).toBeVisible();
   await aviso.getByRole('button', { name: 'Entendi' }).click();
   await expect(page.getByRole('alert')).toHaveCount(0);
-  await expect(page.getByText('✓ Salvo no aparelho')).toBeVisible();
+  await expect(page.getByText('Salvo no aparelho', { exact: true })).toBeVisible();
 
   // Câmera aberta e foto chegando normalmente: nada de aviso depois.
   const jpeg = await jpegDeCamera(page, 1600, 1200);
@@ -386,5 +386,5 @@ test('fechou o app durante o "Salvando foto…": ao reabrir, o cartão avisa', a
 
   const reaberta = await reabrir(context);
   await expect(cartao(reaberta, 'TAPETE').getByRole('alert')).toContainText('A foto não foi salva');
-  await expect(reaberta.getByRole('button', { name: '⚠ Foto não salva' })).toBeVisible();
+  await expect(reaberta.getByRole('button', { name: 'Foto não salva' })).toBeVisible();
 });

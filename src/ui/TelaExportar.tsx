@@ -11,7 +11,15 @@ import { dataCurta, haQuantoTempo } from '../exportar/textos.ts';
 import type { UltimoBackup } from '../db/repositorio.ts';
 import { ArquivoPronto } from './ArquivoPronto.tsx';
 import { useDados } from './dados.tsx';
-import { IconeBackup, IconeCamera, IconePlanilha, IconeRestaurar } from './Icones.tsx';
+import {
+  IconeAvancar,
+  IconeAviso,
+  IconeBackup,
+  IconeCamera,
+  IconeErro,
+  IconePlanilha,
+  IconeRestaurar,
+} from './Icones.tsx';
 import { pendenciaDeBackup, textoPendencia, useAgora } from './LinhaBackup.tsx';
 import { Progresso } from './Progresso.tsx';
 import { rotas } from './rota.ts';
@@ -120,7 +128,8 @@ function Exportacao({
         <>
           {estado.etapa === 'erro' && (
             <p class="erro" role="alert">
-              ⚠ {estado.mensagem}
+              <IconeErro />
+              {estado.mensagem}
             </p>
           )}
           <button
@@ -158,7 +167,10 @@ export function TelaExportar() {
           </p>
         ) : (
           <p class="aviso aviso--bloco estado-backup">
-            <strong>Nenhum backup feito ainda.</strong>
+            <strong>
+              <IconeAviso />
+              Nenhum backup feito ainda.
+            </strong>
             {pendente && <span>{pendente}.</span>}
           </p>
         )}
@@ -212,7 +224,7 @@ export function TelaExportar() {
         <a class="link-acao" href={rotas.restaurar}>
           <IconeRestaurar />
           <span>Restaurar um backup</span>
-          <span aria-hidden="true">›</span>
+          <IconeAvancar />
         </a>
       </main>
     </>

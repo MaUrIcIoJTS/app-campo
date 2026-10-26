@@ -4,6 +4,14 @@ import { atualizarEspaco, useEstadoFotos } from './fotos.ts';
 import type { StatusAparelho } from './EstadoDoAparelho.tsx';
 import { rotas } from './rota.ts';
 import { NOME_TEMA, type Tema } from './tema.ts';
+import { IconeArquivo, IconeAviso, IconeFeito, IconeSalvando, IconeTema } from './Icones.tsx';
+
+/** Ícone da linha de estado: feito, aviso ou ainda verificando. */
+function IconeEstado({ estado }: { estado: 'ok' | 'alerta' | 'aguardando' }) {
+  if (estado === 'ok') return <IconeFeito />;
+  if (estado === 'alerta') return <IconeAviso />;
+  return <IconeSalvando />;
+}
 
 interface Props {
   status: StatusAparelho;
@@ -21,18 +29,23 @@ export function RodapeAparelho({ status, tema, trocarTema }: Props) {
   return (
     <section class="cartao rodape" aria-label="Aparelho">
       <ul class="status">
-        <li data-estado={offline ? 'ok' : 'alerta'}>
-          {offline ? 'Pronto para usar offline' : 'Preparando uso offline…'}
-        </li>
-        <li data-estado={persistente === null ? 'aguardando' : persistente ? 'ok' : 'alerta'}>
-          {persistente === null
-            ? 'Verificando armazenamento…'
-            : persistente
-              ? 'Dados protegidos no aparelho'
-              : 'Instale o app na tela inicial para proteger os dados'}
-        </li>
+        {/* O que não está pronto (sem internet, app não instalado) aparece no topo da lista;
+            repetir aqui faria a mesma frase aparecer duas vezes na tela. */}
+        {offline && (
+          <li data-estado="ok">
+            <IconeEstado estado="ok" />
+            Pronto para usar offline
+          </li>
+        )}
+        {persistente !== false && (
+          <li data-estado={persistente ? 'ok' : 'aguardando'}>
+            <IconeEstado estado={persistente ? 'ok' : 'aguardando'} />
+            {persistente ? 'Dados protegidos no aparelho' : 'Verificando armazenamento…'}
+          </li>
+        )}
         {espaco && (
           <li data-estado={espaco.nivel === 'ok' ? 'ok' : 'alerta'}>
+            <IconeEstado estado={espaco.nivel === 'ok' ? 'ok' : 'alerta'} />
             Espaço para ~{espaco.fotosQueCabem.toLocaleString('pt-BR')}{' '}
             {espaco.fotosQueCabem === 1 ? 'foto' : 'fotos'}
           </li>
@@ -49,9 +62,11 @@ export function RodapeAparelho({ status, tema, trocarTema }: Props) {
       )}
       <div class="acoes">
         <a class="botao botao--secundario" href={rotas.importar}>
+          <IconeArquivo />
           {imp ? 'Trocar o PCM' : 'Importar PCM'}
         </a>
         <button type="button" class="botao botao--secundario" onClick={trocarTema}>
+          <IconeTema />
           Tema: {NOME_TEMA[tema]}
         </button>
       </div>

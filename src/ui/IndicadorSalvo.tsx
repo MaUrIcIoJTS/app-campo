@@ -3,6 +3,7 @@ import { filaDeGravacao, semEspaco, type EstadoGravacao } from '../db/salvamento
 import { useDados } from './dados.tsx';
 import { useResumoFotos } from './fotos.ts';
 import { irPara, rotas } from './rota.ts';
+import { IconeErro, IconeFeito, IconeSalvando } from './Icones.tsx';
 
 /** Leva até o aviso da foto que não salvou (abre a ficha do equipamento, se preciso). */
 function irAoAvisoDeFoto(equipamentoId: string) {
@@ -29,7 +30,8 @@ export function IndicadorSalvo() {
   if (erroAoAbrir) {
     return (
       <span class="salvo salvo--erro" role="alert">
-        ⚠ Dados não abriram
+        <IconeErro />
+        Dados não abriram
       </span>
     );
   }
@@ -40,7 +42,8 @@ export function IndicadorSalvo() {
         class="salvo salvo--erro"
         onClick={() => void filaDeGravacao.descarregar()}
       >
-        {semEspaco(filaDeGravacao.ultimoErro()) ? '⚠ Celular sem espaço' : '⚠ Não salvou. Tentar'}
+        <IconeErro />
+        {semEspaco(filaDeGravacao.ultimoErro()) ? 'Celular sem espaço' : 'Não salvou. Tentar'}
       </button>
     );
   }
@@ -52,7 +55,8 @@ export function IndicadorSalvo() {
         class="salvo salvo--erro"
         onClick={() => irAoAvisoDeFoto(falha[1].destino.equipamentoId)}
       >
-        ⚠ Foto não salva
+        <IconeErro />
+        Foto não salva
       </button>
     );
   }
@@ -67,7 +71,8 @@ export function IndicadorSalvo() {
       role="status"
       aria-live="polite"
     >
-      {fotos > 0 ? 'Salvando foto…' : salvando ? 'Salvando…' : '✓ Salvo no aparelho'}
+      {salvando ? <IconeSalvando /> : <IconeFeito />}
+      {fotos > 0 ? 'Salvando foto…' : salvando ? 'Salvando…' : 'Salvo no aparelho'}
     </span>
   );
 }

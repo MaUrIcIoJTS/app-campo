@@ -38,3 +38,6 @@ Thumbs.db
 
 # Claude Code (configuração pessoal)
 .claude/settings.local.json
+
+# Estado local da skill impeccable (capturas de revisão, cache)
+.impeccable/

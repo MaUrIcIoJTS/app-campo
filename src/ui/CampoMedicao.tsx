@@ -4,6 +4,7 @@ import { formatarDelta, formatarNumero } from '../dominio/numeros.ts';
 import type { CampoTemplate } from '../dominio/templates/registro.ts';
 import type { ItemPcm } from '../dominio/tipos.ts';
 import { irAoProximoCampo } from './foco.ts';
+import { IconeConfere, IconeDiverge, IconeErro } from './Icones.tsx';
 
 interface Props {
   campo: CampoTemplate;
@@ -54,6 +55,7 @@ export function CampoMedicao({ campo, item, valor, conferencia, onValor, onConfe
         aria-label={`${campo.rotulo}: não tem`}
         onClick={() => onConferencia('naoTem')}
       >
+        {conferencia === 'naoTem' && <IconeConfere />}
         Não tem
       </button>
     )
@@ -95,6 +97,7 @@ export function CampoMedicao({ campo, item, valor, conferencia, onValor, onConfe
                 aria-pressed={valor === o}
                 onClick={() => onValor(valor === o ? '' : o)}
               >
+                {valor === o && <IconeConfere />}
                 {o}
               </button>
             ))}
@@ -123,11 +126,16 @@ export function CampoMedicao({ campo, item, valor, conferencia, onValor, onConfe
       )}
 
       <p class="campo-med-info" aria-live="polite">
-        {invalido && <span class="erro">Use só números (vírgula para decimal).</span>}
+        {invalido && (
+          <span class="erro">
+            <IconeErro />
+            Use só números (vírgula para decimal).
+          </span>
+        )}
         {ambiguo && (
           <span class="erro">
-            “{valor}”: é {valor?.replace('.', '')} ou {valor?.replace('.', ',')}? Use vírgula para
-            decimal.
+            <IconeErro />“{valor}”: é {valor?.replace('.', '')} ou {valor?.replace('.', ',')}? Use
+            vírgula para decimal.
           </span>
         )}
         {!invalido && !ambiguo && delta !== null && (
@@ -160,7 +168,7 @@ function BotoesConferencia({
         aria-label={`${rotulo}: confere`}
         onClick={() => onConferencia('confere')}
       >
-        ✓
+        <IconeConfere />
       </button>
       <button
         type="button"
@@ -169,7 +177,7 @@ function BotoesConferencia({
         aria-label={`${rotulo}: diverge`}
         onClick={() => onConferencia('diverge')}
       >
-        ✗
+        <IconeDiverge />
       </button>
     </span>
   );

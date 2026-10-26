@@ -12,6 +12,7 @@ import { emOperacaoCritica, filaDeGravacao, semRecarregarDurante } from '../db/s
 import { useDados } from './dados.tsx';
 import { rotas } from './rota.ts';
 import { Topo } from './Topo.tsx';
+import { IconeAviso, IconeErro } from './Icones.tsx';
 
 type Previa = { etapa: 'previa'; arquivo: File; pcm: Pcm; previa: PreviaImportacao; id: string };
 type Etapa =
@@ -26,7 +27,7 @@ const ACEITA =
 
 const ERRO = {
   pendente:
-    'Ainda há medidas ou fotos sendo salvas no aparelho. Espere aparecer “✓ Salvo no aparelho” e tente de novo.',
+    'Ainda há medidas ou fotos sendo salvas no aparelho. Espere aparecer “Salvo no aparelho” e tente de novo.',
   app: 'Uma parte do app não carregou. Abra o app uma vez com internet e tente de novo.',
   arquivo: 'Não consegui ler este arquivo. Ele abre no Excel? Tente salvar de novo como .xlsx.',
   vazio: 'Não achei equipamentos nesta planilha. Confira se é o arquivo do PCM.',
@@ -149,7 +150,8 @@ export function TelaImportar({ onImportado }: { onImportado: (mensagem: string) 
         {estado.etapa === 'erro' && (
           <section class="cartao">
             <p class="erro" role="alert">
-              ⚠ {estado.mensagem}
+              <IconeErro />
+              {estado.mensagem}
             </p>
             <BotaoArquivo onEscolher={escolheu} rotulo="Escolher arquivo de novo" />
           </section>
@@ -236,7 +238,10 @@ function Previa({
 
       {avisos.length > 0 && (
         <div class="aviso aviso--bloco">
-          <strong>⚠ Atenção na leitura:</strong>
+          <strong>
+            <IconeAviso />
+            Atenção na leitura:
+          </strong>
           <ul>
             {avisos.map((a) => (
               <li key={a}>{a}</li>

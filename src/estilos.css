@@ -1,75 +1,149 @@
 /*
- * Uso em campo: sol forte, luva, tela de 360 px.
- * Alto contraste nos dois temas, alvos de toque ≥ 48 px, texto base 18 px,
- * inputs ≥ 16 px (abaixo disso o iOS dá zoom ao focar).
+ * Material 3 do Android, na régua dos apps do Google (Arquivos, Keep, Configurações).
+ * Campo: sol forte, luva, uma mão, 360 px. Texto com contraste alto nos dois temas, alvos de
+ * toque ≥ 48 px, inputs ≥ 16 px (abaixo disso o iOS dá zoom), Roboto do sistema (nada externo).
+ * Superfícies tonais no lugar de molduras; peso 400/500 no lugar de negrito; cor forte só em
+ * ação, seleção e estado (verde confere, vermelho diverge, âmbar aviso).
  */
 :root {
   color-scheme: light dark;
-  --fundo: #f8fafc;
+
+  /* Superfícies e texto (tema claro: tokens do Google Material 3). */
+  --fundo: #f0f4f9;
   --superficie: #ffffff;
-  --texto: #0b1220;
-  --texto-suave: #334155;
-  --borda: #475569;
-  --primaria: #0b4f99;
+  --superficie-alta: #e9eef6;
+  --campo: #e7ecf2;
+  --texto: #1f1f1f;
+  --texto-suave: #444746;
+  --contorno: #747775;
+  --divisor: #c4c7c5;
+
+  /* Ação e seleção. */
+  --primaria: #0842a0;
   --primaria-texto: #ffffff;
-  --ok: #05561f;
-  --erro: #991b1b;
-  --aviso-fundo: #fff4c2;
-  --aviso-texto: #3d2a00;
-  --foco: #d97706;
-  --trilho: #e2e8f0;
-  /* Fundo das barras de progresso: visível ao sol (o --trilho some). */
-  --barra-fundo: #cbd5e1;
+  --primaria-container: #d3e3fd;
+  --primaria-container-texto: #041e49;
+  --tonal: #c2e7ff;
+  --tonal-texto: #001d35;
+
+  /* Estado. */
+  --erro: #8c1d18;
+  --erro-texto: #ffffff;
+  --erro-container: #f9dedc;
+  --erro-container-texto: #410e0b;
+  --ok: #0f5223;
+  --ok-texto: #ffffff;
+  --ok-container: #c4eed0;
+  --ok-container-texto: #072711;
+  --aviso: #8a5300;
+  --aviso-fundo: #ffe08a;
+  --aviso-texto: #3a2700;
+
+  /* Aviso temporário (snackbar). */
+  --inversa: #303030;
+  --inversa-texto: #f2f2f2;
+  --inversa-primaria: #a8c7fa;
+
+  --foco: #0842a0;
+  /* Anel de 1 px nos botões tonais: ao sol, o tonal claro some contra o branco. */
+  --anel-tonal: inset 0 0 0 1px var(--contorno);
+  /* Preenchimento das peças nos desenhos "onde medir". */
+  --trilho: #e9eef6;
+  /* Trilho das barras de progresso: visível ao sol. */
+  --barra-fundo: #c9d3e0;
+  /* Camada de toque (pressionado), da cor do texto do controle. */
+  --camada-toque: color-mix(in srgb, currentColor 14%, transparent);
+
+  --fonte: Roboto, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --raio-campo: 8px;
+  --raio-chip: 8px;
+  --raio-cartao: 20px;
+  --pilula: 999px;
   --toque: 48px;
-  /* Barra fixa do topo; o cabeçalho do item gruda logo abaixo dela. */
-  --altura-topo: calc(60px + env(safe-area-inset-top));
-  --raio: 10px;
   --espaco: 16px;
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    sans-serif;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  /* Barra fixa do topo (64 px, como a barra superior do Material); o nome do item gruda logo
+     abaixo dela. */
+  --altura-topo: calc(64px + env(safe-area-inset-top));
+
+  font-family: var(--fonte);
   font-size: 18px;
-  line-height: 1.4;
+  line-height: 1.45;
   -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
 }
 
+/* Tema escuro: tokens escuros do Google Material 3. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-tema='claro']) {
-    --fundo: #0b1220;
-    --superficie: #111a2e;
-    --texto: #f8fafc;
-    --texto-suave: #cbd5e1;
-    --borda: #94a3b8;
-    --primaria: #7cc4ff;
-    --primaria-texto: #0b1220;
-    --ok: #4ade80;
-    --erro: #ff8a80;
-    --aviso-fundo: #4a3800;
-    --aviso-texto: #fff4c2;
-    --foco: #fbbf24;
-    --trilho: #1e293b;
-    --barra-fundo: #334155;
+    --fundo: #131314;
+    --superficie: #1e1f20;
+    --superficie-alta: #282a2c;
+    --campo: #333537;
+    --texto: #e3e3e3;
+    --texto-suave: #c4c7c5;
+    --contorno: #8e918f;
+    --divisor: #444746;
+    --primaria: #a8c7fa;
+    --primaria-texto: #062e6f;
+    --primaria-container: #0842a0;
+    --primaria-container-texto: #d3e3fd;
+    --tonal: #004a77;
+    --tonal-texto: #c2e7ff;
+    --erro: #f2b8b5;
+    --erro-texto: #601410;
+    --erro-container: #8c1d18;
+    --erro-container-texto: #f9dedc;
+    --ok: #6dd58c;
+    --ok-texto: #0a3818;
+    --ok-container: #0f5223;
+    --ok-container-texto: #c4eed0;
+    --aviso: #fcc934;
+    --aviso-fundo: #4d3a00;
+    --aviso-texto: #ffe08a;
+    --inversa: #e3e3e3;
+    --inversa-texto: #303030;
+    --inversa-primaria: #0842a0;
+    --anel-tonal: none;
+    --foco: #a8c7fa;
+    --trilho: #282a2c;
+    --barra-fundo: #4a4d50;
   }
 }
 
 :root[data-tema='escuro'] {
-  --fundo: #0b1220;
-  --superficie: #111a2e;
-  --texto: #f8fafc;
-  --texto-suave: #cbd5e1;
-  --borda: #94a3b8;
-  --primaria: #7cc4ff;
-  --primaria-texto: #0b1220;
-  --ok: #4ade80;
-  --erro: #ff8a80;
-  --aviso-fundo: #4a3800;
-  --aviso-texto: #fff4c2;
-  --foco: #fbbf24;
-  --trilho: #1e293b;
-  --barra-fundo: #334155;
+  --fundo: #131314;
+  --superficie: #1e1f20;
+  --superficie-alta: #282a2c;
+  --campo: #333537;
+  --texto: #e3e3e3;
+  --texto-suave: #c4c7c5;
+  --contorno: #8e918f;
+  --divisor: #444746;
+  --primaria: #a8c7fa;
+  --primaria-texto: #062e6f;
+  --primaria-container: #0842a0;
+  --primaria-container-texto: #d3e3fd;
+  --tonal: #004a77;
+  --tonal-texto: #c2e7ff;
+  --erro: #f2b8b5;
+  --erro-texto: #601410;
+  --erro-container: #8c1d18;
+  --erro-container-texto: #f9dedc;
+  --ok: #6dd58c;
+  --ok-texto: #0a3818;
+  --ok-container: #0f5223;
+  --ok-container-texto: #c4eed0;
+  --aviso: #fcc934;
+  --aviso-fundo: #4d3a00;
+  --aviso-texto: #ffe08a;
+  --inversa: #e3e3e3;
+  --inversa-texto: #303030;
+  --inversa-primaria: #0842a0;
+  --anel-tonal: none;
+  --foco: #a8c7fa;
+  --trilho: #282a2c;
+  --barra-fundo: #4a4d50;
 }
 
 *,
@@ -79,7 +153,7 @@
 }
 
 html {
-  /* Campo focado não fica escondido sob a barra do topo nem sob o cabeçalho do item. */
+  /* Campo focado não fica escondido sob a barra do topo nem sob o nome do item. */
   scroll-padding-top: calc(var(--altura-topo) + 88px);
 }
 
@@ -99,78 +173,198 @@ button {
   color: inherit;
 }
 
+input,
+textarea {
+  caret-color: var(--primaria);
+}
+
+::selection {
+  background: var(--primaria-container);
+  color: var(--primaria-container-texto);
+}
+
+:focus-visible {
+  outline: 3px solid var(--foco);
+  outline-offset: 2px;
+}
+
+a {
+  color: var(--primaria);
+}
+
+/* Ênfase em 500, como o resto: nada de negrito 700 do navegador. */
+strong,
+b {
+  font-weight: 500;
+}
+
+/* Ícones: traço de 2 px, alinhados ao texto. Em botões e chips, o espaçamento vem do gap. */
+.icone {
+  flex: none;
+  width: 1.25em;
+  height: 1.25em;
+  margin-inline-end: 0.35em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vertical-align: -0.27em;
+}
+
+/* Círculo tonal atrás do ícone (início de uma linha de lista). */
+.icone-fundo {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--primaria-container);
+  color: var(--primaria-container-texto);
+}
+
+.icone-fundo > .icone {
+  width: 22px;
+  height: 22px;
+  margin: 0;
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .tela {
   max-width: 720px;
   margin: 0 auto;
-  padding: var(--espaco) var(--espaco) max(96px, env(safe-area-inset-bottom));
+  padding: 8px var(--espaco) max(96px, env(safe-area-inset-bottom));
 }
 
-/* Barra do topo: fica visível ao rolar, com "Salvo no aparelho" sempre à vista. */
+/* ---- Barra superior --------------------------------------------------------------- */
+
+/* Fica visível ao rolar, com "Salvo no aparelho" sempre à vista. */
 .topo {
   position: sticky;
   top: 0;
   z-index: 10;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   height: var(--altura-topo);
-  padding: env(safe-area-inset-top) var(--espaco) 0;
-  background: var(--superficie);
-  border-bottom: 2px solid var(--borda);
+  padding: env(safe-area-inset-top) 12px 0 0;
+  background: var(--fundo);
+  transition: background-color 150ms var(--ease);
+}
+
+.topo[data-rolou] {
+  background: var(--superficie-alta);
+}
+
+/* Marca o topo da página: quando sai da tela, a barra sabe que a página rolou. */
+.topo-sentinela {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
 }
 
 .topo-voltar {
-  display: inline-flex;
-  align-items: center;
-  min-height: var(--toque);
-  padding-right: 8px;
-  color: var(--primaria);
-  font-weight: 700;
-  text-decoration: none;
-  white-space: nowrap;
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 64px;
+  height: 56px;
+  color: var(--texto);
+}
+
+.topo-voltar::before {
+  content: '';
+  position: absolute;
+  inset: 4px 8px;
+  border-radius: 50%;
+}
+
+.topo-voltar:active::before {
+  background: var(--camada-toque);
+}
+
+.topo-voltar .icone {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  margin: 0;
 }
 
 .topo-titulo {
   flex: 1;
   min-width: 0;
-  margin: 0;
+  margin: 0 0 0 12px;
   overflow: hidden;
-  font-size: 1.3rem;
-  line-height: 1.15;
-  letter-spacing: 0.02em;
-}
-
-.salvo {
-  flex: none;
-  padding: 5px 8px;
-  border: 2px solid currentColor;
-  border-radius: 999px;
-  font-size: 0.85rem;
-  font-weight: 700;
+  font-size: 1.25rem;
+  font-weight: 400;
+  line-height: 1.2;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.salvo--salvo {
-  color: var(--ok);
+/* "Salvo no aparelho": chip de estado (Material: chip de assistência). */
+.salvo {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  margin-left: auto;
+  padding: 0 12px 0 8px;
+  border: 1px solid var(--divisor);
+  border-radius: var(--raio-chip);
+  background: var(--superficie);
+  color: var(--texto-suave);
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
-.salvo--salvando {
-  color: var(--texto-suave);
+.salvo .icone {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+}
+
+.salvo--salvo {
+  border-color: transparent;
+  background: var(--ok-container);
+  color: var(--ok-container-texto);
+}
+
+.salvo--salvando .icone {
+  color: var(--primaria);
+  animation: girar 1.2s linear infinite;
 }
 
 .salvo--erro {
   min-height: var(--toque);
-  background: transparent;
-  color: var(--erro);
+  border-color: transparent;
+  background: var(--erro-container);
+  color: var(--erro-container-texto);
   cursor: pointer;
 }
 
+.salvo--erro:active {
+  background-image: linear-gradient(var(--camada-toque), var(--camada-toque));
+}
+
+/* ---- Superfícies -------------------------------------------------------------------- */
+
 .cartao {
-  margin: 0 0 var(--espaco);
+  margin: 0 0 12px;
   padding: var(--espaco);
   background: var(--superficie);
-  border: 2px solid var(--borda);
-  border-radius: var(--raio);
+  border-radius: var(--raio-cartao);
 }
 
 .cartao > :first-child {
@@ -181,53 +375,169 @@ button {
   margin-bottom: 0;
 }
 
+.titulo-tela {
+  margin: 8px 4px 16px;
+  font-size: 1.6rem;
+  font-weight: 400;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.subtitulo-tela {
+  margin: 24px 4px 8px;
+  color: var(--texto-suave);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.secao-titulo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 6px;
+  font-size: 1.15rem;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.secao-titulo > .icone {
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  color: var(--primaria);
+}
+
+.suave {
+  color: var(--texto-suave);
+}
+
+.erro {
+  color: var(--erro);
+}
+
+.ok {
+  color: var(--ok);
+}
+
+/* Visualmente oculto, mas acessível (input de arquivo dentro do <label>). */
+.oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---- Botões (pílulas do Material: preenchido, tonal, texto) --------------------------- */
+
 .botao {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   min-height: var(--toque);
   min-width: var(--toque);
-  padding: 0 20px;
-  border: 2px solid var(--primaria);
-  border-radius: var(--raio);
+  padding: 0 24px;
+  border: 0;
+  border-radius: var(--pilula);
   background: var(--primaria);
   color: var(--primaria-texto);
-  font-weight: 700;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
   text-align: center;
   text-decoration: none;
   cursor: pointer;
+  transition: background-color 150ms var(--ease);
+}
+
+.botao:active {
+  background-image: linear-gradient(var(--camada-toque), var(--camada-toque));
+}
+
+.botao .icone {
+  width: 1.2em;
+  height: 1.2em;
+  margin: 0;
 }
 
 .botao--grande {
   width: 100%;
   min-height: 56px;
-  padding: 0 12px;
-  font-size: 1.1rem;
+  padding: 0 16px;
 }
 
+.botao--largo {
+  width: 100%;
+}
+
+/* Tonal: ação comum (foto, galeria, próximo item, preparar). */
 .botao--secundario {
-  background: transparent;
-  color: var(--primaria);
+  background: var(--tonal);
+  box-shadow: var(--anel-tonal);
+  color: var(--tonal-texto);
 }
 
-/* Ação menor, sem moldura (ex.: "Preparar de novo"): o toque continua com 48 px. */
+/* Texto: ação menor (ex.: "Preparar de novo"); o toque continua com 48 px. */
 .botao--texto {
-  border-color: transparent;
+  padding: 0 12px;
   background: transparent;
   color: var(--primaria);
-  text-decoration: underline;
-  text-underline-offset: 3px;
 }
 
-:focus-visible {
-  outline: 3px solid var(--foco);
-  outline-offset: 2px;
+.botao--perigo {
+  background: var(--erro);
+  color: var(--erro-texto);
+}
+
+.botao--perigo-contorno {
+  background: transparent;
+  color: var(--erro);
+  box-shadow: inset 0 0 0 1px var(--erro);
+}
+
+.botao:disabled {
+  background: color-mix(in srgb, var(--texto) 12%, transparent);
+  color: color-mix(in srgb, var(--texto) 50%, transparent);
+  box-shadow: none;
+  cursor: default;
+}
+
+.botao--texto:disabled {
+  background: transparent;
+}
+
+/* "Próximo equipamento": ação e, embaixo, qual é o próximo. */
+.botao--proximo {
+  flex-direction: column;
+  gap: 2px;
+  min-height: 64px;
+  padding: 8px 16px;
+}
+
+.botao-linha {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.botao-sub {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 0.9rem;
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .acoes {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 8px;
   margin-top: var(--espaco);
 }
 
@@ -248,186 +558,36 @@ button {
   padding: 0 12px;
 }
 
-.titulo-tela {
-  margin: 0 0 var(--espaco);
-  font-size: 1.4rem;
-  line-height: 1.2;
-  overflow-wrap: anywhere;
+/* Dois botões lado a lado (cópia: Baixar | Apagar). */
+.acoes--linha {
+  flex-wrap: nowrap;
+  margin-top: 8px;
 }
 
-.aviso {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: var(--espaco);
-  padding: 12px var(--espaco);
-  border-radius: var(--raio);
-  background: var(--aviso-fundo);
-  color: var(--aviso-texto);
-  font-weight: 600;
-}
-
-.status {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: grid;
-  gap: 8px;
-}
-
-.status li {
-  padding-left: 1.6em;
-  position: relative;
-  color: var(--texto-suave);
-}
-
-.status li::before {
-  content: '…';
-  position: absolute;
-  left: 0;
-}
-
-.status li[data-estado='ok'] {
-  color: var(--ok);
-  font-weight: 700;
-}
-
-.status li[data-estado='ok']::before {
-  content: '✓';
-}
-
-.status li[data-estado='alerta'] {
-  color: var(--erro);
-  font-weight: 700;
-}
-
-.status li[data-estado='alerta']::before {
-  content: '⚠';
-}
-
-.aviso--topo {
-  margin: 0;
-  border-radius: 0;
-}
-
-.aviso--bloco {
-  display: block;
-  margin: var(--espaco) 0;
-}
-
-.aviso--bloco ul {
-  margin: 8px 0 0;
-  padding-left: 1.2em;
-  font-weight: 500;
-}
-
-.suave {
-  color: var(--texto-suave);
-}
-
-.erro {
-  color: var(--erro);
-  font-weight: 700;
-}
-
-/* Visualmente oculto, mas acessível (input de arquivo dentro do <label>). */
-.oculto {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-/* Aviso temporário: no topo, logo abaixo da barra — nunca cobre os botões do fim da tela.
-   Não recebe toques (o que está embaixo continua tocável). */
-.toast {
-  position: fixed;
-  top: calc(var(--altura-topo) + 8px);
-  left: var(--espaco);
-  right: var(--espaco);
-  z-index: 20;
-  padding: 14px var(--espaco);
-  border-radius: var(--raio);
-  background: var(--texto);
-  color: var(--fundo);
-  font-weight: 700;
-  text-align: center;
-  box-shadow: 0 4px 16px rgb(0 0 0 / 0.35);
-  pointer-events: none;
-}
-
-/* Nova versão: fixa embaixo, não empurra a tela; dá para adiar. */
-.barra-atualizacao {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 15;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px var(--espaco) max(10px, env(safe-area-inset-bottom));
-  background: var(--aviso-fundo);
-  color: var(--aviso-texto);
-  border-top: 2px solid var(--borda);
-  font-weight: 700;
-}
-
-.barra-atualizacao span {
-  flex: 1;
+.acoes--linha > * {
+  flex: 1 1 0;
   min-width: 0;
 }
 
-.barra-atualizacao .botao {
-  padding: 0 12px;
-}
-
-.previa-troca {
-  margin: 0 0 4px;
-}
-
-/* ---- Lista ------------------------------------------------------------------ */
+/* ---- Campos (campo preenchido do Material: fundo tonal e linha embaixo) --------------- */
 
 .campo {
   width: 100%;
-  min-height: 52px;
-  padding: 0 14px;
-  background: var(--superficie);
-  border: 2px solid var(--borda);
-  border-radius: var(--raio);
-  font-size: 1.05rem;
-}
-
-.filtros {
-  display: grid;
-  gap: 10px;
-}
-
-.busca {
-  position: relative;
-}
-
-.busca .campo {
-  padding-right: 56px;
-}
-
-.busca-limpar {
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  bottom: 2px;
-  width: var(--toque);
+  min-height: 56px;
+  padding: 0 16px;
   border: 0;
-  background: transparent;
-  color: var(--texto-suave);
-  font-size: 1.6rem;
-  cursor: pointer;
+  border-radius: var(--raio-campo) var(--raio-campo) 0 0;
+  background: var(--campo);
+  box-shadow: inset 0 -2px 0 var(--texto-suave);
+  color: var(--texto);
+  font-size: 1.05rem;
+  transition: box-shadow 150ms var(--ease);
+}
+
+.campo:focus,
+.campo:focus-visible {
+  outline: none;
+  box-shadow: inset 0 -3px 0 var(--primaria);
 }
 
 .campo::placeholder {
@@ -435,39 +595,132 @@ button {
   opacity: 1;
 }
 
+select.campo {
+  padding-right: 48px;
+  border-radius: var(--pilula);
+  background-color: var(--superficie-alta);
+  box-shadow: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23444746' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9.5l6 6 6-6'/%3E%3C/svg%3E");
+  background-position: right 14px center;
+  background-repeat: no-repeat;
+  background-size: 22px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema='claro']) select.campo {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23c4c7c5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9.5l6 6 6-6'/%3E%3C/svg%3E");
+  }
+}
+
+:root[data-tema='escuro'] select.campo {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23c4c7c5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9.5l6 6 6-6'/%3E%3C/svg%3E");
+}
+
+.campo-texto {
+  display: block;
+  min-height: 80px;
+  padding: 12px 16px;
+  line-height: 1.4;
+  resize: vertical;
+}
+
+/* ---- Lista ---------------------------------------------------------------------------- */
+
+.filtros {
+  display: grid;
+  gap: 8px;
+}
+
+/* Barra de busca do Material: pílula com a lupa. */
+.busca {
+  position: relative;
+}
+
+.busca > .icone {
+  position: absolute;
+  top: 50%;
+  left: 16px;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  color: var(--texto-suave);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.busca .campo {
+  padding: 0 56px 0 52px;
+  border-radius: var(--pilula);
+  background: var(--superficie-alta);
+  box-shadow: none;
+}
+
+.busca .campo:focus,
+select.campo:focus {
+  box-shadow: inset 0 0 0 2px var(--primaria);
+}
+
+.busca-limpar {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  bottom: 4px;
+  display: grid;
+  place-items: center;
+  width: var(--toque);
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--texto-suave);
+  cursor: pointer;
+}
+
+.busca-limpar .icone {
+  width: 24px;
+  height: 24px;
+  margin: 0;
+}
+
+.busca-limpar:active {
+  background: var(--camada-toque);
+}
+
 input[type='search']::-webkit-search-cancel-button {
   display: none;
 }
 
 .contagem {
-  margin: 10px 0 6px;
+  margin: 12px 4px 8px;
   color: var(--texto-suave);
   font-size: 0.9rem;
 }
 
+/* Equipamentos: uma lista do Material dentro de uma superfície, com divisórias finas. */
 .lista-eq {
-  list-style: none;
   margin: 0 0 var(--espaco);
   padding: 0;
-  border-top: 2px solid var(--borda);
+  overflow: hidden;
+  list-style: none;
+  background: var(--superficie);
+  border-radius: var(--raio-cartao);
 }
 
 .lista-eq > li + li {
-  margin-top: 6px;
+  border-top: 1px solid var(--divisor);
 }
 
 .eq {
   display: grid;
-  gap: 4px;
-  min-height: 64px;
-  padding: 12px 4px;
-  border-bottom: 1px solid var(--borda);
+  gap: 2px;
+  min-height: 72px;
+  padding: 12px var(--espaco);
   color: inherit;
   text-decoration: none;
 }
 
 .eq:active {
-  background: var(--superficie);
+  background: var(--camada-toque);
 }
 
 .eq-linha1 {
@@ -478,15 +731,14 @@ input[type='search']::-webkit-search-cancel-button {
 }
 
 .eq-tag {
-  font-size: 1.1rem;
-  font-weight: 800;
-  letter-spacing: 0.02em;
+  font-size: 1.05rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
   white-space: nowrap;
 }
 
 .eq-tag--nome {
   font-size: 1rem;
-  letter-spacing: 0;
   white-space: normal;
 }
 
@@ -495,15 +747,22 @@ input[type='search']::-webkit-search-cancel-button {
   font-size: 0.85rem;
 }
 
-.eq-linha1 .eq-aba {
-  flex: 0 1 auto;
+.eq-linha1 > :first-child {
+  flex: 1 1 auto;
   min-width: 0;
+}
+
+/* A aba fica com a largura dela ("AREA 1" numa linha); nome longo de aba quebra até 45%. */
+.eq-linha1 .eq-aba {
+  flex: 0 0 auto;
+  max-width: 45%;
   text-align: right;
 }
 
 .eq-nome {
   display: -webkit-box;
   overflow: hidden;
+  color: var(--texto-suave);
   font-size: 0.95rem;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -514,49 +773,78 @@ input[type='search']::-webkit-search-cancel-button {
   flex-wrap: wrap;
   align-items: center;
   gap: 6px 12px;
+  margin-top: 6px;
   color: var(--texto-suave);
-  font-size: 0.85rem;
+  font-size: 0.875rem;
 }
 
+/* Barra de % (indicador linear do Material, mais grossa para o sol). */
 .barra {
-  flex: 0 0 72px;
-  height: 12px;
+  flex: 0 0 80px;
+  height: 6px;
   overflow: hidden;
   background: var(--barra-fundo);
-  border: 1px solid var(--borda);
-  border-radius: 6px;
+  border-radius: 3px;
 }
 
 .barra > span {
   display: block;
   height: 100%;
-  background: var(--ok);
+  background: var(--primaria);
+  border-radius: 3px;
 }
 
 .eq-pct {
   min-width: 3ch;
   color: var(--texto);
-  font-weight: 700;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.eq-diverge,
+.eq-fotos {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .eq-diverge {
   color: var(--erro);
-  font-weight: 700;
+  font-weight: 500;
+}
+
+.eq-aviso {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 8px;
+  border-radius: var(--raio-chip);
+  background: var(--aviso-fundo);
+  color: var(--aviso-texto);
+  font-weight: 500;
+}
+
+.eq-diverge .icone,
+.eq-fotos .icone,
+.eq-aviso .icone {
+  width: 1.15em;
+  height: 1.15em;
+  margin: 0;
 }
 
 .selo {
-  display: inline-block;
+  display: inline-flex;
   padding: 2px 8px;
-  border: 2px solid var(--borda);
-  border-radius: 6px;
+  border-radius: var(--raio-chip);
+  background: var(--superficie-alta);
   color: var(--texto-suave);
   font-size: 0.85rem;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .selo--alerta {
-  border-color: var(--erro);
-  color: var(--erro);
+  background: var(--erro-container);
+  color: var(--erro-container-texto);
 }
 
 .vazio {
@@ -564,24 +852,264 @@ input[type='search']::-webkit-search-cancel-button {
 }
 
 .vazio h2 {
-  font-size: 1.2rem;
+  margin: 8px 0;
+  font-size: 1.35rem;
+  font-weight: 400;
+}
+
+.vazio .botao + .suave {
+  margin-top: 24px;
+}
+
+/* ---- Estado do aparelho (topo da lista) e rodapé ------------------------------------------ */
+
+.estado {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+/* Linha de lista: ícone, texto em duas linhas, "Backup ›". */
+.linha-backup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 72px;
+  margin-bottom: 12px;
+  padding: 12px 8px 12px var(--espaco);
+  background: var(--superficie);
+  border-radius: var(--raio-cartao);
+  color: var(--texto);
+  text-decoration: none;
+}
+
+.estado > .linha-backup {
+  margin: 0;
+}
+
+.linha-backup:active {
+  background-image: linear-gradient(var(--camada-toque), var(--camada-toque));
+}
+
+.linha-backup[data-alerta] {
+  background-color: var(--aviso-fundo);
+  color: var(--aviso-texto);
+}
+
+.linha-backup[data-alerta] .icone-fundo {
+  background: color-mix(in srgb, var(--aviso-texto) 14%, transparent);
+  color: inherit;
+}
+
+.linha-backup-texto {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.linha-backup-depois {
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+}
+
+.linha-backup[data-alerta] .linha-backup-depois {
+  color: inherit;
+}
+
+.linha-backup-acao {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  color: var(--texto-suave);
+}
+
+.linha-backup-acao .icone {
+  width: 24px;
+  height: 24px;
+  margin: 0;
+}
+
+.linha-backup[data-alerta] .linha-backup-acao {
+  color: inherit;
+}
+
+.estado-aviso {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 0;
+  padding: 14px var(--espaco);
+  background: var(--aviso-fundo);
+  border-radius: var(--raio-cartao);
+  color: var(--aviso-texto);
+}
+
+.estado-aviso .icone {
+  width: 24px;
+  height: 24px;
+  margin: 0;
 }
 
 .rodape {
-  margin-top: calc(var(--espaco) * 2);
+  margin-top: 24px;
+}
+
+.status {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.status li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 6px 0;
+}
+
+.status li .icone {
+  width: 22px;
+  height: 22px;
+  margin: 0.05em 0 0;
+  color: var(--texto-suave);
+}
+
+.status li[data-estado='ok'] .icone {
+  color: var(--ok);
+}
+
+.status li[data-estado='alerta'] .icone {
+  color: var(--aviso);
 }
 
 .rodape .suave {
   margin: 12px 0 0;
-  font-size: 0.85rem;
+  font-size: 0.875rem;
 }
 
-/* ---- Importação ------------------------------------------------------------- */
+.rodape .acoes > * {
+  flex-basis: 100%;
+}
+
+/* ---- Avisos -------------------------------------------------------------------------- */
+
+.aviso {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: var(--espaco);
+  padding: 12px var(--espaco);
+  border-radius: 12px;
+  background: var(--aviso-fundo);
+  color: var(--aviso-texto);
+}
+
+.aviso--bloco {
+  display: block;
+  margin: 12px 0;
+}
+
+.aviso--bloco ul {
+  margin: 8px 0 0;
+  padding-left: 1.2em;
+}
+
+.aviso p {
+  margin: 0 0 6px;
+}
+
+.aviso p:last-child {
+  margin-bottom: 0;
+}
+
+.aviso--feito {
+  margin-bottom: 0;
+  background: var(--ok-container);
+  color: var(--ok-container-texto);
+}
+
+.aviso-feito-titulo {
+  font-weight: 500;
+}
+
+.aviso-nota {
+  font-size: 0.9rem;
+}
+
+.aviso--perigo {
+  background: var(--erro-container);
+  color: var(--erro-container-texto);
+}
+
+/* Aviso temporário (snackbar do Material): no topo, logo abaixo da barra — nunca cobre os
+   botões do fim da tela. Não recebe toques (o que está embaixo continua tocável). */
+.toast {
+  position: fixed;
+  top: calc(var(--altura-topo) + 8px);
+  left: var(--espaco);
+  right: var(--espaco);
+  z-index: 20;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 14px var(--espaco);
+  border-radius: 8px;
+  background: var(--inversa);
+  color: var(--inversa-texto);
+  font-size: 0.95rem;
+  box-shadow:
+    0 4px 8px 3px rgb(0 0 0 / 0.15),
+    0 1px 3px rgb(0 0 0 / 0.3);
+  pointer-events: none;
+}
+
+/* Nova versão: snackbar fixa embaixo, com as ações; não empurra a tela; dá para adiar. */
+.barra-atualizacao {
+  position: fixed;
+  left: 8px;
+  right: 8px;
+  bottom: max(8px, env(safe-area-inset-bottom));
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 4px 8px 4px var(--espaco);
+  border-radius: 8px;
+  background: var(--inversa);
+  color: var(--inversa-texto);
+  font-size: 0.95rem;
+  box-shadow:
+    0 4px 8px 3px rgb(0 0 0 / 0.15),
+    0 1px 3px rgb(0 0 0 / 0.3);
+}
+
+.barra-atualizacao span {
+  flex: 1;
+  min-width: 0;
+}
+
+.barra-atualizacao .botao {
+  padding: 0 12px;
+  background: transparent;
+  color: var(--inversa-primaria);
+}
+
+/* ---- Importação e tabelas ------------------------------------------------------------- */
 
 .previa-titulo {
   margin: 0 0 8px;
   font-size: 1.05rem;
+  font-weight: 500;
   overflow-wrap: anywhere;
+}
+
+.previa-troca {
+  margin: 0 0 4px;
 }
 
 .tabela {
@@ -593,34 +1121,152 @@ input[type='search']::-webkit-search-cancel-button {
 
 .tabela th,
 .tabela td {
-  padding: 8px 4px;
-  border-bottom: 1px solid var(--borda);
+  padding: 10px 6px;
+  border-bottom: 1px solid var(--divisor);
   text-align: left;
+}
+
+.tabela thead th {
+  color: var(--texto-suave);
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 .tabela th:not(:first-child),
 .tabela td:not(:first-child) {
   width: 4.5em;
   text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
-/* ---- Ficha do equipamento --------------------------------------------------- */
+/* ---- Ficha do equipamento ----------------------------------------------------------- */
 
 .cabecalho-eq {
   margin-bottom: var(--espaco);
+  padding: 0 4px;
 }
 
 .cabecalho-eq .titulo-tela {
-  margin: 2px 0 4px;
-}
-
-.cabecalho-nome {
-  font-size: 1.05rem;
-  font-weight: 700;
+  margin: 8px 0 2px;
 }
 
 .cabecalho-eq p {
   margin: 0;
+}
+
+.cabecalho-nome {
+  font-size: 1.05rem;
+  font-weight: 500;
+}
+
+.cabecalho-apoio {
+  margin-top: 2px !important;
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+}
+
+.ficha-progresso {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  margin-top: 12px !important;
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+}
+
+.cabecalho-eq .fotos {
+  margin-top: var(--espaco);
+}
+
+/* "Ir para item…": índice compacto, fechado por padrão. */
+.indice {
+  margin: 0 0 12px;
+  overflow: hidden;
+  background: var(--superficie);
+  border-radius: var(--raio-cartao);
+}
+
+.indice-resumo,
+.desenhos > summary {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 56px;
+  padding: 0 var(--espaco);
+  font-weight: 500;
+  list-style: none;
+  cursor: pointer;
+}
+
+.indice-resumo::-webkit-details-marker,
+.desenhos > summary::-webkit-details-marker {
+  display: none;
+}
+
+.indice-resumo > span,
+.desenhos > summary > span {
+  flex: 1;
+  min-width: 0;
+}
+
+.indice-resumo .icone,
+.desenhos > summary .icone {
+  width: 24px;
+  height: 24px;
+  margin: 0;
+}
+
+.indice-resumo > .icone:first-child,
+.desenhos > summary > .icone:first-child {
+  color: var(--primaria);
+}
+
+.indice-resumo > .icone:last-child,
+.desenhos > summary > .icone:last-child {
+  color: var(--texto-suave);
+  transition: transform 200ms var(--ease);
+}
+
+.indice[open] > .indice-resumo > .icone:last-child,
+.desenhos[open] > summary > .icone:last-child {
+  transform: rotate(180deg);
+}
+
+.indice-resumo:active,
+.desenhos > summary:active {
+  background: var(--camada-toque);
+}
+
+.indice-lista {
+  margin: 0;
+  padding: 0 0 8px;
+  list-style: none;
+}
+
+.indice-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 52px;
+  padding: 6px var(--espaco);
+  border: 0;
+  border-top: 1px solid var(--divisor);
+  background: transparent;
+  color: var(--texto);
+  text-align: left;
+  cursor: pointer;
+}
+
+.indice-item:active {
+  background: var(--camada-toque);
+}
+
+.indice-nome {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .itens {
@@ -631,41 +1277,19 @@ input[type='search']::-webkit-search-cancel-button {
   list-style: none;
 }
 
+/* Cartão do item: borda transparente (fica vermelha quando diverge, sem mexer no layout). */
 .item {
   margin: 0;
+  padding: 14px;
+  border: 2px solid transparent;
 }
 
-.item-nome {
-  margin: 0;
-  font-size: 1.1rem;
-}
-
-.item-tipo {
-  margin: 2px 0 8px;
-  color: var(--texto-suave);
-  font-size: 0.85rem;
-}
-
-.item-pcm,
-.item-qtd {
-  margin: 4px 0;
-}
-
-.rotulo-pcm {
-  display: inline-block;
-  margin-right: 4px;
-  padding: 0 6px;
-  border-radius: 4px;
-  background: var(--texto-suave);
-  color: var(--superficie);
-  font-size: 0.85rem;
-  font-weight: 800;
-  line-height: 1.35;
-  vertical-align: 1px;
+.item--diverge {
+  border-color: var(--erro);
 }
 
 /*
- * Topo do cartão: nome do item e quantos campos já foram feitos (ou "✗ Diverge").
+ * Topo do cartão: nome do item e quantos campos já foram feitos (ou "Diverge").
  * Gruda sob a barra enquanto o cartão está na tela — o técnico sempre sabe em que item está.
  */
 .item > .item-topo {
@@ -673,20 +1297,23 @@ input[type='search']::-webkit-search-cancel-button {
   top: var(--altura-topo);
   z-index: 5;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin: calc(-1 * var(--espaco)) calc(-1 * var(--espaco)) 0;
-  padding: 12px var(--espaco) 8px;
+  margin: -14px -14px 0;
+  padding: 14px 14px 10px;
   background: var(--superficie);
-  border-bottom: 2px solid var(--trilho);
-  border-radius: var(--raio) var(--raio) 0 0;
+  border-radius: calc(var(--raio-cartao) - 2px) calc(var(--raio-cartao) - 2px) 0 0;
 }
 
 .item-nome {
   display: -webkit-box;
   min-width: 0;
+  margin: 0;
   overflow: hidden;
+  font-size: 1.15rem;
+  font-weight: 500;
+  line-height: 1.3;
   overflow-wrap: anywhere;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -696,115 +1323,109 @@ input[type='search']::-webkit-search-cancel-button {
   outline: none;
 }
 
+/* Selo de estado: "3/7", "7/7 feito", aviso, "Diverge". */
 .item-estado {
+  display: inline-flex;
   flex: none;
-  padding: 2px 8px;
-  border: 2px solid var(--borda);
-  border-radius: 999px;
+  align-items: center;
+  gap: 4px;
+  min-height: 28px;
+  padding: 2px 10px;
+  border-radius: var(--raio-chip);
+  background: var(--superficie-alta);
   color: var(--texto-suave);
-  font-size: 0.85rem;
-  font-weight: 800;
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
+.item-estado .icone {
+  width: 1.1em;
+  height: 1.1em;
+  margin: 0;
+}
+
 .item-estado--ok {
-  border-color: var(--ok);
-  color: var(--ok);
+  background: var(--ok-container);
+  color: var(--ok-container-texto);
 }
 
 .item-estado--diverge {
-  border-color: var(--erro);
   background: var(--erro);
-  color: var(--superficie);
+  color: var(--erro-texto);
 }
 
 .item-estado--aviso {
-  border-color: var(--aviso-texto);
   background: var(--aviso-fundo);
   color: var(--aviso-texto);
 }
 
-.eq-aviso {
-  padding: 0 6px;
-  border-radius: 4px;
-  background: var(--aviso-fundo);
-  color: var(--aviso-texto);
-  font-weight: 700;
+.item-tipo {
+  margin: 10px 0 8px;
+  color: var(--texto-suave);
+  font-size: 0.875rem;
 }
 
-/* "Ir para item…": índice compacto, fechado por padrão. */
-.indice {
-  margin: 0 0 var(--espaco);
-  background: var(--superficie);
-  border: 2px solid var(--borda);
-  border-radius: var(--raio);
-}
-
-.indice-resumo {
-  display: flex;
-  align-items: center;
-  min-height: var(--toque);
-  padding: 0 var(--espaco);
-  color: var(--primaria);
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.indice-lista {
-  margin: 0;
-  padding: 0 8px 8px;
-  list-style: none;
-}
-
-.indice-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-  min-height: var(--toque);
-  padding: 4px 8px;
-  border: 0;
-  border-top: 1px solid var(--trilho);
-  background: transparent;
-  text-align: left;
-  cursor: pointer;
-}
-
-.indice-nome {
-  min-width: 0;
-  font-weight: 700;
-  overflow-wrap: anywhere;
-}
-
-.item--diverge {
-  border-color: var(--erro);
-  border-width: 3px;
+.item-pcm,
+.item-qtd {
+  margin: 4px 0;
 }
 
 .item-pcm {
   overflow-wrap: anywhere;
 }
 
-.ficha-progresso {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 12px;
-  margin-top: 8px !important;
+/* "PCM": de onde vem o valor de referência. */
+.rotulo-pcm {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 0 6px;
+  border-radius: 6px;
+  background: var(--tonal);
+  color: var(--tonal-texto);
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  line-height: 1.45;
+  vertical-align: 1px;
+}
+
+/* Desenhos "onde medir": linhas de lista de largura total no cartão. */
+.desenhos {
+  margin: 8px -14px 0;
+}
+
+.desenhos + .desenhos {
+  margin-top: 0;
+}
+
+.desenhos > summary {
+  color: var(--primaria);
+}
+
+.desenho {
+  margin: 0;
+  padding: 4px 0 12px; /* sem margem lateral: o SVG usa a largura toda (texto ≥ 14 px) */
+}
+
+.desenho figcaption {
+  margin-top: 6px;
+  padding: 0 var(--espaco);
+  white-space: pre-line; /* uma ideia por linha */
   color: var(--texto-suave);
   font-size: 0.9rem;
 }
 
-/* ---- Campo de medição ------------------------------------------------------- */
+/* ---- Campo de medição ------------------------------------------------------------------ */
 
 .campos {
-  margin-top: 12px;
+  margin-top: 8px;
 }
 
 .campo-med {
-  padding: 12px 0;
-  border-top: 1px solid var(--borda);
+  padding: 14px 0;
+  border-top: 1px solid var(--contorno);
 }
 
 .campo-med-topo {
@@ -813,23 +1434,24 @@ input[type='search']::-webkit-search-cancel-button {
   align-items: baseline;
   justify-content: space-between;
   gap: 2px 12px;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .campo-med-rotulo {
   display: block;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .unidade {
   color: var(--texto-suave);
-  font-weight: 600;
+  font-weight: 400;
 }
 
-/* Valor do PCM: perto do campo e com o mesmo peso do que se digita. */
+/* Valor do PCM: perto do campo, alinhado à direita, algarismos tabulares. */
 .campo-med-pcm {
   margin-left: auto;
-  font-weight: 700;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
 
@@ -843,13 +1465,14 @@ input[type='search']::-webkit-search-cancel-button {
   flex: 1;
   min-width: 0;
   font-size: 1.2rem;
-  font-weight: 700;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
 }
 
 .campo-med-input[aria-invalid='true'] {
-  border-color: var(--erro);
-  border-width: 3px;
+  background: var(--erro-container);
+  box-shadow: inset 0 -3px 0 var(--erro);
+  color: var(--erro-container-texto);
 }
 
 .conferir {
@@ -858,17 +1481,25 @@ input[type='search']::-webkit-search-cancel-button {
   gap: 8px;
 }
 
+/* ✓ e ✗: botões de ícone circulares do Material, 52 px para a luva. */
 .conferir-botao {
+  display: grid;
+  place-items: center;
   width: 52px;
   height: 52px;
   padding: 0;
-  border: 2px solid var(--borda);
-  border-radius: var(--raio);
+  border: 0;
+  border-radius: 50%;
   background: transparent;
-  font-size: 1.5rem;
-  font-weight: 800;
-  line-height: 1;
+  box-shadow: inset 0 0 0 1px var(--contorno);
   cursor: pointer;
+}
+
+.conferir-botao .icone {
+  width: 26px;
+  height: 26px;
+  margin: 0;
+  stroke-width: 2.4;
 }
 
 .conferir-botao--ok {
@@ -879,34 +1510,69 @@ input[type='search']::-webkit-search-cancel-button {
   color: var(--erro);
 }
 
+.conferir-botao:active {
+  background: var(--camada-toque);
+}
+
 .conferir-botao--ok[aria-pressed='true'] {
-  border-color: var(--ok);
   background: var(--ok);
-  color: var(--superficie);
+  box-shadow: none;
+  color: var(--ok-texto);
 }
 
 .conferir-botao--erro[aria-pressed='true'] {
-  border-color: var(--erro);
   background: var(--erro);
-  color: var(--superficie);
+  box-shadow: none;
+  color: var(--erro-texto);
+}
+
+/* "Não tem" e opções: chips de filtro do Material, com visto quando escolhidos. */
+.nao-tem,
+.opcao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 0;
+  border-radius: var(--raio-chip);
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--contorno);
+  font-weight: 500;
+  cursor: pointer;
 }
 
 .nao-tem {
   flex: none;
-  width: 112px;
+  min-width: 112px;
   height: 52px;
-  border: 2px solid var(--borda);
-  border-radius: var(--raio);
-  background: transparent;
+  padding: 0 14px;
   color: var(--texto-suave);
-  font-weight: 700;
-  cursor: pointer;
 }
 
-.nao-tem[aria-pressed='true'] {
-  border-color: var(--texto);
-  background: var(--texto);
-  color: var(--superficie);
+.opcao {
+  flex: 1 1 auto;
+  min-height: var(--toque);
+  padding: 0 16px;
+  color: var(--texto);
+}
+
+.nao-tem .icone,
+.opcao .icone {
+  width: 1.15em;
+  height: 1.15em;
+  margin: 0;
+}
+
+.nao-tem:active,
+.opcao:active {
+  background-image: linear-gradient(var(--camada-toque), var(--camada-toque));
+}
+
+.nao-tem[aria-pressed='true'],
+.opcao[aria-pressed='true'] {
+  background-color: var(--primaria);
+  box-shadow: none;
+  color: var(--primaria-texto);
 }
 
 .campo-med-conferir {
@@ -921,32 +1587,12 @@ input[type='search']::-webkit-search-cancel-button {
   gap: 8px;
 }
 
-.opcao {
-  flex: 1 1 auto;
-  min-height: var(--toque);
-  padding: 0 12px;
-  border: 2px solid var(--borda);
-  border-radius: var(--raio);
-  background: transparent;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.opcao[aria-pressed='true'] {
-  border-color: var(--primaria);
-  background: var(--primaria);
-  color: var(--primaria-texto);
-}
-
-.opcao[aria-pressed='true']::before {
-  content: '● ';
-}
-
 .campo-med-info {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 12px;
-  margin: 6px 0 0;
+  align-items: center;
+  gap: 6px 12px;
+  margin: 8px 0 0;
   font-size: 0.9rem;
 }
 
@@ -954,42 +1600,38 @@ input[type='search']::-webkit-search-cancel-button {
   margin: 0;
 }
 
+.campo-med-info .erro .icone {
+  width: 1.1em;
+  height: 1.1em;
+}
+
+/* Δ = medido − PCM. */
 .delta {
-  padding: 0 6px;
-  border: 2px solid var(--texto);
-  border-radius: 6px;
+  display: inline-flex;
+  padding: 2px 10px;
+  border-radius: var(--raio-chip);
+  background: var(--superficie-alta);
+  color: var(--texto);
   font-size: 1rem;
-  font-weight: 800;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
 }
 
 .delta--zero {
-  border-color: var(--ok);
-  color: var(--ok);
+  background: var(--ok-container);
+  color: var(--ok-container-texto);
 }
 
 .dica {
   color: var(--texto-suave);
 }
 
-.campo-texto {
-  display: block;
-  min-height: 72px;
-  padding: 10px 14px;
-  line-height: 1.35;
-  resize: vertical;
-}
-
 .obs-rotulo {
-  margin: 12px 0 6px;
+  margin: 16px 0 8px;
 }
 
 .obs-eq .campo-med-rotulo {
-  margin-bottom: 6px;
-}
-
-.botao--largo {
-  width: 100%;
+  margin-bottom: 8px;
 }
 
 .item-proximo {
@@ -1002,61 +1644,19 @@ input[type='search']::-webkit-search-cancel-button {
   margin-top: var(--espaco);
 }
 
+.fim-ficha .linha-backup {
+  margin: 0;
+}
+
 .fim-ficha .suave {
   margin: 0;
   text-align: center;
 }
 
-.botao--proximo {
-  flex-direction: column;
-  min-height: 64px;
-  padding: 6px 16px;
-  line-height: 1.2;
-}
+/* ---- Desenhos de referência ("onde medir") ------------------------------------------- */
 
-.botao-sub {
-  max-width: 100%;
-  overflow: hidden;
-  font-size: 0.9rem;
-  font-weight: 600;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* ---- Desenhos de referência ("onde medir") ------------------------------------ */
-
-.desenhos {
-  margin: 12px 0 0;
-  border: 2px solid var(--borda);
-  border-radius: var(--raio);
-}
-
-.desenhos > summary {
-  display: flex;
-  align-items: center;
-  min-height: var(--toque);
-  padding: 0 var(--espaco);
-  color: var(--primaria);
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.desenho {
-  margin: 0;
-  padding: 8px 0 12px; /* sem margem lateral: o SVG usa a largura toda (texto ≥ 14 px) */
-  border-top: 1px solid var(--trilho);
-}
-
-.desenho figcaption {
-  margin-top: 6px;
-  padding: 0 12px;
-  white-space: pre-line; /* uma ideia por linha */
-  color: var(--texto-suave);
-  font-size: 0.9rem;
-}
-
-/* viewBox de 300 de largura: na tela de 360 px o SVG tem 288 px (escala 0,96) — texto de 15
-   vira 14,4 px e traço de 2,2 vira 2,1 px. */
+/* viewBox de 300 de largura: na tela de 360 px o SVG tem ~300 px (escala ~1) — texto de 15
+   fica ≥ 14 px e traço de 2,2 fica ≥ 2 px. */
 .desenho-svg {
   display: block;
   width: 100%;
@@ -1144,7 +1744,7 @@ input[type='search']::-webkit-search-cancel-button {
   fill: currentColor;
   font-family: inherit;
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 500;
   /* contorno da cor do fundo: o texto se lê mesmo sobre linhas e peças */
   paint-order: stroke;
   stroke: var(--superficie);
@@ -1174,39 +1774,17 @@ input[type='search']::-webkit-search-cancel-button {
   stroke: none;
 }
 
-/* ---- Fotos -------------------------------------------------------------------- */
-
-.icone {
-  flex: none;
-  width: 1.3em;
-  height: 1.3em;
-  margin-right: 6px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2.2;
-  stroke-linejoin: round;
-}
-
-.eq-fotos {
-  display: inline-flex;
-  align-items: center;
-}
-
-.eq-fotos .icone {
-  width: 1.2em;
-  height: 1.2em;
-  margin-right: 4px;
-}
+/* ---- Fotos -------------------------------------------------------------------------- */
 
 .fotos {
   margin-top: 12px;
 }
 
 .fotos-titulo {
-  margin: 0 0 6px;
+  margin: 0 0 8px;
   color: var(--texto-suave);
-  font-size: 0.9rem;
-  font-weight: 700;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 /* 3 por linha em 360 px (~90 px cada): dá para ver o que é e acertar com a luva. */
@@ -1214,7 +1792,7 @@ input[type='search']::-webkit-search-cancel-button {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
-  margin: 0 0 10px;
+  margin: 0 0 12px;
   padding: 0;
   list-style: none;
 }
@@ -1226,9 +1804,9 @@ input[type='search']::-webkit-search-cancel-button {
   aspect-ratio: 1;
   padding: 0;
   overflow: hidden;
-  border: 2px solid var(--borda);
-  border-radius: 8px;
-  background: var(--trilho);
+  border: 0;
+  border-radius: 12px;
+  background: var(--superficie-alta);
   cursor: pointer;
 }
 
@@ -1243,38 +1821,72 @@ input[type='search']::-webkit-search-cancel-button {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-style: dashed;
+  border: 2px dashed var(--contorno);
   color: var(--texto);
   font-size: 0.85rem;
-  font-weight: 800;
+  font-weight: 500;
   cursor: default;
 }
 
 .miniatura-selo {
   position: absolute;
-  left: 4px;
-  bottom: 4px;
-  padding: 0 6px;
-  border-radius: 4px;
+  left: 6px;
+  bottom: 6px;
+  padding: 1px 8px;
+  border-radius: 6px;
   background: var(--primaria);
   color: var(--primaria-texto);
   font-size: 0.85rem;
-  font-weight: 800;
+  font-weight: 500;
 }
 
 .fotos-acoes {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
+}
+
+/* Na placa (dentro do cartão do item), o rótulo longo não cabe ao lado de "Galeria": um por
+   linha. */
+.item .fotos--placa .fotos-acoes > * {
+  flex: 1 1 100%;
+}
+
+/* No cabeçalho da ficha, a medição tem de começar alto na tela: "Foto do equipamento" ocupa a
+   linha e "Galeria" vira botão só com ícone (o nome continua para leitor de tela). */
+.cabecalho-eq .fotos .fotos-acoes {
+  flex-wrap: nowrap;
+}
+
+.cabecalho-eq .fotos .fotos-tirar {
+  min-width: 0;
+  min-height: 52px;
+  padding: 0 12px;
+}
+
+.cabecalho-eq .fotos .fotos-galeria {
+  width: 52px;
+  min-height: 52px;
+  padding: 0;
+}
+
+.cabecalho-eq .fotos .fotos-galeria-texto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.fotos-acoes > .botao {
+  padding: 0 16px;
 }
 
 .fotos-acoes > .fotos-tirar,
 .fotos-acoes > .botao--grande {
   flex: 1 1 auto;
   width: auto;
-}
-
-.fotos-acoes > .botao {
-  padding: 0 12px;
 }
 
 .fotos-galeria {
@@ -1291,25 +1903,17 @@ input[type='search']::-webkit-search-cancel-button {
 
 /* Fotos do cartão: um respiro antes da observação (longe dos campos e do "Próximo item"). */
 .item .fotos:not(.fotos--placa) {
-  margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid var(--borda);
+  margin-top: 20px;
 }
 
-.botao--perigo {
-  border-color: var(--erro);
-  background: var(--erro);
-  color: var(--superficie);
+.fotos-aviso-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-.botao--perigo-contorno {
-  border-color: var(--erro);
-  color: var(--erro);
-}
-
-.botao:disabled {
-  opacity: 0.6;
-  cursor: default;
+.fotos-aviso-acoes > .botao {
+  flex: 1 1 auto;
 }
 
 /* Foto ampliada: tela cheia, botões embaixo (alcance do polegar). */
@@ -1344,27 +1948,26 @@ html:has(.foto-dialogo[open]) {
   gap: 8px;
   padding: max(8px, env(safe-area-inset-top)) var(--espaco) 8px;
   background: var(--superficie);
-  border-bottom: 2px solid var(--borda);
 }
 
 .foto-dialogo-titulo {
   flex: 1;
   min-width: 0;
   margin: 0;
-  font-weight: 800;
+  font-weight: 500;
   overflow-wrap: anywhere;
 }
 
 .foto-dialogo-data {
   display: block;
   color: var(--texto-suave);
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: 0.875rem;
+  font-weight: 400;
 }
 
 .foto-dialogo-topo .botao {
   flex: none;
-  padding: 0 12px;
+  padding: 0 16px;
 }
 
 .foto-area {
@@ -1396,7 +1999,6 @@ html:has(.foto-dialogo[open]) {
   gap: 12px;
   padding: 12px var(--espaco) max(12px, env(safe-area-inset-bottom));
   background: var(--superficie);
-  border-top: 2px solid var(--borda);
 }
 
 .foto-dialogo-acoes > .botao {
@@ -1411,7 +2013,7 @@ html:has(.foto-dialogo[open]) {
 
 .foto-confirmar > p {
   margin: 0;
-  font-weight: 800;
+  font-weight: 500;
 }
 
 .foto-confirmar > .botao {
@@ -1424,201 +2026,132 @@ html:has(.foto-dialogo[open]) {
   margin-top: 12px;
 }
 
-.fotos-aviso-acoes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.fotos-aviso-acoes > .botao {
-  flex: 1 1 auto;
-}
-
-/* ===== Backup, exportar, restaurar e estado do aparelho ===== */
-
-/* Topo da lista: um bloco só — último backup e o que falta para o campo. */
-.estado {
-  margin-bottom: var(--espaco);
-  overflow: hidden;
-  border: 2px solid var(--borda);
-  border-radius: var(--raio);
-  background: var(--superficie);
-}
-
-.estado > * + * {
-  border-top: 2px solid var(--borda);
-}
-
-.estado > .linha-backup {
-  margin: 0;
-  border-width: 0;
-  border-radius: 0;
-}
-
-.estado-aviso {
-  margin: 0;
-  padding: 10px var(--espaco);
-  background: var(--aviso-fundo);
-  color: var(--aviso-texto);
-  font-weight: 700;
-}
-
-.linha-backup {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 56px;
-  margin-bottom: var(--espaco);
-  padding: 8px var(--espaco);
-  border: 2px solid var(--borda);
-  border-radius: var(--raio);
-  background: var(--superficie);
-  color: var(--texto);
-  font-weight: 700;
-  text-decoration: none;
-}
-
-.linha-backup .icone {
-  width: 1.5em;
-  height: 1.5em;
-  margin: 0;
-}
-
-.linha-backup[data-alerta] {
-  border-color: var(--aviso-texto);
-  background: var(--aviso-fundo);
-  color: var(--aviso-texto);
-}
-
-.linha-backup-texto {
-  display: grid;
-  flex: 1;
-  min-width: 0;
-}
-
-.linha-backup-depois {
-  color: var(--texto-suave);
-  font-size: 0.9rem;
-  font-weight: 600;
-}
-
-.linha-backup[data-alerta] .linha-backup-depois {
-  color: inherit;
-}
-
-.linha-backup-acao {
-  color: var(--primaria);
-  white-space: nowrap;
-}
-
-.linha-backup[data-alerta] .linha-backup-acao {
-  color: inherit;
-}
-
-.secao-titulo {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0 0 6px;
-  font-size: 1.15rem;
-}
-
-.secao-titulo .icone {
-  width: 1.5em;
-  height: 1.5em;
-  margin: 0;
-  color: var(--primaria);
-}
-
-.extensao {
-  color: var(--texto-suave);
-  font-size: 0.9em;
-  font-weight: 600;
-}
-
-.subtitulo-tela {
-  margin: calc(var(--espaco) * 1.5) 0 8px;
-  color: var(--texto-suave);
-  font-size: 1rem;
-}
+/* ---- Backup e exportar ------------------------------------------------------------------ */
 
 .estado-backup {
   display: grid;
   gap: 2px;
-  margin: 0 0 var(--espaco);
+  margin: 0 4px var(--espaco);
 }
 
 .estado-backup span {
   color: var(--texto-suave);
 }
 
-/* Backup em destaque; planilha e fotos compactas. */
-.exportacao--destaque {
-  border-width: 3px;
-  border-color: var(--primaria);
+.aviso.estado-backup {
+  margin: 0 0 var(--espaco);
 }
 
-.exportacao:not(.exportacao--destaque) {
-  padding-block: 12px;
+.aviso.estado-backup span {
+  color: inherit;
+}
+
+.extensao {
+  color: var(--texto-suave);
+  font-size: 0.9em;
+  font-weight: 400;
 }
 
 .exportacao-texto {
-  margin: 0 0 12px;
+  margin: 0 0 14px;
   color: var(--texto-suave);
   font-size: 0.95rem;
 }
 
-.exportacao:not(.exportacao--destaque) .exportacao-texto {
-  margin-bottom: 10px;
+.exportacao:not(.exportacao--destaque) {
+  padding-block: 14px;
 }
 
-/* "Restaurar um backup": link no fim da tela (alvo de 56 px). */
+/* Backup em destaque: cartão tonal (azul), botão grande. Texto secundário no tom do cartão. */
+.exportacao--destaque {
+  background: var(--primaria-container);
+  color: var(--primaria-container-texto);
+}
+
+.exportacao--destaque .secao-titulo > .icone,
+.exportacao--destaque .extensao,
+.exportacao--destaque .exportacao-texto,
+.exportacao--destaque .arquivo-nome,
+.exportacao--destaque .arquivo-pendente,
+.exportacao--destaque .progresso-nota {
+  color: inherit;
+}
+
+.exportacao--destaque .progresso-barra {
+  background: color-mix(in srgb, var(--primaria-container-texto) 18%, transparent);
+}
+
+/* No cartão tonal, o botão tonal sumiria: vira branco com texto azul. */
+.exportacao--destaque .botao--secundario {
+  background: var(--superficie);
+  color: var(--primaria);
+}
+
+/* Dentro do cartão tonal, o "Baixado" é texto, não outra caixa. */
+.exportacao--destaque .aviso--feito {
+  margin-top: 12px;
+  padding: 0;
+  background: none;
+  color: inherit;
+}
+
+.exportacao--destaque .aviso-feito-titulo {
+  color: inherit;
+}
+
+/* "Restaurar um backup": linha de lista no fim da tela. */
 .link-acao {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 16px;
   min-height: 56px;
   margin-top: var(--espaco);
-  padding: 0 4px;
+  padding: 0 var(--espaco);
+  background: var(--superficie);
+  border-radius: var(--raio-cartao);
   color: var(--primaria);
-  font-weight: 700;
+  font-weight: 500;
   text-decoration: none;
 }
 
-.link-acao > span:first-of-type {
+.link-acao > span {
   flex: 1;
-  text-decoration: underline;
-  text-underline-offset: 3px;
 }
 
 .link-acao .icone {
   margin: 0;
 }
 
-/* Barra de progresso ("Preparando… 120 de 300 fotos"). */
+.link-acao:active {
+  background-image: linear-gradient(var(--camada-toque), var(--camada-toque));
+}
+
+/* Barra de progresso ("Preparando… 120 de 300 fotos"): indicador linear do Material. */
 .progresso {
   margin: 4px 0 0;
 }
 
 .progresso-barra {
-  height: 18px;
+  height: 8px;
   overflow: hidden;
-  border: 2px solid var(--borda);
-  border-radius: 9px;
+  border-radius: 4px;
   background: var(--barra-fundo);
 }
 
 .progresso-barra > span {
   display: block;
   height: 100%;
+  border-radius: 4px;
   background: var(--primaria);
-  transition: width 0.3s;
+  transform-origin: left;
+  transition: transform 0.3s var(--ease);
 }
 
 /* Sem contagem (planilha, gravação): um pedaço da barra vai e volta. */
 .progresso-barra--continua > span {
   width: 35%;
-  animation: progresso-vai-e-volta 1.2s ease-in-out infinite alternate;
+  transition: none;
+  animation: progresso-vai-e-volta 1.2s var(--ease) infinite alternate;
 }
 
 @keyframes progresso-vai-e-volta {
@@ -1630,35 +2163,29 @@ html:has(.foto-dialogo[open]) {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .progresso-barra--continua > span {
-    width: 100%;
-    animation: none;
-    background: repeating-linear-gradient(
-      -45deg,
-      var(--primaria) 0 10px,
-      var(--barra-fundo) 10px 20px
-    );
-  }
-}
-
 .progresso-texto {
-  margin: 8px 0 0;
-  font-weight: 700;
+  margin: 10px 0 0;
   font-variant-numeric: tabular-nums;
 }
 
 .progresso-nota {
   margin: 2px 0 0;
   color: var(--texto-suave);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
 }
 
-/* Arquivo pronto: "Backup de 26/10 14:30 · 243 MB" e o nome do arquivo menor, embaixo. */
+/* Arquivo pronto: "Pronto para baixar", "Backup de 26/10 14:30" e o tamanho e nome embaixo. */
+.arquivo-pendente {
+  margin: 0 0 2px;
+  color: var(--primaria);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
 .arquivo-titulo {
   margin: 0;
-  font-size: 1.05rem;
-  font-weight: 800;
+  font-size: 1.1rem;
+  font-weight: 500;
 }
 
 .arquivo-nome {
@@ -1668,75 +2195,13 @@ html:has(.foto-dialogo[open]) {
   overflow-wrap: anywhere;
 }
 
-.arquivo-pendente {
-  margin: 0 0 2px;
-  color: var(--primaria);
-  font-size: 0.9rem;
-  font-weight: 800;
-}
-
 /* Longe do "Baixar": um toque de luva na borda de baixo não refaz o arquivo. */
 .arquivo-pronto + .botao {
-  margin-top: 16px;
+  margin-top: var(--espaco);
 }
 
-.ok {
-  color: var(--ok);
-  font-weight: 700;
-}
+/* ---- Restaurar: prévia "Backup × Este celular" --------------------------------------------- */
 
-.aviso--feito {
-  margin-bottom: 0;
-  border: 2px solid var(--ok);
-  background: var(--superficie);
-  color: var(--texto);
-  font-weight: 500;
-}
-
-.aviso--feito p {
-  margin: 0 0 6px;
-}
-
-.aviso--feito p:last-child {
-  margin-bottom: 0;
-}
-
-.aviso-feito-titulo {
-  color: var(--ok);
-  font-weight: 700;
-}
-
-.aviso-nota {
-  color: var(--texto-suave);
-  font-size: 0.9rem;
-}
-
-.aviso--perigo {
-  border: 2px solid var(--erro);
-  background: var(--superficie);
-  color: var(--erro);
-}
-
-.aviso--perigo p {
-  margin: 0 0 6px;
-}
-
-.aviso--perigo p:last-child {
-  margin-bottom: 0;
-}
-
-/* Dois botões lado a lado (cópia: Baixar | Apagar). */
-.acoes--linha {
-  flex-wrap: nowrap;
-  margin-top: 12px;
-}
-
-.acoes--linha > * {
-  flex: 1 1 0;
-  min-width: 0;
-}
-
-/* Restaurar: prévia "Backup × Este celular". */
 .previa-pcm {
   margin: 0 0 4px;
   overflow-wrap: anywhere;
@@ -1752,23 +2217,26 @@ html:has(.foto-dialogo[open]) {
   font-size: 1rem;
 }
 
-.tabela--comparar th[scope='row'] {
-  font-weight: 600;
-}
-
 .tabela--comparar thead th {
   vertical-align: bottom;
-  font-size: 0.9rem;
+}
+
+.tabela--comparar th[scope='row'] {
+  font-weight: 400;
 }
 
 .tabela--comparar td {
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
+  font-weight: 500;
 }
 
 .tabela--comparar td.mais {
   color: var(--erro);
-  font-weight: 800;
+}
+
+.tabela--comparar td .icone {
+  width: 1em;
+  height: 1em;
+  margin-inline-end: 0.2em;
 }
 
 .mais-nota {
@@ -1779,9 +2247,32 @@ html:has(.foto-dialogo[open]) {
 .copia + .copia {
   margin-top: var(--espaco);
   padding-top: var(--espaco);
-  border-top: 2px solid var(--trilho);
+  border-top: 1px solid var(--divisor);
 }
 
 .copia > .botao--grande {
-  margin-top: 4px;
+  margin-top: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .salvo--salvando .icone {
+    animation: none;
+  }
+
+  .progresso-barra--continua > span {
+    width: 100%;
+    animation: none;
+    background: repeating-linear-gradient(
+      -45deg,
+      var(--primaria) 0 10px,
+      var(--barra-fundo) 10px 20px
+    );
+  }
+
+  .indice-resumo > .icone:last-child,
+  .desenhos > summary > .icone:last-child,
+  .botao,
+  .campo {
+    transition: none;
+  }
 }

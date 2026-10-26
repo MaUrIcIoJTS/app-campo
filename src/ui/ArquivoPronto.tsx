@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { baixar, compartilhar, tamanhoLegivel } from '../exportar/compartilhar.ts';
-import { IconeBaixar, IconeCompartilhar } from './Icones.tsx';
+import { IconeBaixar, IconeCompartilhar, IconeFeito } from './Icones.tsx';
 
 /** URL do arquivo para o link "Baixar"; revogada um tempo depois (o download lê o blob depois). */
 export function useUrl(arquivo: Blob): string {
@@ -51,7 +51,8 @@ export function AvisoBaixado({ em, recusado = false }: { em: Date; recusado?: bo
     <div class="aviso aviso--bloco aviso--feito" role="status">
       {recusado && <p>Este celular não deixa compartilhar este arquivo direto: ele foi baixado.</p>}
       <p class="aviso-feito-titulo">
-        ✓ Baixado às {hora(em)}: está em <strong>Downloads</strong>.
+        <IconeFeito />
+        Baixado às {hora(em)}: está em <strong>Downloads</strong>.
       </p>
       <p>
         Para mandar: app de arquivos do celular → <strong>Downloads</strong> → segure o arquivo →{' '}

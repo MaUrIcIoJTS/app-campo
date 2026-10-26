@@ -13,18 +13,36 @@ import { CampoMedicao } from './CampoMedicao.tsx';
 import { DesenhosDoItem } from './DesenhosDoItem.tsx';
 import { irAoProximoCampo } from './foco.ts';
 import { FotosDoAlvo } from './FotosDoAlvo.tsx';
+import { IconeAviso, IconeConfere, IconeDiverge, IconeSetaBaixo } from './Icones.tsx';
 
 export const idDoCartao = (itemId: string) => `item-${itemId}`;
 
-/** Selo do item (no cartão e no índice): diverge › aviso › feito › "3/7". */
+type EstadoDoItem = ReturnType<typeof estadoDoItem>;
+
+/** Selo do item (no cartão e no índice): diverge, aviso, feito ou "3/7". */
 export function estadoDoItem(item: ItemDb, medicao: Medicao | undefined) {
   const p = progressoItem(item, medicao);
   const contagem = `${p.preenchidos}/${p.total}`;
-  if (itemDiverge(item, medicao)) return { texto: '✗ Diverge', classe: 'item-estado--diverge' };
+  if (itemDiverge(item, medicao)) return { texto: 'Diverge', classe: 'item-estado--diverge' };
   if (avisosDoItem(item, medicao).length > 0)
-    return { texto: `⚠ ${contagem}`, classe: 'item-estado--aviso' };
+    return { texto: contagem, classe: 'item-estado--aviso' };
   if (p.preenchidos === p.total) return { texto: `${contagem} feito`, classe: 'item-estado--ok' };
   return { texto: contagem, classe: '' };
+}
+
+/**
+ * O selo com o ícone do estado. "Diverge" e "feito" se leem pelo texto; o aviso ("3/7") se
+ * distingue do neutro pelo triângulo e pelo âmbar (nunca só pela cor).
+ */
+export function SeloDoItem({ estado }: { estado: EstadoDoItem }) {
+  return (
+    <span class={`item-estado ${estado.classe}`}>
+      {estado.classe === 'item-estado--diverge' && <IconeDiverge />}
+      {estado.classe === 'item-estado--aviso' && <IconeAviso />}
+      {estado.classe === 'item-estado--ok' && <IconeConfere />}
+      {estado.texto}
+    </span>
+  );
 }
 
 /** Leva o item para o topo da tela, logo abaixo da barra fixa (sem abrir o teclado). */
@@ -62,7 +80,7 @@ export function CartaoItem({ item, medicao, proximo, onMedicao }: Props) {
         <h2 class="item-nome" tabIndex={-1}>
           {item.nome}
         </h2>
-        <span class={`item-estado ${estado.classe}`}>{estado.texto}</span>
+        <SeloDoItem estado={estado} />
       </div>
       <p class="item-tipo">{template.nome}</p>
       {item.especificacao && !especNoCampo && (
@@ -97,7 +115,8 @@ export function CartaoItem({ item, medicao, proximo, onMedicao }: Props) {
 
       {avisos.map((a) => (
         <p key={a} class="aviso aviso--bloco" role="status">
-          ⚠ {a}
+          <IconeAviso />
+          {a}
         </p>
       ))}
 
@@ -132,7 +151,8 @@ export function CartaoItem({ item, medicao, proximo, onMedicao }: Props) {
           class="botao botao--secundario botao--largo item-proximo"
           onClick={() => irParaItem(proximo.id)}
         >
-          Próximo item ↓
+          <IconeSetaBaixo />
+          Próximo item
         </button>
       )}
     </li>

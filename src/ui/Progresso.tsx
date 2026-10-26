@@ -25,7 +25,7 @@ export function Progresso({
         aria-valuemax={100}
         aria-valuenow={pct ?? undefined}
       >
-        <span style={pct === null ? undefined : { width: `${pct}%` }} />
+        <span style={pct === null ? undefined : { transform: `scaleX(${pct / 100})` }} />
       </div>
       <p class="progresso-texto">{texto}</p>
       {nota && <p class="progresso-nota">{nota}</p>}
