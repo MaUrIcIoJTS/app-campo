@@ -59,8 +59,13 @@ export function novaNota(
   return { equipamentoId, observacao, atualizadaEm: carimbo(anterior?.atualizadaEm) };
 }
 
-export function valorPcm(campo: CampoTemplate, item: ItemPcm): string | number | null {
-  return campo.pcm?.(item) ?? null;
+/** `irmaos`: os outros itens do equipamento (o tambor lê o mancal na linha MANCAL). */
+export function valorPcm(
+  campo: CampoTemplate,
+  item: ItemPcm,
+  irmaos: readonly ItemPcm[] = [],
+): string | number | null {
+  return campo.pcm?.(item, irmaos) ?? null;
 }
 
 /** Δ = medido − PCM, só para campo numérico com os dois lados numéricos. */
@@ -68,10 +73,11 @@ export function deltaDoCampo(
   campo: CampoTemplate,
   item: ItemPcm,
   valor: string | undefined,
+  irmaos: readonly ItemPcm[] = [],
 ): number | null {
   if (campo.tipo !== 'numero' || !valor) return null;
   const medido = parseMedida(valor);
-  const pcm = parseNumero(valorPcm(campo, item));
+  const pcm = parseNumero(valorPcm(campo, item, irmaos));
   return medido === null || pcm === null ? null : arredondar(medido - pcm, 3);
 }
 

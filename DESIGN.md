@@ -18,6 +18,9 @@ colors:
   divisor: '#c4c7c5'
   barra-fundo: '#c9d3e0'
   trilho: '#e9eef6'
+  desenho: '#6e4b00'
+  desenho-fundo: '#ffefc4'
+  desenho-texto: '#ffffff'
   erro: '#8c1d18'
   erro-texto: '#ffffff'
   erro-container: '#f9dedc'
@@ -33,6 +36,7 @@ colors:
   inversa-texto: '#f2f2f2'
   inversa-primaria: '#a8c7fa'
   foco: '#0842a0'
+  foto-fundo: '#000000'
 typography:
   headline:
     fontFamily: "Roboto, system-ui, -apple-system, 'Segoe UI', sans-serif"
@@ -67,7 +71,55 @@ typography:
     fontFamily: "Roboto, system-ui, -apple-system, 'Segoe UI', sans-serif"
     fontSize: '0.875rem'
     fontWeight: 500
+  ficha-tag:
+    fontFamily: "'Roboto Condensed', sans-serif-condensed, 'Arial Narrow', Roboto, sans-serif"
+    fontSize: '2rem'
+    fontWeight: 700
+    lineHeight: 1.1
+  ficha-guia:
+    fontFamily: "'Roboto Condensed', sans-serif-condensed, 'Arial Narrow', Roboto, sans-serif"
+    fontSize: '1.375rem'
+    fontWeight: 700
+    lineHeight: 1.15
+  ficha-item:
+    fontFamily: "'Roboto Condensed', sans-serif-condensed, 'Arial Narrow', Roboto, sans-serif"
+    fontSize: '1.3rem'
+    fontWeight: 700
+    lineHeight: 1.3
+  titulo-vazio:
+    fontFamily: "Roboto, system-ui, -apple-system, 'Segoe UI', sans-serif"
+    fontSize: '1.35rem'
+    fontWeight: 400
+  titulo-arquivo:
+    fontFamily: "Roboto, system-ui, -apple-system, 'Segoe UI', sans-serif"
+    fontSize: '1.1rem'
+    fontWeight: 500
+  body-large:
+    fontFamily: "Roboto, system-ui, -apple-system, 'Segoe UI', sans-serif"
+    fontSize: '1.05rem'
+    fontWeight: 400
+  subtitle:
+    fontFamily: "Roboto, system-ui, -apple-system, 'Segoe UI', sans-serif"
+    fontSize: '1rem'
+    fontWeight: 500
+  body-medium:
+    fontFamily: "Roboto, system-ui, -apple-system, 'Segoe UI', sans-serif"
+    fontSize: '0.95rem'
+    fontWeight: 400
+  caption:
+    fontFamily: "Roboto, system-ui, -apple-system, 'Segoe UI', sans-serif"
+    fontSize: '0.85rem'
+    fontWeight: 500
+  desenho:
+    fontFamily: "Roboto, system-ui, -apple-system, 'Segoe UI', sans-serif"
+    fontSize: '15px'
+    fontWeight: 400
+  extensao:
+    fontFamily: "Roboto, system-ui, -apple-system, 'Segoe UI', sans-serif"
+    fontSize: '0.9em'
+    fontWeight: 400
 rounded:
+  raio-etiqueta: '6px'
   raio-chip: '8px'
   raio-campo: '8px'
   raio-aviso: '12px'
@@ -203,12 +255,16 @@ Um azul de ação sobre neutros azulados frios, com três cores de estado (verde
 
 ### Primary
 
-- **Azul Google profundo** (`primaria`): botão preenchido, chip marcado ("Não tem", opções), links, cursor do campo, linha do campo focado, barras de progresso, ícone inicial das seções, cotas e marcas dos desenhos "onde medir". É o tom 30 do M3; o tom 40 (#0b57d0) previsto no contrato perdeu contraste ao sol e foi trocado.
+- **Azul Google profundo** (`primaria`): botão preenchido, chip marcado ("Não tem", opções), links, cursor do campo, linha do campo focado, barras de progresso, ícone inicial das seções. É o tom 30 do M3; o tom 40 (#0b57d0) previsto no contrato perdeu contraste ao sol e foi trocado.
 - **Azul claro de container** (`primaria-container` / `primaria-container-texto`): círculo atrás do ícone nas linhas de lista, cartão de backup em destaque, seleção de texto.
 
 ### Secondary
 
-- **Azul-céu tonal** (`tonal` / `tonal-texto`): botão tonal (ação comum: foto, galeria, próximo item, preparar) e o rótulo "PCM" que marca o valor de referência.
+- **Azul-céu tonal** (`tonal` / `tonal-texto`): botão tonal (ação comum: foto, galeria, próximo item, preparar).
+
+### Desenhos "onde medir"
+
+- **Âmbar de prancheta** (`desenho`, `desenho-fundo`, `desenho-texto`): só dentro dos desenhos, como no protótipo de campo que o técnico aprovou. Cotas e setas em âmbar escuro (aparece ao sol); a peça que se mede (tambor, tubo do rolete, polias) em amarelo claro com contorno âmbar; marcas numeradas em âmbar. O texto do desenho fica na cor do texto: 400 no nome da peça, 600 no que se mede.
 
 ### Tertiary
 
@@ -220,13 +276,15 @@ Um azul de ação sobre neutros azulados frios, com três cores de estado (verde
 
 - **Névoa azulada** (`fundo`): fundo da página e da barra superior em repouso.
 - **Papel branco** (`superficie`): cartões, listas, linhas de ação, topo grudado do cartão do item.
-- **Névoa alta** (`superficie-alta`): barra superior depois de rolar, barra de busca, select, selos neutros, Δ diferente de zero, miniatura carregando.
+- **Névoa alta** (`superficie-alta`): barra superior e barra de guias depois de rolar, barra de busca, select, selos neutros, Δ diferente de zero, miniatura carregando, o valor do PCM ("PCM: [valor]") e a faixa de bloco dentro do cartão ("Mancal e rolamento").
+- **Tinta como seleção** (`texto` de fundo, `fundo` de texto): a guia aberta da ficha, como no protótipo; ao sol é o par de maior contraste.
 - **Campo** (`campo`): fundo dos campos preenchidos.
 - **Tinta** (`texto`) e **Grafite** (`texto-suave`): texto principal e secundário. O secundário mira 7:1 e também desenha a linha dos campos em repouso.
 - **Contorno** (`contorno`): anel dos botões tonais no claro, dos ✓/✗ e dos chips desmarcados, separador entre campos de medição.
 - **Divisor** (`divisor`): linhas entre itens de lista, de tabela e entre cópias de backup; borda do chip "Salvo" neutro.
 - **Trilho de barra** (`barra-fundo`): fundo das barras de progresso, escurecido para aparecer ao sol.
 - **Inversa** (`inversa`, `inversa-texto`, `inversa-primaria`): snackbars (aviso temporário e nova versão).
+- **Preto de foto** (`foto-fundo`): fundo da foto ampliada, com um véu preto a 85 % atrás (como a galeria do Android); só ali.
 
 ### Tema escuro
 
@@ -242,13 +300,14 @@ Um azul de ação sobre neutros azulados frios, com três cores de estado (verde
 | divisor         | #444746 | ok / ok-texto                     | #6dd58c / #0a3818           |
 | barra-fundo     | #4a4d50 | ok-container / -texto             | #0f5223 / #c4eed0           |
 | trilho          | #282a2c | aviso / aviso-fundo / aviso-texto | #fcc934 / #4d3a00 / #ffe08a |
+| desenho         | #f2b705 | desenho-fundo / desenho-texto     | #3a3115 / #131314           |
 | foco            | #a8c7fa | inversa / -texto / -primaria      | #e3e3e3 / #303030 / #0842a0 |
 
 No escuro, `--anel-tonal` é `none`: o tonal escuro já se separa do fundo.
 
 ### Named Rules
 
-**The Cor É Estado Rule.** Verde, vermelho e âmbar significam confere/salvo, diverge/erro e aviso, e nada mais. Nunca usar uma delas como decoração ou para dar destaque a algo que não é estado.
+**The Cor É Estado Rule.** Verde, vermelho e âmbar significam confere/salvo, diverge/erro e aviso, e nada mais. Nunca usar uma delas como decoração ou para dar destaque a algo que não é estado. A única exceção é o âmbar de prancheta dentro dos desenhos "onde medir" (tokens `desenho*`, nunca `aviso*`).
 
 **The Nunca Só Cor Rule.** Todo estado vermelho ou âmbar vem com ícone (✗, ⚠) e palavra ("Diverge", "Não salvou"). A cor reforça; não carrega o significado sozinha.
 
@@ -256,26 +315,28 @@ No escuro, `--anel-tonal` é `none`: o tonal escuro já se separa do fundo.
 
 ## Typography
 
-**Display Font:** nenhuma; não há display.
+**Title Font:** Roboto Condensed do sistema (`'Roboto Condensed', sans-serif-condensed`, que o Android já traz; nada é baixado), só nos títulos da ficha.
 **Body Font:** Roboto do sistema (com system-ui, -apple-system, 'Segoe UI', sans-serif)
 
-**Character:** Uma família só, a do próprio Android, em 400 e 500. A hierarquia vem de tamanho e de cor (texto ou texto suave), não de negrito; `strong` e `b` são 500.
+**Character:** A família do próprio Android, em 400 e 500 no texto. Os títulos da ficha (TAG, título da guia, nome do item) são condensados e em 700, como no protótipo de campo; todo o resto tira a hierarquia de tamanho e de cor, não de negrito. `strong` e `b` são 500.
 
 A raiz é 18 px, então `1rem` = 18 px. Todo input, select, textarea e botão tem no mínimo 16 px.
 
 ### Hierarchy
 
-- **Headline** (400, 1.6rem, 1.25): título da tela e nome do equipamento na ficha; quebra em qualquer ponto (`overflow-wrap: anywhere`) para TAG e nome longos.
+- **Headline** (400, 1.6rem, 1.25): título das telas (lista, backup, restaurar); quebra em qualquer ponto (`overflow-wrap: anywhere`).
+- **Ficha** (condensada, 700): TAG do equipamento (2rem), título da guia (1.375rem) e nome do item no cartão (1.3rem, até 2 linhas).
 - **Title-bar** (400, 1.25rem, 1.2): nome curto do app na barra superior da tela inicial; uma linha com reticências.
-- **Title** (500, 1.15rem, 1.3): nome do item no cartão (até 2 linhas) e título de seção nos cartões.
+- **Title** (500, 1rem a 1.15rem): título de seção nos cartões, do desenho da guia e da faixa "Mancal e rolamento".
 - **Medida** (500, 1.2rem, algarismos tabulares): o valor digitado no campo de medição.
 - **Body** (400, 18 px, 1.45): texto corrido; os campos comuns usam 1.05rem.
 - **Body-small** (400, 0.9rem): texto de apoio (contagens, notas, legendas dos desenhos, datas).
 - **Label** (500, 0.875rem): chips, selos, botões, cabeçalhos de tabela, títulos de grupo de fotos. Sem caixa alta.
+- **Degraus de apoio** (já em uso): body-large 1.05rem (campos comuns, TAG na lista, nome do equipamento), subtitle 1rem/500 (subtítulos de guia, faixa de bloco, Δ), body-medium 0.95rem (subtítulo de tela, snackbars, tabelas, "Ocultar"), caption 0.85rem/500 (selos, contagem na guia, nome de arquivo), 1.35rem (título da lista vazia), 1.1rem (título do arquivo pronto), 15 px no desenho (escala ~1 em 360 px) e 0.9em na extensão do arquivo.
 
 ### Named Rules
 
-**The 500 É o Teto Rule.** Nenhum texto passa de 500. Ênfase é 500, nunca 700.
+**The Negrito Só no Título Rule.** Só os títulos condensados da ficha passam de 500. Rótulo, valor, botão e ênfase ficam em 500, nunca 700.
 
 **The Algarismo Tabular Rule.** Todo número que se compara (PCM, medido, Δ, %, "3/7", colunas de tabela) usa `font-variant-numeric: tabular-nums`.
 
@@ -285,7 +346,7 @@ Coluna única centrada, `max-width: 720px`, com margens laterais de 16 px (`--es
 
 Ritmo de 4 px: 4, 8, 12, 16 e 24 px. 8 px entre botões e chips, 12 px entre cartões e entre itens, 16 px de padding de cartão (14 px no cartão do item), 24 px antes de um grupo novo.
 
-A barra superior é fixa e tem 64 px (mais a área segura): voltar à esquerda, chip "Salvo no aparelho" à direita, sempre à vista. O nome do item gruda logo abaixo dela enquanto o cartão está na tela, e o `scroll-padding-top` evita que o campo focado fique escondido sob os dois.
+A barra superior é fixa e tem 64 px (mais a área segura): voltar à esquerda, chip "Salvo no aparelho" à direita, sempre à vista. Na ficha, a barra de guias (64 px, chips em pílula de 48 px) prende logo abaixo dela e rola de lado sozinha; o nome do item gruda abaixo das guias, e o `scroll-padding-top` evita que o campo focado fique escondido sob as três. Cada guia de medida abre com o seu título e o desenho "onde medir" aberto; "Ocultar" fica lembrado no aparelho.
 
 Grupos de ações (`.acoes`) quebram linha com base de 140 px; em pilha ocupam a largura toda. Fotos em grade de 3 colunas (cerca de 90 px cada em 360 px). Ações finais e da foto ampliada ficam embaixo, no alcance do polegar.
 
@@ -334,7 +395,7 @@ Pílulas do Material, firmes e grandes para a luva.
 - **Salvo no aparelho:** chip de estado de 36 px na barra superior. Verde (`ok-container`) quando salvo; neutro com borda `divisor` e ícone girando em `primaria` enquanto salva; vermelho (`erro-container`), com 48 px e tocável, quando não salvou.
 - **Escolha ("Não tem" e opções):** chips de filtro de raio 8 com anel de 1 px em `contorno`, 500. "Não tem" tem 112 × 52 px; opções têm 48 px e dividem a linha. Marcados ficam preenchidos em `primaria` com visto.
 - **Selos:** `item-estado` (28 px: "3/7" neutro, feito verde, aviso âmbar, "Diverge" preenchido em `erro`), `selo` neutro ou de alerta, e o Δ (neutro; verde quando zero).
-- **Rótulo PCM:** etiqueta tonal de raio 6 com a palavra "PCM", antes do valor de referência. Marca de onde vem o número; só aparece ao lado de um valor do PCM.
+- **Valor do PCM:** "PCM:" em texto suave e o valor numa etiqueta `superficie-alta` de raio 6, em 500 tabular (o que o técnico compara fica em destaque, como no protótipo).
 
 ### Cards / Containers
 
@@ -349,13 +410,15 @@ Pílulas do Material, firmes e grandes para a luva.
 - **Style:** campo preenchido do Material: fundo `campo`, 56 px de altura, raio 8 só em cima, linha inferior de 2 px em `texto-suave` em repouso.
 - **Focus:** a linha vira 3 px em `primaria`. Na busca e no select (pílulas em `superficie-alta`, sem linha), o foco é um anel interno de 2 px em `primaria`.
 - **Error:** fundo `erro-container`, texto `erro-container-texto`, linha de 3 px em `erro`, e a mensagem com ícone embaixo.
-- **Medição:** rótulo em 500 com a unidade em texto suave; o valor do PCM alinhado à direita na mesma linha; o input em 1.2rem tabular ao lado dos ✓/✗; Δ e mensagens embaixo.
+- **Medição:** rótulo em 500 com a unidade em texto suave; o valor do PCM na linha de baixo, à esquerda (valor longo quebra sem ficar torto); o input em 1.2rem tabular ao lado dos ✓/✗; Δ e mensagens embaixo. Um campo pode abrir um bloco dentro do cartão (`grupo`): faixa `superficie-alta` de ponta a ponta com o título ("Mancal e rolamento").
 
 ### Navigation
 
 - **Barra superior:** 64 px, fundo `fundo`, que vira `superficie-alta` ao rolar. Voltar com área de 64 × 56 px e ícone de 24 px, camada de toque circular. Na tela inicial, o nome curto do app no lugar do voltar.
 - **Linhas de ação:** `linha-backup` (72 px: círculo de ícone tonal, duas linhas de texto, chevron; âmbar quando em alerta) e `link-acao` (56 px, texto `primaria`), ambas em cartão de raio 20.
-- **Listas:** equipamentos numa superfície única de raio 20 com divisórias de 1 px, linhas de 72 px no mínimo (TAG em 500, aba à direita, nome em 2 linhas, barra de % de 6 px e contadores). O índice "Ir para item" e os desenhos "onde medir" são `<details>` de 56 px com chevron que gira 180°.
+- **Listas:** equipamentos numa superfície única de raio 20 com divisórias de 1 px, linhas de 72 px no mínimo (TAG em 500, aba à direita, nome em 2 linhas, barra de % de 6 px e contadores). Os desenhos dos cartões são `<details>` de 56 px com chevron que gira 180°.
+- **Guias da ficha:** chips em pílula de 48 px com anel `contorno`; a aberta em tinta. Ao lado do nome, ✓ verde em círculo (tudo feito), ✗ vermelho em círculo (algo diverge) ou o número de fotos; leitor de tela ouve "Correia diverge", "Fotos 3". A guia PCM é uma lista com divisórias (item, especificação, qtd. e selo) que leva ao item; "Seguir para X" (botão grande com a contagem embaixo) fecha cada guia.
+- **Desenho da guia:** cartão aberto no alto da guia, título em 500 e "Ocultar"/"Ver desenho" em azul na mesma linha de 56 px; figura e legenda embaixo.
 
 ### Conferir (✓ / ✗)
 

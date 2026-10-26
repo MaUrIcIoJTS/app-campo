@@ -1,5 +1,6 @@
 import type { ItemPcm, TipoItem } from '../tipos.ts';
 import { parseCodigoRolete, type CodigoRolete } from '../rolete.ts';
+import { normalizar } from '../texto.ts';
 import * as x from './extratores.ts';
 
 /** Desenho de referência "onde medir" (`src/ui/desenhos/`). */
@@ -26,10 +27,15 @@ export interface CampoTemplate {
   tipo: 'numero' | 'texto' | 'opcoes';
   unidade?: string;
   opcoes?: readonly string[];
-  /** Valor de referência do PCM para mostrar ao lado do campo (e calcular Δ). */
-  pcm?: (item: ItemPcm) => string | number | null;
+  /**
+   * Valor de referência do PCM para mostrar ao lado do campo (e calcular Δ). `irmaos` são os
+   * outros itens do mesmo equipamento (ex.: o tambor busca o rolamento na linha ROLAMENTO).
+   */
+  pcm?: (item: ItemPcm, irmaos: readonly ItemPcm[]) => string | number | null;
   /** Ajuda curta mostrada abaixo do campo. */
   dica?: string;
+  /** Título de um bloco dentro do cartão: aparece antes do primeiro campo do grupo. */
+  grupo?: string;
 }
 
 export interface TemplateItem {
@@ -57,6 +63,15 @@ const opc = (
 const doRolete = (k: keyof CodigoRolete) => (i: ItemPcm) =>
   parseCodigoRolete(i.especificacao)?.[k] ?? null;
 const espec = (i: ItemPcm) => i.especificacao || null;
+/** Especificação das linhas de mancal/rolamento/bucha do equipamento (as diferentes, com " / "). */
+const dosMancais = (nome: RegExp) => (_: ItemPcm, irmaos: readonly ItemPcm[]) => {
+  const specs = irmaos
+    .filter((i) => i.tipo === 'mancal' && nome.test(normalizar(i.nome)))
+    .map((i) => i.especificacao.trim())
+    .filter(Boolean);
+  return specs.length > 0 ? [...new Set(specs)].join(' / ') : null;
+};
+const MANCAL_DO_TAMBOR = 'Mancal e rolamento';
 const qtd = num('quantidade', 'Quantidade', 'un', { pcm: (i) => x.quantidade(i.quantidade) });
 const ESTADO = ['Bom', 'Folga', 'Ruído', 'Aquecido', 'Vazando', 'Danificado'] as const;
 
@@ -112,6 +127,13 @@ export const TEMPLATES: Readonly<Record<TipoItem, TemplateItem>> = {
       num('pontaAcoplamento', 'Ø ponta (redutor ou acoplamento)', 'mm'),
       txt('chaveta', 'Chaveta da ponta', { dica: 'Largura × altura, ex.: 14 × 9' }),
       num('comprimentoEixo', 'Comprimento total do eixo', 'mm'),
+      // Cada tambor com o seu mancal: os dois lados podem ter mancais diferentes.
+      txt('mancal', 'Mancal (código gravado)', {
+        grupo: MANCAL_DO_TAMBOR,
+        pcm: dosMancais(/^MANCAL/),
+      }),
+      txt('rolamento', 'Rolamento', { grupo: MANCAL_DO_TAMBOR, pcm: dosMancais(/^ROLAMENTO/) }),
+      txt('bucha', 'Bucha', { grupo: MANCAL_DO_TAMBOR, pcm: dosMancais(/^BUCHA/) }),
     ],
   },
   rolete: {

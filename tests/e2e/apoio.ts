@@ -12,9 +12,50 @@ export const linhasDoTexto = (alvo: Locator) =>
     return new Set([...faixa.getClientRects()].map((r) => Math.round(r.bottom))).size;
   });
 
-/** Cartão de um item na ficha, pelo nome exato do item. */
+/** Cartão de um item na ficha, pelo nome exato do item (a guia dele precisa estar aberta). */
 export const cartao = (page: Page, item: string) =>
   page.locator('li.item').filter({ has: page.getByRole('heading', { name: item, exact: true }) });
+
+/** Guia da ficha onde fica cada item dos equipamentos da fixture. */
+const GUIA_DO_ITEM: Readonly<Record<string, string>> = {
+  TAPETE: 'Correia',
+  CORREIA: 'Correia',
+  'TAMBOR 1': 'Tambores',
+  'TAMBOR 2': 'Tambores',
+  MANCAL: 'Tambores',
+  ROLAMENTO: 'Tambores',
+  BUCHA: 'Tambores',
+  'ROLETE DE CARGA': 'Roletes',
+  'ROLETE DE RETORNO': 'Roletes',
+  REDUTOR: 'Acionamento',
+  MOTOR: 'Acionamento',
+  'POLIA DO MOTOR': 'Acionamento',
+  'CORREIA EM V': 'Acionamento',
+  'CHAVE DE SEGURANÇA': 'Outros',
+};
+
+/** Botão de uma guia da ficha ("Tambores", "Fotos 3"…), pelo começo do nome. */
+export const guia = (page: Page, nome: string) =>
+  page.getByRole('tab', { name: new RegExp(`^${nome}`) });
+
+/**
+ * Abre uma guia da ficha. Clica pelo DOM: o click do Playwright num elemento preso no topo
+ * (sticky) rola a página antes, o que um dedo não faz.
+ */
+export async function abrirGuia(page: Page, nome: string) {
+  const botao = guia(page, nome);
+  if ((await botao.getAttribute('aria-selected')) === 'true') return;
+  await botao.evaluate((el: HTMLElement) => el.click());
+  await expect(botao).toHaveAttribute('aria-selected', 'true');
+}
+
+/** Abre a guia onde fica o item e devolve o cartão dele. */
+export async function noItem(page: Page, item: string): Promise<Locator> {
+  const nome = GUIA_DO_ITEM[item];
+  if (!nome) throw new Error(`Item sem guia conhecida: ${item}`);
+  await abrirGuia(page, nome);
+  return cartao(page, item);
+}
 
 /** Espera o service worker pré-carregar o app e assumir a página (a partir daí, abre offline). */
 export async function esperarServiceWorker(page: Page) {

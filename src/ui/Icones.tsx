@@ -204,15 +204,6 @@ export function IconeRegua() {
   );
 }
 
-/** Lista com marcadores: ir para um item. */
-export function IconeLista() {
-  return (
-    <Icone>
-      <path d="M9 6.5h11M9 12h11M9 17.5h11M4.5 6.5h.1M4.5 12h.1M4.5 17.5h.1" />
-    </Icone>
-  );
-}
-
 export function IconeApagar() {
   return (
     <Icone>

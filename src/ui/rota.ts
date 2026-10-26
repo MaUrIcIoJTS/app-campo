@@ -6,15 +6,20 @@ export type Rota =
   | { tela: 'importar' }
   | { tela: 'exportar' }
   | { tela: 'restaurar' }
-  | { tela: 'equipamento'; id: string };
+  | { tela: 'equipamento'; id: string; guia?: string };
 
 export function lerRota(hash: string): Rota {
   const [, tela, param] = hash.replace(/^#\/?/, '').match(/^([^/]*)\/?(.*)$/) ?? [];
   if (tela === 'importar') return { tela: 'importar' };
   if (tela === 'exportar') return { tela: 'exportar' };
   if (tela === 'restaurar') return { tela: 'restaurar' };
-  if (tela === 'equipamento' && param)
-    return { tela: 'equipamento', id: decodeURIComponent(param) };
+  if (tela === 'equipamento' && param) {
+    // O id vem codificado (sem "/"); depois dele, a guia aberta (Correia, Tambores…).
+    const [id = '', guia] = param.split('/');
+    return guia
+      ? { tela: 'equipamento', id: decodeURIComponent(id), guia }
+      : { tela: 'equipamento', id: decodeURIComponent(id) };
+  }
   return { tela: 'lista' };
 }
 
@@ -23,7 +28,8 @@ export const rotas = {
   importar: '#/importar',
   exportar: '#/exportar',
   restaurar: '#/restaurar',
-  equipamento: (id: string) => `#/equipamento/${encodeURIComponent(id)}`,
+  equipamento: (id: string, guia?: string) =>
+    `#/equipamento/${encodeURIComponent(id)}${guia ? `/${guia}` : ''}`,
 };
 
 export function irPara(hash: string): void {

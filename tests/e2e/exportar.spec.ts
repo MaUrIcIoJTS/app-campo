@@ -5,6 +5,7 @@ import * as XLSX from 'xlsx';
 import { lerPcm } from '../../src/dominio/pcm/parser.ts';
 import {
   abrirFicha,
+  abrirGuia,
   cartao,
   esperarServiceWorker,
   fichaOffline,
@@ -12,6 +13,7 @@ import {
   jpegDeCamera,
   linhas,
   linhasDoTexto,
+  noItem,
 } from './apoio.ts';
 
 const arquivo = (buffer: Buffer, name: string) => ({ name, mimeType: 'image/jpeg', buffer });
@@ -21,19 +23,22 @@ const semRolagemLateral = async (page: Page) =>
 
 /** Medidas, ✓/✗, "Não tem", observações e 2 fotos (uma da placa) no XA-TC-01. */
 async function preencher(page: Page) {
-  const tapete = cartao(page, 'TAPETE');
+  const tapete = await noItem(page, 'TAPETE');
   await tapete.getByRole('textbox', { name: 'Largura' }).fill('660');
   await tapete.getByRole('textbox', { name: 'Centro a centro LD' }).fill('12450');
   await tapete.getByRole('button', { name: 'Lonas: diverge' }).click();
   await tapete.getByRole('textbox', { name: 'Observação do item' }).fill('Emenda "nova" no LD');
-  await cartao(page, 'TAMBOR 1')
-    .getByRole('button', { name: 'Ø ponta (redutor ou acoplamento): não tem' })
-    .click();
-  await page.getByRole('textbox', { name: 'Observação do equipamento' }).fill('Proteção solta');
   const jpeg = await jpegDeCamera(page, 2000, 1500);
   await camera(page, 'TAPETE').setInputFiles(arquivo(jpeg, 'a.jpg'));
   await expect(page.locator('.eq-fotos').getByText('1 foto')).toBeVisible();
-  await cartao(page, 'MOTOR')
+  const tambor = await noItem(page, 'TAMBOR 1');
+  await tambor.getByRole('button', { name: 'Ø ponta (redutor ou acoplamento): não tem' }).click();
+  await tambor.getByRole('textbox', { name: 'Mancal (código gravado)' }).fill('SNA 515');
+  await abrirGuia(page, 'Notas');
+  await page.getByRole('textbox', { name: 'Observação do equipamento' }).fill('Proteção solta');
+  await (
+    await noItem(page, 'MOTOR')
+  )
     .getByLabel(/Foto da placa/)
     .setInputFiles(arquivo(jpeg, 'b.jpg'));
   await expect(page.locator('.eq-fotos').getByText('2 fotos')).toBeVisible();
@@ -213,16 +218,20 @@ test('backup offline → outro aparelho limpo → restaurar: medidas, observaç�
 
   expect(await estadoDoBanco(p2)).toEqual(antes);
   await abrirFicha(p2, 'XA-TC-01');
-  const tapete = cartao(p2, 'TAPETE');
+  const tapete = await noItem(p2, 'TAPETE');
   await expect(tapete.getByRole('textbox', { name: 'Largura' })).toHaveValue('660');
   await expect(tapete.getByRole('textbox', { name: 'Observação do item' })).toHaveValue(
     'Emenda "nova" no LD',
   );
+  await expect(tapete.getByRole('button', { name: 'Ampliar foto 1 de 1' })).toBeVisible();
+  await expect(p2.locator('.eq-fotos').getByText('2 fotos')).toBeVisible();
+  await expect(
+    (await noItem(p2, 'TAMBOR 1')).getByRole('textbox', { name: 'Mancal (código gravado)' }),
+  ).toHaveValue('SNA 515');
+  await abrirGuia(p2, 'Notas');
   await expect(p2.getByRole('textbox', { name: 'Observação do equipamento' })).toHaveValue(
     'Proteção solta',
   );
-  await expect(tapete.getByRole('button', { name: 'Ampliar foto 1 de 1' })).toBeVisible();
-  await expect(p2.locator('.eq-fotos').getByText('2 fotos')).toBeVisible();
   await outro.contexto.close();
 });
 
@@ -299,9 +308,10 @@ test('PCM atualizado (.xlsx) offline: colunas na linha de cada item e reimporta 
     header: 1,
     defval: '',
   });
+  // O mancal anotado no tambor vai junto, na linha do tambor.
   expect(fora[3]!.slice(3, 5)).toEqual([
     'TAMBOR 1',
-    'Ø ponta (redutor ou acoplamento): não se aplica',
+    'Ø ponta (redutor ou acoplamento): não se aplica; Mancal (código gravado): SNA 515',
   ]);
   expect(lerPcm(bytes)).toEqual(lerPcm(readFileSync(FIXTURE)));
 
@@ -315,7 +325,9 @@ test('PCM atualizado (.xlsx) offline: colunas na linha de cada item e reimporta 
   await expect(linhas(page)).toHaveCount(9);
   await expect(page.getByText('Fora do PCM atual')).toHaveCount(0);
   await abrirFicha(page, 'XA-TC-01');
-  await expect(cartao(page, 'TAPETE').getByRole('textbox', { name: 'Largura' })).toHaveValue('660');
+  await expect(
+    (await noItem(page, 'TAPETE')).getByRole('textbox', { name: 'Largura' }),
+  ).toHaveValue('660');
   await expect(page.locator('.eq-fotos').getByText('2 fotos')).toBeVisible();
 });
 

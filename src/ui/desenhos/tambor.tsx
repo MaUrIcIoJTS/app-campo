@@ -16,7 +16,7 @@ export function Tambor() {
       <rect class="cheia" x={230} y={64} width={24} height={48} rx={3} />
       <rect class="cheia" x={222} y={112} width={40} height={10} />
       {/* corpo do tambor */}
-      <rect class="cheia" x={80} y={40} width={140} height={100} rx={6} />
+      <rect class="cheia principal" x={80} y={40} width={140} height={100} rx={6} />
       <Cota x1={108} y1={40} x2={108} y2={140} texto="Ø tambor" tx={116} ty={72} ancora="inicio" />
       <Linha x1={80} y1={36} x2={80} y2={18} />
       <Linha x1={220} y1={36} x2={220} y2={18} />

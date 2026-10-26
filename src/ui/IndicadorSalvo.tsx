@@ -1,19 +1,27 @@
 import { useEffect, useState } from 'preact/hooks';
 import { filaDeGravacao, semEspaco, type EstadoGravacao } from '../db/salvamento.ts';
+import { guiaDoItem, type IdGuia } from '../dominio/guias.ts';
 import { useDados } from './dados.tsx';
-import { useResumoFotos } from './fotos.ts';
-import { irPara, rotas } from './rota.ts';
+import { useResumoFotos, type Destino } from './fotos.ts';
+import { irPara, lerRota, rotas, substituirPor } from './rota.ts';
 import { IconeErro, IconeFeito, IconeSalvando } from './Icones.tsx';
 
-/** Leva até o aviso da foto que não salvou (abre a ficha do equipamento, se preciso). */
-function irAoAvisoDeFoto(equipamentoId: string) {
+/**
+ * Leva até o aviso da foto que não salvou: abre a ficha do equipamento na guia do item (ou
+ * em Fotos, se a foto é do equipamento), se o aviso não estiver na tela.
+ */
+function irAoAvisoDeFoto({ equipamentoId }: Destino, guia: IdGuia | undefined) {
   const mostrar = () => {
     const aviso = document.querySelector<HTMLElement>('.fotos-aviso');
     aviso?.scrollIntoView({ block: 'center' });
     return !!aviso;
   };
   if (mostrar()) return;
-  irPara(rotas.equipamento(equipamentoId));
+  const destino = rotas.equipamento(equipamentoId, guia);
+  const rota = lerRota(location.hash);
+  // Na mesma ficha, só troca de guia (sem empilhar histórico); de fora, abre a ficha.
+  if (rota.tela === 'equipamento' && rota.id === equipamentoId) substituirPor(destino);
+  else irPara(destino);
   setTimeout(mostrar, 400); // depois que a ficha abrir e voltar onde estava
 }
 
@@ -53,7 +61,16 @@ export function IndicadorSalvo() {
       <button
         type="button"
         class="salvo salvo--erro"
-        onClick={() => irAoAvisoDeFoto(falha[1].destino.equipamentoId)}
+        onClick={() => {
+          const { destino } = falha[1];
+          const item = dados?.itensPorEquipamento
+            .get(destino.equipamentoId)
+            ?.find((i) => i.id === destino.alvoId);
+          irAoAvisoDeFoto(
+            destino,
+            destino.alvoId === destino.equipamentoId ? 'fotos' : item && guiaDoItem(item),
+          );
+        }}
       >
         <IconeErro />
         Foto não salva

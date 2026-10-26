@@ -75,7 +75,7 @@ export function App() {
       ) : restaurando || rota.tela === 'restaurar' ? (
         <TelaRestaurar />
       ) : rota.tela === 'equipamento' ? (
-        <TelaEquipamento id={rota.id} abaFiltrada={filtros.aba} />
+        <TelaEquipamento id={rota.id} guia={rota.guia} abaFiltrada={filtros.aba} />
       ) : (
         <TelaLista
           filtros={filtros}

@@ -32,8 +32,15 @@ Um tipo de item tem 4 partes: **detecção** (coluna B/C → tipo), **template**
      chave no IndexedDB e a coluna na exportação; se precisar, crie migração).
    - `rotulo` curto em português, com a letra do desenho quando houver (`A — comprimento do tubo`).
    - `unidade` (`mm`, `m`, `cv`, `rpm`, `A`, `un`) e `pcm: (item) => …` quando o PCM tiver o valor.
+     Se o valor está em outra linha do mesmo equipamento, use o 2º argumento:
+     `pcm: (item, irmaos) => …` (ex.: o mancal do tambor vem da linha MANCAL).
    - `dica` só se ajudar em campo, em até ~8 palavras.
+   - `grupo: 'Título'` abre um bloco dentro do cartão (ex.: "Mancal e rolamento" no tambor).
    - `fotoPlaca: true` para itens com placa (motor, redutor).
+   - **Guia da ficha**: o tipo novo precisa de uma guia em `GUIA_DO_TIPO`
+     (`src/dominio/guias.ts`: Correia, Tambores, Roletes, Acionamento ou Outros); o typecheck
+     acusa se faltar. Atualize `tests/unit/guias.test.ts` e, se o item da fixture mudar de guia,
+     `GUIA_DO_ITEM` em `tests/e2e/apoio.ts`.
 
 6. **Desenho** — `src/ui/desenhos/<id>.tsx`, o id em `IdDesenho`, a entrada em
    `src/ui/desenhos/index.ts` (SVG + legenda de 1–2 frases) e o id em `desenhos` do template:

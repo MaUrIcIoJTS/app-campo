@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { abrirFicha, importarFixture } from './apoio.ts';
 
 /** Problemas de legibilidade dos desenhos abertos na página (vazio = tudo certo). */
@@ -27,6 +27,16 @@ function problemasDeLeitura() {
   return problemas;
 }
 
+/** Guias de medida da ficha aberta (sem PCM, Fotos e Notas). */
+const guiasDeMedida = (page: Page) =>
+  page
+    .getByRole('tab')
+    .evaluateAll((els) =>
+      els
+        .map((e) => e.id.replace('guia-', ''))
+        .filter((id) => !['pcm', 'fotos', 'notas'].includes(id)),
+    );
+
 test('desenhos "onde medir": os 15 abrem, legíveis em 360 px (texto ≥ 14 px, traço ≥ 2 px, nada cortado)', async ({
   page,
 }) => {
@@ -37,51 +47,76 @@ test('desenhos "onde medir": os 15 abrem, legíveis em 360 px (texto ≥ 14 px, 
   for (const tag of ['XA-TC-01', 'XA-EC-01', 'XB-PV-01']) {
     await page.goto('./#/');
     await abrirFicha(page, tag);
-    const resumos = page.locator('details.desenhos > summary');
-    const n = await resumos.count();
-    // Botão de 48 px numa linha só (o nome curto cabe em 360 px).
-    const alturas = await resumos.evaluateAll((els) =>
-      els.map((e) => e.getBoundingClientRect().height),
-    );
-    expect(Math.min(...alturas)).toBeGreaterThanOrEqual(48);
-    expect(Math.max(...alturas)).toBeLessThan(60);
-    for (let k = 0; k < n; k++) await resumos.nth(k).click();
-    // Cada desenho aberto mostra a figura (o SVG só é montado ao abrir).
-    await expect(page.locator('details.desenhos[open]')).toHaveCount(n);
-    await expect(page.locator('details.desenhos[open]:not(:has(figure))')).toHaveCount(0);
+    for (const id of await guiasDeMedida(page)) {
+      await page.locator(`#guia-${id}`).evaluate((el: HTMLElement) => el.click());
+      await expect(page.locator(`#guia-${id}`)).toHaveAttribute('aria-selected', 'true');
+      // O desenho da guia (se houver) já vem aberto no alto, com a figura.
+      await expect(page.locator('details.desenho-guia:not([open])')).toHaveCount(0);
+      const resumos = page.locator('details.desenhos > summary');
+      const n = await resumos.count();
+      if (n > 0) {
+        // Botão de 48 px numa linha só (o nome curto cabe em 360 px).
+        const alturas = await resumos.evaluateAll((els) =>
+          els.map((e) => e.getBoundingClientRect().height),
+        );
+        expect(Math.min(...alturas)).toBeGreaterThanOrEqual(48);
+        expect(Math.max(...alturas)).toBeLessThan(60);
+      }
+      for (let k = 0; k < n; k++) await resumos.nth(k).click();
+      // Cada desenho aberto mostra a figura (o SVG só é montado ao abrir).
+      await expect(page.locator('details.desenhos[open]')).toHaveCount(n);
+      await expect(page.locator('details[open]:not(:has(figure))')).toHaveCount(0);
 
-    for (const nome of await page
-      .locator('.desenho-svg')
-      .evaluateAll((svgs) => svgs.map((s) => s.getAttribute('aria-label') ?? '')))
-      vistos.add(nome);
+      for (const nome of await page
+        .locator('.desenho-svg')
+        .evaluateAll((svgs) => svgs.map((s) => s.getAttribute('aria-label') ?? '')))
+        vistos.add(nome);
 
-    expect(await page.evaluate(problemasDeLeitura)).toEqual([]);
-    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
-      360,
-    );
+      expect(await page.evaluate(problemasDeLeitura)).toEqual([]);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+        360,
+      );
+    }
   }
 
   expect(vistos.size).toBe(15);
 });
 
-test('cada desenho tem seu botão: fechado por padrão, abre e fecha com um toque grande', async ({
+test('desenho da guia aberto no alto ("Ocultar" lembra); os do cartão abrem com um toque grande', async ({
   page,
 }) => {
   await page.goto('./');
   await importarFixture(page);
   await abrirFicha(page, 'XA-TC-01');
+
+  // Guia Correia: a vista de cima já aberta no alto, antes do cartão do tapete.
+  const doTopo = page.locator('details.desenho-guia');
+  await expect(doTopo).toHaveAttribute('open', '');
+  await expect(doTopo.getByRole('img', { name: /Tapete visto de cima/ })).toBeVisible();
+  const resumo = doTopo.locator('summary');
+  expect((await resumo.boundingBox())!.height).toBeGreaterThanOrEqual(48);
+  await expect(resumo).toContainText('Ocultar');
+
+  // No cartão, só o que não está no alto: o corte, fechado por padrão.
   const tapete = page
     .locator('li.item')
     .filter({ has: page.getByRole('heading', { name: 'TAPETE', exact: true }) });
-  const deCima = tapete.locator('summary', { hasText: 'Desenho: vista de cima' });
-  await expect(tapete.locator('summary', { hasText: 'Desenho: corte' })).toBeVisible();
+  await expect(tapete.locator('summary', { hasText: 'Desenho: vista de cima' })).toHaveCount(0);
+  const corte = tapete.locator('summary', { hasText: 'Desenho: corte' });
   await expect(tapete.getByRole('img')).toHaveCount(0);
-  expect((await deCima.boundingBox())!.height).toBeGreaterThanOrEqual(48);
-
-  await deCima.click();
+  expect((await corte.boundingBox())!.height).toBeGreaterThanOrEqual(48);
+  await corte.click();
   await expect(tapete.getByRole('img')).toHaveCount(1); // só o desenho tocado
-  await expect(tapete.getByRole('img', { name: /Tapete visto de cima/ })).toBeVisible();
-  const fechar = tapete.locator('summary', { hasText: 'Fechar desenho' });
-  await fechar.click();
+  await tapete.locator('summary', { hasText: 'Fechar desenho' }).click();
   await expect(tapete.getByRole('img')).toHaveCount(0);
+
+  // "Ocultar" recolhe e fica assim na ficha seguinte (o técnico já sabe onde medir).
+  await resumo.click();
+  await expect(doTopo.getByRole('img')).toHaveCount(0);
+  await expect(resumo).toContainText('Ver desenho');
+  await page.goto('./#/');
+  await abrirFicha(page, 'XA-TC-02');
+  await expect(page.locator('details.desenho-guia')).not.toHaveAttribute('open');
+  await page.locator('details.desenho-guia > summary').click();
+  await expect(page.locator('details.desenho-guia').getByRole('img')).toBeVisible();
 });

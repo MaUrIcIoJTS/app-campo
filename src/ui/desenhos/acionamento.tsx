@@ -11,7 +11,7 @@ export function Acionamento() {
       {/* tambor de tração (de cima), mancais e o eixo dele entrando no redutor */}
       <Centro x1={257} y1={2} x2={257} y2={150} />
       <rect class="peca" x={253} y={4} width={8} height={142} />
-      <rect class="cheia" x={232} y={24} width={50} height={70} rx={4} />
+      <rect class="cheia principal" x={232} y={24} width={50} height={70} rx={4} />
       <rect class="cheia" x={247} y={6} width={20} height={12} />
       <rect class="cheia" x={247} y={100} width={20} height={12} />
       <rect class="cheia" x={220} y={120} width={74} height={66} rx={6} />
@@ -25,10 +25,10 @@ export function Acionamento() {
       </Texto>
       {/* entrada do redutor com a polia movida (grande) */}
       <rect class="peca" x={120} y={158} width={100} height={8} />
-      <rect class="cheia" x={110} y={134} width={10} height={56} />
+      <rect class="cheia principal" x={110} y={134} width={10} height={56} />
       {/* motor ao lado, eixo paralelo, polia motora (pequena) alinhada com a movida */}
       <rect class="peca" x={120} y={58} width={14} height={8} />
-      <rect class="cheia" x={110} y={50} width={10} height={24} />
+      <rect class="cheia principal" x={110} y={50} width={10} height={24} />
       <rect class="cheia" x={134} y={34} width={62} height={56} rx={6} />
       <Texto x={165} y={67} ancora="meio">
         Motor

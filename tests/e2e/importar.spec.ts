@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { esperarServiceWorker, importarFixture, linhas } from './apoio.ts';
+import { abrirGuia, esperarServiceWorker, importarFixture, linhas } from './apoio.ts';
 
 test('importa o PCM, lista, busca e filtra por aba', async ({ page }) => {
   await page.goto('./');
@@ -57,6 +57,10 @@ test('ficha mostra itens do PCM e tambores deduzidos; voltar mantém a busca', a
   await expect(page.getByRole('heading', { level: 1, name: 'XA-TC-01' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'TAPETE' })).toBeVisible();
   await expect(page.getByText('26" 3/16 X 1/16 2 LONAS')).toBeVisible();
+  // Os tambores deduzidos ficam na guia Tambores (e também na guia PCM, como linhas extras).
+  await abrirGuia(page, 'Tambores');
+  await expect(page.getByText('Não está no PCM — deduzido dos mancais')).toHaveCount(2);
+  await abrirGuia(page, 'PCM');
   await expect(page.getByText('Não está no PCM — deduzido dos mancais')).toHaveCount(2);
 
   await page.getByRole('link', { name: /Lista/ }).click();

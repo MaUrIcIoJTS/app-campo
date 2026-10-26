@@ -48,16 +48,19 @@ console.log(
 console.log('* tambores deduzidos dos mancais (não estão no PCM)\n');
 
 // Tipos detectados + cobertura dos extratores (quantos campos com referência PCM foram lidos).
-const todos = pcm.abas
-  .flatMap((a) => a.equipamentos.flatMap((e) => e.itens))
-  .filter((i) => i.origem === 'pcm');
+const equipamentos = pcm.abas.flatMap((a) => a.equipamentos);
+const todos = equipamentos.flatMap((e) => e.itens).filter((i) => i.origem === 'pcm');
+const irmaosDe = new Map(equipamentos.flatMap((e) => e.itens.map((i) => [i, e.itens] as const)));
 const porTipo = new Map<TipoItem, typeof todos>();
 for (const i of todos) porTipo.set(i.tipo, [...(porTipo.get(i.tipo) ?? []), i]);
 
 console.log(`${pad('Tipo detectado', 34)}${padE('Itens', 6)}${padE('%', 6)}   Ref. PCM extraída`);
 for (const [tipo, itens] of [...porTipo].sort((a, b) => b[1].length - a[1].length)) {
   const campos = TEMPLATES[tipo].campos.filter((c) => c.pcm);
-  const lidos = itens.reduce((s, i) => s + campos.filter((c) => c.pcm?.(i) != null).length, 0);
+  const lidos = itens.reduce(
+    (s, i) => s + campos.filter((c) => c.pcm?.(i, irmaosDe.get(i) ?? []) != null).length,
+    0,
+  );
   const possiveis = itens.length * campos.length;
   const cobertura = possiveis
     ? `${Math.round((100 * lidos) / possiveis)}% (${lidos}/${possiveis})`

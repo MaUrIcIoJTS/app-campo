@@ -1,3 +1,4 @@
+import { Fragment } from 'preact';
 import type { ItemDb, Medicao } from '../db/esquema.ts';
 import {
   avisosDoItem,
@@ -8,7 +9,7 @@ import {
   valorPcm,
 } from '../dominio/medicao.ts';
 import { progressoItem } from '../dominio/progresso.ts';
-import { TEMPLATES } from '../dominio/templates/registro.ts';
+import { TEMPLATES, type IdDesenho } from '../dominio/templates/registro.ts';
 import { CampoMedicao } from './CampoMedicao.tsx';
 import { DesenhosDoItem } from './DesenhosDoItem.tsx';
 import { irAoProximoCampo } from './foco.ts';
@@ -45,29 +46,62 @@ export function SeloDoItem({ estado }: { estado: EstadoDoItem }) {
   );
 }
 
-/** Leva o item para o topo da tela, logo abaixo da barra fixa (sem abrir o teclado). */
-export function irParaItem(itemId: string) {
+/** Altura do que fica preso no alto da tela: a barra e, na ficha, as guias. */
+export function alturaFixa(): number {
+  const topo = document.querySelector('.topo')?.getBoundingClientRect().height ?? 64;
+  const guias = document.querySelector('.guias')?.getBoundingClientRect().height ?? 0;
+  return topo + guias;
+}
+
+/**
+ * Leva o item para o topo da tela, logo abaixo das barras fixas (sem abrir o teclado). Com
+ * `'fotos'`, vai direto aos botões de foto do cartão (vindo da guia Fotos).
+ */
+export function irParaItem(itemId: string, parte?: 'fotos') {
   const cartao = document.getElementById(idDoCartao(itemId));
   if (!cartao) return;
-  const barra = document.querySelector('.topo')?.getBoundingClientRect().height ?? 60;
-  window.scrollTo(0, cartao.getBoundingClientRect().top + window.scrollY - barra - 8);
+  const fotos = parte === 'fotos' ? cartao.querySelector('.fotos:not(.fotos--placa)') : null;
+  if (fotos) {
+    // O nome do item fica preso sob as barras: desconta a altura dele também.
+    const nome = cartao.querySelector('.item-topo')?.getBoundingClientRect().height ?? 0;
+    const y = fotos.getBoundingClientRect().top + window.scrollY - alturaFixa() - nome - 8;
+    window.scrollTo(0, y);
+    return;
+  }
+  window.scrollTo(0, cartao.getBoundingClientRect().top + window.scrollY - alturaFixa() - 8);
   cartao.querySelector<HTMLElement>('.item-nome')?.focus({ preventScroll: true });
 }
 
 interface Props {
   item: ItemDb;
   medicao: Medicao | undefined;
-  /** Próximo item da ficha (null no último). */
+  /** Os outros itens do equipamento (referência do PCM do mancal no tambor). */
+  irmaos: readonly ItemDb[];
+  /** Próximo item da guia (null no último). */
   proximo: ItemDb | null;
+  /** Desenho que já está aberto no alto da guia: não repete no cartão. */
+  desenhoNoTopo?: IdDesenho | null;
+  /** Linha MANCAL/ROLAMENTO/BUCHA: o que já foi anotado nos tambores, para conferir. */
+  anotadoNosTambores?: string | null;
   onMedicao: (mudar: (atual: Medicao | undefined) => Medicao) => void;
 }
 
-export function CartaoItem({ item, medicao, proximo, onMedicao }: Props) {
+export function CartaoItem({
+  item,
+  medicao,
+  irmaos,
+  proximo,
+  desenhoNoTopo = null,
+  anotadoNosTambores = null,
+  onMedicao,
+}: Props) {
   const template = TEMPLATES[item.tipo];
   const estado = estadoDoItem(item, medicao);
   const avisos = avisosDoItem(item, medicao);
   // Se um campo já mostra a especificação inteira como valor do PCM, não repete aqui.
-  const especNoCampo = template.campos.some((c) => valorPcm(c, item) === item.especificacao);
+  const especNoCampo = template.campos.some(
+    (c) => valorPcm(c, item, irmaos) === item.especificacao,
+  );
   const idObs = `obs-${item.id}`;
 
   return (
@@ -85,31 +119,42 @@ export function CartaoItem({ item, medicao, proximo, onMedicao }: Props) {
       <p class="item-tipo">{template.nome}</p>
       {item.especificacao && !especNoCampo && (
         <p class="item-pcm">
-          <span class="rotulo-pcm">PCM</span> {item.especificacao}
+          <span class="rotulo-pcm">PCM:</span> <span class="valor-pcm">{item.especificacao}</span>
         </p>
       )}
       {item.quantidade && <p class="item-qtd">Qtd.: {item.quantidade}</p>}
+      {anotadoNosTambores && (
+        <p class="item-anotado">
+          <span class="rotulo-pcm">Nos tambores:</span> {anotadoNosTambores}
+        </p>
+      )}
       {item.origem === 'deduzido' && (
         <span class="selo">Não está no PCM — deduzido dos mancais</span>
       )}
       {item.orfao && <span class="selo selo--alerta">Fora do PCM atual</span>}
-      <DesenhosDoItem ids={template.desenhos} />
+      <DesenhosDoItem ids={template.desenhos.filter((d) => d !== desenhoNoTopo)} />
       {/* Motor e redutor: a placa é a primeira coisa a registrar (modelo, série, redução). */}
       {template.fotoPlaca && (
         <FotosDoAlvo alvoId={item.id} nome={item.nome} rotulo="Foto da placa" placa />
       )}
 
       <div class="campos">
-        {template.campos.map((c) => (
-          <CampoMedicao
-            key={c.id}
-            campo={c}
-            item={item}
-            valor={medicao?.valores[c.id]}
-            conferencia={medicao?.conferencia[c.id]}
-            onValor={(v) => onMedicao((m) => comValor(m, item.id, c.id, v))}
-            onConferencia={(marca) => onMedicao((m) => comConferencia(m, item.id, c.id, marca))}
-          />
+        {template.campos.map((c, k) => (
+          <Fragment key={c.id}>
+            {/* Bloco dentro do cartão (ex.: o mancal e o rolamento de cada tambor). */}
+            {c.grupo && c.grupo !== template.campos[k - 1]?.grupo && (
+              <h3 class="campos-grupo">{c.grupo}</h3>
+            )}
+            <CampoMedicao
+              campo={c}
+              item={item}
+              irmaos={irmaos}
+              valor={medicao?.valores[c.id]}
+              conferencia={medicao?.conferencia[c.id]}
+              onValor={(v) => onMedicao((m) => comValor(m, item.id, c.id, v))}
+              onConferencia={(marca) => onMedicao((m) => comConferencia(m, item.id, c.id, marca))}
+            />
+          </Fragment>
         ))}
       </div>
 

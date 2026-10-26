@@ -1,12 +1,15 @@
 import { expect, test, type Page } from '@playwright/test';
 import {
   abrirFicha,
+  abrirGuia,
   cartao,
   fichaOffline,
   fotosNoBanco,
+  guia,
   importarFixture,
   jpegDeCamera,
   linhas,
+  noItem,
   reabrir,
 } from './apoio.ts';
 
@@ -80,21 +83,36 @@ test('5 fotos em itens diferentes (câmera, galeria e placa): lista e ficha cont
   await fichaOffline(page, context);
   const jpeg = await jpegDeCamera(page, 2000, 1500);
 
-  await camera(page, 'TAPETE').setInputFiles(arquivo(jpeg, 'a.jpg'));
-  await camera(page, 'ROLETE DE CARGA').setInputFiles(arquivo(jpeg, 'b.jpg'));
-  await camera(page, 'MANCAL').setInputFiles(arquivo(jpeg, 'c.jpg'));
-  await cartao(page, 'REDUTOR')
+  await (
+    await noItem(page, 'TAPETE')
+  )
+    .getByLabel(/Tirar foto/)
+    .setInputFiles(arquivo(jpeg, 'a.jpg'));
+  await (
+    await noItem(page, 'ROLETE DE CARGA')
+  )
+    .getByLabel(/Tirar foto/)
+    .setInputFiles(arquivo(jpeg, 'b.jpg'));
+  await (
+    await noItem(page, 'MANCAL')
+  )
+    .getByLabel(/Tirar foto/)
+    .setInputFiles(arquivo(jpeg, 'c.jpg'));
+  await (
+    await noItem(page, 'REDUTOR')
+  )
     .getByLabel(/Foto da placa/)
     .setInputFiles(arquivo(jpeg, 'd.jpg'));
   // Da galeria (foto tirada antes, pela câmera do celular).
   await cartao(page, 'MOTOR').getByLabel('Galeria').last().setInputFiles(arquivo(jpeg, 'e.jpg'));
 
   await expect(page.locator('.eq-fotos').getByText('5 fotos')).toBeVisible();
+  await expect(guia(page, 'Fotos')).toHaveAccessibleName('Fotos 5');
   for (const item of ['TAPETE', 'ROLETE DE CARGA', 'MANCAL', 'MOTOR'])
     await expect(
-      cartao(page, item).getByRole('button', { name: 'Ampliar foto 1 de 1' }),
+      (await noItem(page, item)).getByRole('button', { name: 'Ampliar foto 1 de 1' }),
     ).toBeVisible();
-  const redutor = cartao(page, 'REDUTOR');
+  const redutor = await noItem(page, 'REDUTOR');
   await expect(redutor.getByRole('button', { name: 'Ampliar foto da placa 1' })).toBeVisible();
   await expect(redutor.locator('.miniatura-selo')).toHaveText('Placa');
   await expect(page.getByText('Salvo no aparelho', { exact: true })).toBeVisible();
@@ -106,7 +124,15 @@ test('5 fotos em itens diferentes (câmera, galeria e placa): lista e ficha cont
 
   const reaberta = await reabrir(context);
   await expect(reaberta.locator('.eq-fotos').getByText('5 fotos')).toBeVisible();
-  await expect(reaberta.locator('.miniatura img')).toHaveCount(5);
+  // Guia Fotos: quantas fotos cada item tem; a linha leva ao item.
+  await abrirGuia(reaberta, 'Fotos');
+  const linhaDe = (item: string) => reaberta.locator('.pcm-linha', { hasText: item }).first();
+  for (const item of ['TAPETE', 'ROLETE DE CARGA', 'MANCAL', 'REDUTOR', 'MOTOR'])
+    await expect(linhaDe(item)).toContainText('1 foto');
+  await expect(linhaDe('ROLETE DE RETORNO')).toContainText('Sem foto');
+  await linhaDe('MANCAL').click();
+  await expect(reaberta.getByRole('tab', { selected: true })).toHaveText('Tambores');
+  await expect(cartao(reaberta, 'MANCAL').locator('.miniatura img')).toHaveCount(1);
   const fotos = await fotosNoBanco(reaberta);
   expect(fotos).toHaveLength(5);
   expect(new Set(fotos.map((f) => f.alvoId)).size).toBe(5);
@@ -124,7 +150,12 @@ test('apagar pede confirmação; tocar de novo onde estava "Apagar", "Fechar" ou
   await importarFixture(page);
   await abrirFicha(page, 'XA-TC-01');
   const jpeg = await jpegDeCamera(page, 1200, 900);
-  await page.getByLabel(/Foto do equipamento/).setInputFiles(arquivo(jpeg));
+  // Foto do equipamento: na guia Fotos.
+  await abrirGuia(page, 'Fotos');
+  await page
+    .locator('.guia-fotos-eq')
+    .getByLabel(/Tirar foto/)
+    .setInputFiles(arquivo(jpeg));
   await expect(page.locator('.eq-fotos').getByText('1 foto')).toBeVisible();
 
   await page.getByRole('button', { name: 'Ampliar foto 1 de 1' }).first().click();
@@ -171,16 +202,17 @@ test('"Foto da placa" em destaque só no motor e no redutor; botões ≥ 48 px e
   await page.goto('./');
   await importarFixture(page);
   await abrirFicha(page, 'XA-TC-01');
-  await expect(cartao(page, 'MOTOR').getByText('Foto da placa', { exact: true })).toBeVisible();
-  await expect(cartao(page, 'REDUTOR').getByText('Foto da placa', { exact: true })).toBeVisible();
   await expect(cartao(page, 'TAPETE').getByText(/Foto da placa/)).toHaveCount(0);
-  await expect(cartao(page, 'MANCAL').getByText(/Foto da placa/)).toHaveCount(0);
-
   // Câmera direta (traseira) e galeria: sempre <input type=file> dentro de <label>.
-  const inputs = page.locator('label > input[type=file][accept="image/*"]');
-  expect(await inputs.count()).toBeGreaterThan(10);
   await expect(camera(page, 'TAPETE')).toHaveAttribute('capture', 'environment');
   await expect(cartao(page, 'TAPETE').getByLabel('Galeria')).not.toHaveAttribute('capture');
+  await expect((await noItem(page, 'MANCAL')).getByText(/Foto da placa/)).toHaveCount(0);
+
+  await abrirGuia(page, 'Acionamento');
+  await expect(cartao(page, 'MOTOR').getByText('Foto da placa', { exact: true })).toBeVisible();
+  await expect(cartao(page, 'REDUTOR').getByText('Foto da placa', { exact: true })).toBeVisible();
+  const inputs = page.locator('label > input[type=file][accept="image/*"]');
+  expect(await inputs.count()).toBeGreaterThan(10);
 
   const alturas = await page
     .locator('.fotos-acoes > label')
@@ -190,6 +222,16 @@ test('"Foto da placa" em destaque só no motor e no redutor; botões ≥ 48 px e
     .getByText('Foto da placa', { exact: true })
     .boundingBox())!;
   expect(placa.height).toBeGreaterThanOrEqual(56);
+  await semRolagemLateral(page);
+
+  // Guia Fotos: "Tirar foto" e "Galeria" do equipamento cabem lado a lado, ≥ 48 px.
+  await abrirGuia(page, 'Fotos');
+  const acoes = await page
+    .locator('.guia-fotos-eq .fotos-acoes > label')
+    .evaluateAll((els) => els.map((e) => e.getBoundingClientRect()));
+  expect(acoes).toHaveLength(2);
+  expect(acoes[0]!.top).toBe(acoes[1]!.top);
+  expect(Math.min(...acoes.map((r) => r.height))).toBeGreaterThanOrEqual(48);
   await semRolagemLateral(page);
 });
 
@@ -248,6 +290,13 @@ test('celular cheio: avisa no cartão e no topo, nada aparece como salvo; libero
   await page.getByRole('button', { name: 'Foto não salva' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'XA-TC-01' })).toBeVisible();
   await expect(cartao(page, 'TAPETE').getByRole('alert')).toBeInViewport();
+  // Em outra guia da mesma ficha, o topo volta para a guia do item (sem empilhar histórico).
+  await abrirGuia(page, 'Notas');
+  const naFicha = await page.evaluate(() => history.length);
+  await page.getByRole('button', { name: 'Foto não salva' }).click();
+  await expect(page.getByRole('tab', { selected: true })).toHaveText('Correia');
+  await expect(cartao(page, 'TAPETE').getByRole('alert')).toBeInViewport();
+  expect(await page.evaluate(() => history.length)).toBe(naFicha);
 
   // Liberou espaço: grava sem precisar tirar a foto de novo.
   await page.evaluate(() => localStorage.removeItem('teste:fotos-cheio'));
@@ -280,7 +329,7 @@ test('Android recarregou a página ao voltar da câmera: o cartão avisa que a f
   await page.goto('./');
   await importarFixture(page);
   await abrirFicha(page, 'XA-TC-01');
-  const motor = cartao(page, 'MOTOR');
+  const motor = await noItem(page, 'MOTOR');
 
   // Abre a câmera (toque de verdade no <label>) e a página "morre" antes de a foto voltar.
   const seletor = page.waitForEvent('filechooser');
@@ -288,9 +337,11 @@ test('Android recarregou a página ao voltar da câmera: o cartão avisa que a f
   expect((await seletor).element()).toBeTruthy();
   await page.reload();
 
+  // A ficha voltou na mesma guia (Acionamento) e onde estava.
+  await expect(page.getByRole('tab', { selected: true })).toHaveText('Acionamento');
   const aviso = cartao(page, 'MOTOR').getByRole('alert');
   await expect(aviso).toContainText('A foto não foi salva: o app fechou antes de gravar');
-  await expect(aviso).toBeInViewport(); // a ficha voltou onde estava
+  await expect(aviso).toBeInViewport();
   await expect(page.getByRole('alert')).toHaveCount(1); // só no item da foto
   await expect(page.getByRole('button', { name: 'Foto não salva' })).toBeVisible();
   await aviso.getByRole('button', { name: 'Entendi' }).click();
@@ -336,14 +387,17 @@ test('foto ainda gravando e câmera aberta em outro item quando a página morre:
   await cartao(page, 'TAPETE').getByText('Tirar foto', { exact: true }).click();
   await (await primeira).setFiles(arquivo(jpeg));
   await expect(cartao(page, 'TAPETE').getByText('Salvando…')).toBeVisible();
-  // …e a câmera já está aberta de novo, agora para o MANCAL.
+  // …e a câmera já está aberta de novo, agora para o MANCAL (outra guia: a do TAPETE some
+  // da tela com a foto ainda gravando).
   const segunda = page.waitForEvent('filechooser');
-  await cartao(page, 'MANCAL').getByText('Tirar foto', { exact: true }).click();
+  await (await noItem(page, 'MANCAL')).getByText('Tirar foto', { exact: true }).click();
   await segunda;
   await page.reload();
 
-  await expect(cartao(page, 'TAPETE').getByRole('alert')).toContainText('A foto não foi salva');
   await expect(cartao(page, 'MANCAL').getByRole('alert')).toContainText('A foto não foi salva');
+  await expect((await noItem(page, 'TAPETE')).getByRole('alert')).toContainText(
+    'A foto não foi salva',
+  );
   expect(await fotosNoBanco(page)).toHaveLength(0);
 });
 

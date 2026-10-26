@@ -7,10 +7,12 @@ interface Props {
   /** Nome curto do app na barra (só na tela inicial) e o nome completo para leitores de tela. */
   titulo?: { curto: string; completo: string };
   voltar?: { href: string; rotulo: string };
+  /** Onde se está (a TAG na ficha): aparece ao lado do voltar quando a página rola. */
+  contexto?: string;
 }
 
 /** Barra fixa: voltar (ou nome do app) e "Salvo no aparelho" sempre à vista. */
-export function Topo({ titulo, voltar }: Props) {
+export function Topo({ titulo, voltar, contexto }: Props) {
   const sentinela = useRef<HTMLDivElement>(null);
   const [rolou, setRolou] = useState(false);
   useEffect(() => {
@@ -42,6 +44,11 @@ export function Topo({ titulo, voltar }: Props) {
           <h1 class="topo-titulo" aria-label={titulo?.completo}>
             {titulo?.curto}
           </h1>
+        )}
+        {voltar && contexto && (
+          <span class="topo-contexto" aria-hidden={!rolou}>
+            {contexto}
+          </span>
         )}
         <IndicadorSalvo />
       </header>

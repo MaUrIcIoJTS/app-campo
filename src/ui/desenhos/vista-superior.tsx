@@ -14,8 +14,8 @@ export function VistaSuperior() {
       <rect class="cheia" x={250} y={34} width={20} height={14} />
       <rect class="cheia" x={250} y={172} width={20} height={14} />
       {/* tambores e a correia entre eles */}
-      <rect class="cheia" x={28} y={56} width={24} height={108} rx={3} />
-      <rect class="cheia" x={248} y={56} width={24} height={108} rx={3} />
+      <rect class="cheia principal" x={28} y={56} width={24} height={108} rx={3} />
+      <rect class="cheia principal" x={248} y={56} width={24} height={108} rx={3} />
       <rect class="cheia" x={40} y={62} width={220} height={96} />
       <Seta x1={96} y1={102} x2={204} y2={102} />
       <Texto x={150} y={90} ancora="meio">

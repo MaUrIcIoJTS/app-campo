@@ -9,6 +9,8 @@ import { IconeConfere, IconeDiverge, IconeErro } from './Icones.tsx';
 interface Props {
   campo: CampoTemplate;
   item: ItemPcm;
+  /** Os outros itens do equipamento (o tambor lê o mancal na linha MANCAL do PCM). */
+  irmaos: readonly ItemPcm[];
   valor: string | undefined;
   conferencia: Conferencia | undefined;
   onValor: (valor: string) => void;
@@ -18,8 +20,8 @@ interface Props {
 const unidadeVisivel = (campo: CampoTemplate) =>
   campo.unidade && campo.unidade !== 'un' ? campo.unidade : null;
 
-function textoPcm(campo: CampoTemplate, item: ItemPcm): string | null {
-  const v = valorPcm(campo, item);
+function textoPcm(campo: CampoTemplate, item: ItemPcm, irmaos: readonly ItemPcm[]): string | null {
+  const v = valorPcm(campo, item, irmaos);
   if (v === null) return null;
   const s = typeof v === 'number' ? formatarNumero(v) : v;
   const unidade = unidadeVisivel(campo);
@@ -31,12 +33,20 @@ function textoPcm(campo: CampoTemplate, item: ItemPcm): string | null {
  * ✓/✗ só aparece quando há valor do PCM para conferir (ou se já foi marcado). Campo sem PCM
  * tem "Não tem" (a peça não existe aqui): conta como feito, sem precisar digitar.
  */
-export function CampoMedicao({ campo, item, valor, conferencia, onValor, onConferencia }: Props) {
+export function CampoMedicao({
+  campo,
+  item,
+  irmaos,
+  valor,
+  conferencia,
+  onValor,
+  onConferencia,
+}: Props) {
   const idInput = `c-${item.id}-${campo.id}`;
   const idRotulo = `${idInput}-rotulo`;
-  const pcm = textoPcm(campo, item);
+  const pcm = textoPcm(campo, item, irmaos);
   const unidade = unidadeVisivel(campo);
-  const delta = deltaDoCampo(campo, item, valor);
+  const delta = deltaDoCampo(campo, item, valor, irmaos);
   const invalido = numeroInvalido(campo, valor);
   const ambiguo = numeroAmbiguo(campo, valor);
   const comPcm = pcm !== null || conferencia === 'confere' || conferencia === 'diverge';
@@ -81,7 +91,7 @@ export function CampoMedicao({ campo, item, valor, conferencia, onValor, onConfe
         )}
         {pcm !== null && (
           <span class="campo-med-pcm">
-            <span class="rotulo-pcm">PCM</span> {pcm}
+            <span class="rotulo-pcm">PCM:</span> <span class="valor-pcm">{pcm}</span>
           </span>
         )}
       </div>

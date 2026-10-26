@@ -10,7 +10,7 @@ export function Rolete() {
       {/* onde começa o fresado */}
       <line class="peca" x1={44} y1={72} x2={44} y2={88} />
       <line class="peca" x1={256} y1={72} x2={256} y2={88} />
-      <rect class="cheia" x={70} y={50} width={160} height={60} rx={4} />
+      <rect class="cheia principal" x={70} y={50} width={160} height={60} rx={4} />
       <Linha x1={70} y1={46} x2={70} y2={24} />
       <Linha x1={230} y1={46} x2={230} y2={24} />
       <Cota x1={70} y1={30} x2={230} y2={30} texto="A" ty={23} />

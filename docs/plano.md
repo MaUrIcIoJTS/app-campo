@@ -21,7 +21,7 @@ Site: https://mauriciojts.github.io/app-campo/ (deploy automático a cada push n
 | 3. Fotos e desenhos SVG                         | ✅ desenhos validados (24/10); fotos feitas (24/10), **testar no celular**                                                                      |
 | 4. Exportar, backup, restaurar, compartilhar    | ✅ feito (25/10); exportar e enviar pelo WhatsApp **validado no celular em 25/10** (critério 4); falta restaurar em outro aparelho (critério 5) |
 | Aparência e usabilidade em campo                | ✅ feito (25/10): telas de backup e restaurar, estado do aparelho, toast, letras pequenas, `.xlsx` formatado; **conferir no celular**           |
-| Visual novo (Material 3), branch `visual-novo`  | ✅ feito (26/10), **não publicado**: entra depois do campo, com o teste no celular abaixo                                                       |
+| Visual novo (Material 3) e ficha em guias       | ✅ feito e mesclado na `main` (26/10); publica no próximo push. **Conferir no celular** com o roteiro abaixo                                    |
 | 5. Ensaio geral (critérios 1–5 no Android)      | a fazer                                                                                                                                         |
 
 Se atrasar: os desenhos SVG (fase 3) e o `.zip` de fotos (fase 4) podem ficar para depois, porque
@@ -445,7 +445,7 @@ contraste já estava alto (texto secundário ~10:1 nos dois temas) e nenhum alvo
 Ficou para depois (opcional): "Medido" com um campo por linha na planilha (muda o texto
 exportado); manter a formatação original do PCM (exigiria editar o `.xls` binário).
 
-## Visual novo: Material 3 (branch `visual-novo`, 26/10, não publicado)
+## Visual novo: Material 3 (26/10, mesclado na `main`)
 
 Feito com a skill `impeccable` depois da reclamação "tudo em negrito, molduras e caixas pesadas".
 Na rodada de direção, o usuário escolheu o **padrão da categoria**: Material 3 do Android, na régua
@@ -464,13 +464,58 @@ duas revisões conferiram no diff).
 - Testes: os textos sem glifo ("Salvo no aparelho", "Diverge", "Foto não salva"…) e os seletores
   foram ajustados; 288 unitários e 36 E2E passam.
 
-**Para publicar** (depois do campo): fazer o roteiro abaixo com o branch rodando no PC, aprovar,
-mesclar `visual-novo` na `main` e fazer push. Se algo piorar ao sol, volte só o que piorou.
+### Ficha em guias, como no protótipo de campo (26/10, mesmo branch)
+
+Depois do campo de 26/10 (o usuário disse que "funcionou corretamente"), a melhoria pedida foi
+voltar à organização do protótipo antigo (o artifact do claude.ai), mantendo o visual novo, com o
+desenho de cada guia no alto. Nada do protótipo foi copiado: ele tem dados reais do cliente.
+
+- Ficha em guias (`src/dominio/guias.ts`, `src/ui/Guias.tsx`, `src/ui/TelaEquipamento.tsx`):
+  - guias **PCM · Correia · Tambores · Roletes · Acionamento · Outros · Fotos · Notas**;
+  - só aparecem as guias de medida que têm item; sem tambor, a guia dos mancais se chama
+    "Mancais";
+  - a barra de chips (48 px) fica presa sob o topo e rola de lado sozinha; cada chip mostra ✓
+    (tudo feito), ✗ (diverge) ou o número de fotos;
+  - a guia aberta fica no endereço (`#/equipamento/<id>/<guia>`, trocada sem empilhar
+    histórico) e na sessão: o Android recarregando depois da câmera volta na mesma guia e no
+    mesmo lugar.
+- Guia **PCM**: as linhas da planilha (item, especificação, qtd., selo). Tocar leva ao item, na
+  guia dele; substitui o "Ir para item…".
+- Guia **Fotos**: a foto do equipamento (saiu do cabeçalho) e quantas fotos cada item tem.
+- Guia **Notas**: a observação do equipamento e, no fim, "Próximo equipamento".
+- Fim de cada guia: "Seguir para X". O "Próximo item" anda dentro da guia.
+- **Desenho no alto** de cada guia de medida, aberto, com "Ocultar" (lembrado no aparelho):
+  - Correia: vista de cima;
+  - Tambores: tambor (sem tambor: mancal);
+  - Roletes: código do rolete;
+  - Acionamento: acionamento.
+
+  Os outros desenhos seguem nos cartões.
+
+- **Tambor com mancal**: cada tambor ganhou os campos Mancal (código gravado), Rolamento e Bucha,
+  num bloco "Mancal e rolamento". O PCM vem das linhas MANCAL/ROLAMENTO/BUCHA do mesmo
+  equipamento. As linhas do PCM continuam no fim da guia (a coluna "Medido" da planilha depende
+  delas). Os campos novos são só chaves novas nas medições: o esquema não mudou, e o tambor
+  passa de 7 para 10 campos no progresso.
+- **Visual mais próximo do protótipo**:
+  - guia aberta em tinta;
+  - cotas dos desenhos em âmbar e a peça medida em amarelo claro (tokens `desenho*`);
+  - títulos da ficha em Roboto Condensed do sistema, em negrito;
+  - "PCM: [valor]" embaixo do nome do campo.
+- Conferência com o PCM real (só contagens):
+  - todos os 762 itens caem numa guia de medida;
+  - os 45 tambores trazem o PCM do mancal e do rolamento, e 37 o da bucha;
+  - a planilha exportada reimporta igual, com 0 de 3.073 células alteradas.
+
+**Publicação**: o branch `visual-novo` foi mesclado na `main` em 26/10, a pedido do usuário, e
+entra no ar no próximo push (skill `publicar`). Depois, faça o roteiro abaixo no celular. Se algo
+piorar ao sol, volte só o que piorou.
 
 ### Roteiro — visual novo no celular (~10 min, sol e luva, claro e escuro)
 
-Para ver no celular antes de publicar, use o build local: no PC, `git switch visual-novo`, depois
-`npm run build && npm run preview -- --host` e, no celular, na mesma rede, abra
+Depois do push: abra o app com internet e toque em **Atualizar**; medidas e fotos continuam. Para
+ver antes do push, use o build local: no PC, na `main`, `npm run build && npm run preview -- --host`
+e, no celular, na mesma rede, abra
 `http://<ip-do-pc>:4173`. É outra origem: os dados de campo **não** aparecem ali, e sem HTTPS o modo offline não liga (a conferência é só visual, com o PC servindo). Importe a planilha
 fictícia ou uma cópia.
 
@@ -483,8 +528,17 @@ fictícia ou uma cópia.
 4. "Salvo no aparelho" verde; enquanto grava, "Salvando…" neutro com as setas girando.
 5. Peso das letras: títulos em médio (500), texto normal (400). Ficou menos "grosseiro"?
 6. Backup e exportar, Restaurar: mesmas ações de hoje, no visual novo.
+7. Guias: com luva, a barra de guias rola de lado e o toque pega a guia certa? A guia aberta
+   (tinta escura) se distingue ao sol? O ✓/✗ no chip aparece?
+8. Desenho no alto: abre já aberto; "Ocultar" recolhe e continua recolhido no próximo
+   equipamento. As cotas em âmbar se leem ao sol?
+9. Tambores: preencha o mancal e o rolamento de um tambor, troque de guia logo em seguida e
+   feche o app pelos recentes. Reabra: o valor está lá?
+10. Câmera numa guia que não é a primeira (ex.: Acionamento, foto da placa do motor): ao voltar
+    da câmera, a ficha está na mesma guia e no mesmo lugar?
+11. "Seguir para…" no fim de cada guia, até Notas e "Próximo equipamento".
 
-Anote o que ficou pior que a versão de hoje (com a tela e o tema). Isso volta antes de publicar.
+Anote o que ficou pior que a versão de antes (com a tela e o tema). Isso volta numa correção.
 
 ## Roteiro — conferência visual (no Android, ~10 min, sol e luva)
 

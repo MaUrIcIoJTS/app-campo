@@ -49,15 +49,26 @@
   --anel-tonal: inset 0 0 0 1px var(--contorno);
   /* Preenchimento das peças nos desenhos "onde medir". */
   --trilho: #e9eef6;
+  /* Desenhos "onde medir", como no protótipo de campo: cotas em âmbar e a peça principal em
+     amarelo claro. Âmbar escuro: a linha aparece ao sol. */
+  --desenho: #6e4b00;
+  --desenho-fundo: #ffefc4;
+  --desenho-texto: #ffffff;
   /* Trilho das barras de progresso: visível ao sol. */
   --barra-fundo: #c9d3e0;
   /* Camada de toque (pressionado), da cor do texto do controle. */
   --camada-toque: color-mix(in srgb, currentColor 14%, transparent);
 
   --fonte: Roboto, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* Títulos da ficha (TAG, guia, item): Roboto Condensed que já vem no Android
+     ("sans-serif-condensed"), como no protótipo; nada é baixado. */
+  --fonte-titulo:
+    'Roboto Condensed', sans-serif-condensed, 'Arial Narrow', 'DejaVu Sans Condensed', var(--fonte);
   --raio-campo: 8px;
   --raio-chip: 8px;
   --raio-cartao: 20px;
+  /* Canto de dentro do cartão do item (que tem borda de 2 px). */
+  --raio-cartao-interno: calc(var(--raio-cartao) - 2px);
   --pilula: 999px;
   --toque: 48px;
   --espaco: 16px;
@@ -65,6 +76,8 @@
   /* Barra fixa do topo (64 px, como a barra superior do Material); o nome do item gruda logo
      abaixo dela. */
   --altura-topo: calc(64px + env(safe-area-inset-top));
+  /* Barra das guias da ficha (Correia, Tambores…): presa logo abaixo da barra do topo. */
+  --altura-guias: 64px;
 
   font-family: var(--fonte);
   font-size: 18px;
@@ -108,6 +121,9 @@
     --foco: #a8c7fa;
     --trilho: #282a2c;
     --barra-fundo: #4a4d50;
+    --desenho: #f2b705;
+    --desenho-fundo: #3a3115;
+    --desenho-texto: #131314;
   }
 }
 
@@ -144,6 +160,9 @@
   --foco: #a8c7fa;
   --trilho: #282a2c;
   --barra-fundo: #4a4d50;
+  --desenho: #f2b705;
+  --desenho-fundo: #3a3115;
+  --desenho-texto: #131314;
 }
 
 *,
@@ -155,6 +174,10 @@
 html {
   /* Campo focado não fica escondido sob a barra do topo nem sob o nome do item. */
   scroll-padding-top: calc(var(--altura-topo) + 88px);
+}
+
+html:has(.guias) {
+  scroll-padding-top: calc(var(--altura-topo) + var(--altura-guias) + 88px);
 }
 
 body {
@@ -297,6 +320,23 @@ b {
   width: 24px;
   height: 24px;
   margin: 0;
+}
+
+/* TAG do equipamento ao lado do voltar, só depois que o cabeçalho sai da tela. */
+.topo-contexto {
+  min-width: 0;
+  overflow: hidden;
+  font-family: var(--fonte-titulo);
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 150ms var(--ease);
+}
+
+.topo[data-rolou] .topo-contexto {
+  opacity: 1;
 }
 
 .topo-titulo {
@@ -784,14 +824,14 @@ input[type='search']::-webkit-search-cancel-button {
   height: 6px;
   overflow: hidden;
   background: var(--barra-fundo);
-  border-radius: 3px;
+  border-radius: var(--pilula);
 }
 
 .barra > span {
   display: block;
   height: 100%;
   background: var(--primaria);
-  border-radius: 3px;
+  border-radius: var(--pilula);
 }
 
 .eq-pct {
@@ -1148,6 +1188,10 @@ input[type='search']::-webkit-search-cancel-button {
 
 .cabecalho-eq .titulo-tela {
   margin: 8px 0 2px;
+  font-family: var(--fonte-titulo);
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.1;
 }
 
 .cabecalho-eq p {
@@ -1175,19 +1219,292 @@ input[type='search']::-webkit-search-cancel-button {
   font-size: 0.9rem;
 }
 
-.cabecalho-eq .fotos {
+/*
+ * Guias da ficha: chips em pílula numa barra que fica presa sob o topo. Se não couberem, só a
+ * barra rola de lado (a página nunca passa de 360 px). Presa, ganha o tom da barra do topo.
+ */
+.guias-sentinela {
+  height: 1px;
+  margin-bottom: -1px;
+}
+
+.guias {
+  position: sticky;
+  top: var(--altura-topo);
+  z-index: 9;
+  display: flex;
+  gap: 8px;
+  height: var(--altura-guias);
+  margin: 0 calc(-1 * var(--espaco)) 12px;
+  padding: 8px var(--espaco);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  background: var(--fundo);
+  transition: background-color 150ms var(--ease);
+}
+
+.guias::-webkit-scrollbar {
+  display: none;
+}
+
+.guias[data-presa] {
+  background: var(--superficie-alta);
+}
+
+.guia {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--toque);
+  padding: 0 18px;
+  border: 0;
+  border-radius: var(--pilula);
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--contorno);
+  color: var(--texto);
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.guia:active {
+  background-image: linear-gradient(var(--camada-toque), var(--camada-toque));
+}
+
+.guia[aria-selected='true'] {
+  background-color: var(--texto);
+  box-shadow: none;
+  color: var(--fundo);
+}
+
+.guia-contagem {
+  min-width: 24px;
+  padding: 0 6px;
+  border-radius: var(--pilula);
+  background: var(--superficie-alta);
+  color: var(--texto-suave);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 22px;
+  text-align: center;
+}
+
+.guia[aria-selected='true'] .guia-contagem {
+  background: color-mix(in srgb, var(--fundo) 24%, transparent);
+  color: inherit;
+}
+
+/* ✓ tudo feito, ✗ algo diverge: círculo cheio, legível também na guia selecionada. */
+.guia-estado {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+}
+
+.guia-estado .icone {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  stroke-width: 3;
+}
+
+.guia-estado--feito {
+  background: var(--ok);
+  color: var(--ok-texto);
+}
+
+.guia-estado--diverge {
+  background: var(--erro);
+  color: var(--erro-texto);
+}
+
+/* Teclado aberto (campo da ficha em foco): a barra de guias se solta e o nome do item volta a
+   grudar logo abaixo do topo. Sobra tela para o rótulo e o campo; nada muda de lugar. */
+.ficha:has([data-campo-ficha]:focus) .guias {
+  position: relative;
+  top: auto;
+}
+
+.ficha:has([data-campo-ficha]:focus) .item > .item-topo {
+  top: var(--altura-topo);
+}
+
+html:has(.ficha [data-campo-ficha]:focus) {
+  scroll-padding-top: calc(var(--altura-topo) + 88px);
+}
+
+/* A guia ocupa ao menos a tela: trocar de guia nunca faz a barra pular de lugar. */
+.guia-painel {
+  min-height: calc(100dvh - var(--altura-topo) - var(--altura-guias));
+}
+
+/* Título da guia: condensado e forte, como no protótipo (o resto do texto fica em 400/500). */
+.guia-titulo {
+  margin: 0 4px 8px;
+  font-family: var(--fonte-titulo);
+  font-size: 1.375rem;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+/* Desenho no alto da guia: cartão aberto, com o título e "Ocultar" na mesma linha. */
+.desenho-guia {
+  padding: 0;
+  overflow: hidden;
+}
+
+.desenho-guia > summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 0 var(--espaco);
+  list-style: none;
+  cursor: pointer;
+}
+
+.desenho-guia > summary::-webkit-details-marker {
+  display: none;
+}
+
+.desenho-guia > summary:active {
+  background: var(--camada-toque);
+}
+
+.desenho-guia-titulo {
+  flex: 1;
+  min-width: 0;
+  font-weight: 500;
+}
+
+.desenho-guia-acao {
+  color: var(--primaria);
+  font-size: 0.95rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.desenho-guia .desenho {
+  padding-top: 0;
+}
+
+.guia-dica {
+  margin: 0 4px 12px;
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+}
+
+.guia-subtitulo {
+  margin: 24px 4px 8px;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.cartao > .guia-subtitulo:first-child {
+  margin: 0 0 4px;
+}
+
+/* Linhas do PCM (e das fotos por item): lista do Material, divisórias finas. */
+.pcm-linhas {
+  padding: 0;
+  overflow: hidden;
+  list-style: none;
+}
+
+.pcm-linhas > li + li {
+  border-top: 1px solid var(--divisor);
+}
+
+.pcm-linha {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  min-height: 56px;
+  padding: 12px var(--espaco);
+  border: 0;
+  background: transparent;
+  color: var(--texto);
+  text-align: left;
+  cursor: pointer;
+}
+
+.pcm-linha:active {
+  background: var(--camada-toque);
+}
+
+.pcm-linha-topo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pcm-linha-nome {
+  min-width: 0;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.pcm-linha-espec,
+.pcm-linha-qtd {
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.pcm-linha--fotos {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.pcm-linha--fotos > .icone {
+  margin: 0;
+  color: var(--texto-suave);
+}
+
+.pcm-linha-fotos {
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.guia-fotos-eq .fotos {
+  margin-top: 8px;
+}
+
+.fim-guia {
   margin-top: var(--espaco);
 }
 
-/* "Ir para item…": índice compacto, fechado por padrão. */
-.indice {
-  margin: 0 0 12px;
-  overflow: hidden;
-  background: var(--superficie);
-  border-radius: var(--raio-cartao);
+/* Antes de "Próximo equipamento": o que ainda falta, ou a confirmação de que está tudo. */
+.falta .guia-subtitulo {
+  margin-top: 8px;
 }
 
-.indice-resumo,
+.falta-tudo-feito {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 4px 0;
+  color: var(--ok);
+  font-weight: 500;
+}
+
+.falta-tudo-feito .icone {
+  margin: 0;
+}
+
+/* Linha MANCAL/ROLAMENTO/BUCHA: o que já se anotou nos tambores. */
+.item-anotado {
+  margin: 4px 0;
+  overflow-wrap: anywhere;
+}
+
 .desenhos > summary {
   display: flex;
   align-items: center;
@@ -1199,74 +1516,36 @@ input[type='search']::-webkit-search-cancel-button {
   cursor: pointer;
 }
 
-.indice-resumo::-webkit-details-marker,
 .desenhos > summary::-webkit-details-marker {
   display: none;
 }
 
-.indice-resumo > span,
 .desenhos > summary > span {
   flex: 1;
   min-width: 0;
 }
 
-.indice-resumo .icone,
 .desenhos > summary .icone {
   width: 24px;
   height: 24px;
   margin: 0;
 }
 
-.indice-resumo > .icone:first-child,
 .desenhos > summary > .icone:first-child {
   color: var(--primaria);
 }
 
-.indice-resumo > .icone:last-child,
 .desenhos > summary > .icone:last-child {
   color: var(--texto-suave);
   transition: transform 200ms var(--ease);
 }
 
-.indice[open] > .indice-resumo > .icone:last-child,
 .desenhos[open] > summary > .icone:last-child {
   transform: rotate(180deg);
 }
 
-.indice-resumo:active,
 .desenhos > summary:active {
   background: var(--camada-toque);
-}
-
-.indice-lista {
-  margin: 0;
-  padding: 0 0 8px;
-  list-style: none;
-}
-
-.indice-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-  min-height: 52px;
-  padding: 6px var(--espaco);
-  border: 0;
-  border-top: 1px solid var(--divisor);
-  background: transparent;
-  color: var(--texto);
-  text-align: left;
-  cursor: pointer;
-}
-
-.indice-item:active {
-  background: var(--camada-toque);
-}
-
-.indice-nome {
-  min-width: 0;
-  overflow-wrap: anywhere;
 }
 
 .itens {
@@ -1303,7 +1582,7 @@ input[type='search']::-webkit-search-cancel-button {
   margin: -14px -14px 0;
   padding: 14px 14px 10px;
   background: var(--superficie);
-  border-radius: calc(var(--raio-cartao) - 2px) calc(var(--raio-cartao) - 2px) 0 0;
+  border-radius: var(--raio-cartao-interno) var(--raio-cartao-interno) 0 0;
 }
 
 .item-nome {
@@ -1311,8 +1590,9 @@ input[type='search']::-webkit-search-cancel-button {
   min-width: 0;
   margin: 0;
   overflow: hidden;
-  font-size: 1.15rem;
-  font-weight: 500;
+  font-family: var(--fonte-titulo);
+  font-size: 1.3rem;
+  font-weight: 700;
   line-height: 1.3;
   overflow-wrap: anywhere;
   -webkit-line-clamp: 2;
@@ -1376,19 +1656,41 @@ input[type='search']::-webkit-search-cancel-button {
   overflow-wrap: anywhere;
 }
 
-/* "PCM": de onde vem o valor de referência. */
+/* "PCM: [valor]": o rótulo discreto e o valor de referência em destaque (o que se compara). */
 .rotulo-pcm {
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+}
+
+.valor-pcm {
   display: inline-block;
-  margin-right: 6px;
-  padding: 0 6px;
+  max-width: 100%;
+  padding: 0 8px;
   border-radius: 6px;
-  background: var(--tonal);
-  color: var(--tonal-texto);
-  font-size: 0.85rem;
+  background: var(--superficie-alta);
+  color: var(--texto);
   font-weight: 500;
-  letter-spacing: 0.04em;
-  line-height: 1.45;
-  vertical-align: 1px;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+/* Na ficha, o nome do item gruda logo abaixo das guias. */
+.ficha .item > .item-topo {
+  top: calc(var(--altura-topo) + var(--altura-guias));
+}
+
+/* Bloco dentro do cartão (ex.: "Mancal e rolamento" de cada tambor): faixa tonal de ponta a
+   ponta, sem moldura — separa sem pesar. */
+.campos-grupo {
+  margin: 12px -14px 0;
+  padding: 12px 14px;
+  background: var(--superficie-alta);
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.campos-grupo + .campo-med {
+  border-top: 0;
 }
 
 /* Desenhos "onde medir": linhas de lista de largura total no cartão. */
@@ -1448,10 +1750,9 @@ input[type='search']::-webkit-search-cancel-button {
 }
 
 /* Valor do PCM: perto do campo, alinhado à direita, algarismos tabulares. */
+/* Embaixo do nome do campo, alinhado à esquerda (valor longo quebra sem ficar torto). */
 .campo-med-pcm {
-  margin-left: auto;
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
+  flex-basis: 100%;
   overflow-wrap: anywhere;
 }
 
@@ -1680,6 +1981,12 @@ input[type='search']::-webkit-search-cancel-button {
   stroke-linejoin: round;
 }
 
+/* A peça que se mede (tambor, tubo do rolete, polias): amarelo claro com contorno âmbar. */
+.desenho-svg .principal {
+  fill: var(--desenho-fundo);
+  stroke: var(--desenho);
+}
+
 .desenho-svg .escura {
   fill: var(--texto-suave);
   stroke: currentColor;
@@ -1699,7 +2006,7 @@ input[type='search']::-webkit-search-cancel-button {
 
 .desenho-svg .placa {
   fill: var(--superficie);
-  stroke: var(--primaria);
+  stroke: var(--desenho);
   stroke-width: 2.5;
 }
 
@@ -1732,19 +2039,20 @@ input[type='search']::-webkit-search-cancel-button {
 }
 
 .desenho-svg .cota line {
-  stroke: var(--primaria);
+  stroke: var(--desenho);
   stroke-width: 2.5;
 }
 
 .desenho-svg .cota polygon {
-  fill: var(--primaria);
+  fill: var(--desenho);
 }
 
+/* Nome da peça em 400; o que se mede (cotas e destaques) em 600, sempre na cor do texto. */
 .desenho-svg text {
   fill: currentColor;
   font-family: inherit;
   font-size: 15px;
-  font-weight: 500;
+  font-weight: 400;
   /* contorno da cor do fundo: o texto se lê mesmo sobre linhas e peças */
   paint-order: stroke;
   stroke: var(--superficie);
@@ -1754,7 +2062,7 @@ input[type='search']::-webkit-search-cancel-button {
 
 .desenho-svg .cota text,
 .desenho-svg text.destaque {
-  fill: var(--primaria);
+  font-weight: 600;
 }
 
 .desenho-svg .meio {
@@ -1766,11 +2074,12 @@ input[type='search']::-webkit-search-cancel-button {
 }
 
 .desenho-svg .marca circle {
-  fill: var(--primaria);
+  fill: var(--desenho);
 }
 
 .desenho-svg .marca text {
-  fill: var(--primaria-texto);
+  fill: var(--desenho-texto);
+  font-weight: 600;
   stroke: none;
 }
 
@@ -1850,33 +2159,6 @@ input[type='search']::-webkit-search-cancel-button {
    linha. */
 .item .fotos--placa .fotos-acoes > * {
   flex: 1 1 100%;
-}
-
-/* No cabeçalho da ficha, a medição tem de começar alto na tela: "Foto do equipamento" ocupa a
-   linha e "Galeria" vira botão só com ícone (o nome continua para leitor de tela). */
-.cabecalho-eq .fotos .fotos-acoes {
-  flex-wrap: nowrap;
-}
-
-.cabecalho-eq .fotos .fotos-tirar {
-  min-width: 0;
-  min-height: 52px;
-  padding: 0 12px;
-}
-
-.cabecalho-eq .fotos .fotos-galeria {
-  width: 52px;
-  min-height: 52px;
-  padding: 0;
-}
-
-.cabecalho-eq .fotos .fotos-galeria-texto {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
 }
 
 .fotos-acoes > .botao {
@@ -2134,14 +2416,14 @@ html:has(.foto-dialogo[open]) {
 .progresso-barra {
   height: 8px;
   overflow: hidden;
-  border-radius: 4px;
+  border-radius: var(--pilula);
   background: var(--barra-fundo);
 }
 
 .progresso-barra > span {
   display: block;
   height: 100%;
-  border-radius: 4px;
+  border-radius: var(--pilula);
   background: var(--primaria);
   transform-origin: left;
   transition: transform 0.3s var(--ease);
@@ -2269,10 +2551,11 @@ html:has(.foto-dialogo[open]) {
     );
   }
 
-  .indice-resumo > .icone:last-child,
   .desenhos > summary > .icone:last-child,
   .botao,
-  .campo {
+  .campo,
+  .guias,
+  .topo-contexto {
     transition: none;
   }
 }

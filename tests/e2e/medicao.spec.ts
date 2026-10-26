@@ -1,5 +1,14 @@
 import { expect, test, type Page } from '@playwright/test';
-import { abrirFicha, cartao, fichaOffline, importarFixture, linhas, reabrir } from './apoio.ts';
+import {
+  abrirFicha,
+  abrirGuia,
+  cartao,
+  fichaOffline,
+  importarFixture,
+  linhas,
+  noItem,
+  reabrir,
+} from './apoio.ts';
 
 /** 20 medidas em 4 itens do XA-TC-01: [item, campo, valor digitado]. */
 const MEDIDAS: ReadonlyArray<readonly [string, string, string]> = [
@@ -25,8 +34,15 @@ const MEDIDAS: ReadonlyArray<readonly [string, string, string]> = [
   ['REDUTOR', 'Nº de série', '0000000001'],
 ];
 
+/** Campo de texto de um item; a guia do item precisa estar aberta (ver `noItem`). */
 const campo = (page: Page, item: string, rotulo: string) =>
   cartao(page, item).getByRole('textbox', { name: rotulo });
+
+/** Abre a guia do item e devolve o campo. */
+async function campoNaGuia(page: Page, item: string, rotulo: string) {
+  await noItem(page, item);
+  return campo(page, item, rotulo);
+}
 
 test('20 medidas, ✓/✗ e observações: fecha logo depois e reabre offline — tudo lá', async ({
   page,
@@ -34,14 +50,16 @@ test('20 medidas, ✓/✗ e observações: fecha logo depois e reabre offline �
 }) => {
   await fichaOffline(page, context);
 
-  for (const [item, rotulo, valor] of MEDIDAS) await campo(page, item, rotulo).fill(valor);
-  const tapete = cartao(page, 'TAPETE');
-  await tapete.getByRole('button', { name: 'Largura: diverge' }).click();
-  await tapete.getByRole('button', { name: 'Lonas: confere' }).click();
-  await tapete.getByRole('textbox', { name: 'Observação do item' }).fill('Emenda a 3 m da cabeça');
+  for (const [item, rotulo, valor] of MEDIDAS)
+    await (await campoNaGuia(page, item, rotulo)).fill(valor);
+  await abrirGuia(page, 'Notas');
   await page
     .getByRole('textbox', { name: 'Observação do equipamento' })
     .fill('Esticador no fim do curso');
+  const tapete = await noItem(page, 'TAPETE');
+  await tapete.getByRole('button', { name: 'Largura: diverge' }).click();
+  await tapete.getByRole('button', { name: 'Lonas: confere' }).click();
+  await tapete.getByRole('textbox', { name: 'Observação do item' }).fill('Emenda a 3 m da cabeça');
 
   // Na tela, na hora: Δ, aviso LD ≠ LE e item divergente.
   await expect(tapete.getByText('Δ −2 mm')).toBeVisible();
@@ -55,9 +73,9 @@ test('20 medidas, ✓/✗ e observações: fecha logo depois e reabre offline �
 
   const reaberta = await reabrir(context);
   for (const [item, rotulo, valor] of MEDIDAS) {
-    await expect(campo(reaberta, item, rotulo)).toHaveValue(valor);
+    await expect(await campoNaGuia(reaberta, item, rotulo)).toHaveValue(valor);
   }
-  const t = cartao(reaberta, 'TAPETE');
+  const t = await noItem(reaberta, 'TAPETE');
   await expect(t.getByRole('button', { name: 'Largura: diverge' })).toHaveAttribute(
     'aria-pressed',
     'true',
@@ -69,6 +87,9 @@ test('20 medidas, ✓/✗ e observações: fecha logo depois e reabre offline �
   await expect(t.getByRole('textbox', { name: 'Observação do item' })).toHaveValue(
     'Emenda a 3 m da cabeça',
   );
+  // A guia com o ✗ avisa sem precisar abrir.
+  await expect(reaberta.getByRole('tab', { name: 'Correia diverge' })).toBeVisible();
+  await abrirGuia(reaberta, 'Notas');
   await expect(reaberta.getByRole('textbox', { name: 'Observação do equipamento' })).toHaveValue(
     'Esticador no fim do curso',
   );
@@ -160,12 +181,19 @@ test('"próximo" do teclado vai para o próximo campo; "Próximo item" leva ao i
   await campo(page, 'TAPETE', 'Largura').press('Enter');
   await expect(campo(page, 'TAPETE', 'Lonas')).toBeFocused();
 
-  await cartao(page, 'TAPETE').getByRole('button', { name: 'Próximo item' }).click();
-  const titulo = cartao(page, 'ROLETE DE CARGA').getByRole('heading');
+  // "Próximo item" anda dentro da guia: do rolete de carga para o de retorno.
+  await abrirGuia(page, 'Roletes');
+  await cartao(page, 'ROLETE DE CARGA').getByRole('button', { name: 'Próximo item' }).click();
+  const titulo = cartao(page, 'ROLETE DE RETORNO').getByRole('heading');
   await expect(titulo).toBeInViewport();
   const y = (await titulo.boundingBox())!.y;
-  expect(y).toBeGreaterThanOrEqual(56); // não fica embaixo da barra do topo
-  expect(y).toBeLessThan(160);
+  const guias = (await page.locator('.guias').boundingBox())!;
+  expect(y).toBeGreaterThanOrEqual(guias.y + guias.height - 1); // não fica embaixo das barras
+  expect(y).toBeLessThan(220);
+  // O último item da guia não tem "Próximo item": o fim da guia leva à guia seguinte.
+  await expect(
+    cartao(page, 'ROLETE DE RETORNO').getByRole('button', { name: 'Próximo item' }),
+  ).toHaveCount(0);
 });
 
 test('"Próximo equipamento" troca a ficha sem empilhar histórico', async ({ page }) => {
@@ -174,11 +202,17 @@ test('"Próximo equipamento" troca a ficha sem empilhar histórico', async ({ pa
   await abrirFicha(page, 'XA-TC-01');
   const naFicha = await page.evaluate(() => history.length);
 
+  // Fica no fim da última guia (Notas): o técnico passa por fotos e notas antes de sair.
+  await expect(page.getByRole('link', { name: /Próximo equipamento/ })).toHaveCount(0);
+  await abrirGuia(page, 'Notas');
   await page.getByRole('link', { name: /Próximo equipamento/ }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'XA-TC-02' })).toBeVisible();
   expect(await page.evaluate(() => window.scrollY)).toBe(0);
   expect(await page.evaluate(() => history.length)).toBe(naFicha);
+  // A ficha nova abre na primeira guia de medida, não na Notas da anterior.
+  await expect(page.getByRole('tab', { selected: true })).toHaveText('Correia');
 
+  await abrirGuia(page, 'Notas');
   await page.getByRole('link', { name: 'Voltar para a lista' }).click();
   await expect(linhas(page)).toHaveCount(9);
   expect(await page.evaluate(() => history.length)).toBe(naFicha); // voltou, não empilhou
@@ -188,7 +222,7 @@ test('opções viram botões grandes; tocar de novo desmarca', async ({ page }) 
   await page.goto('./');
   await importarFixture(page);
   await abrirFicha(page, 'XA-TC-01');
-  const saida = cartao(page, 'REDUTOR').getByRole('group', { name: 'Saída' });
+  const saida = (await noItem(page, 'REDUTOR')).getByRole('group', { name: 'Saída' });
   const vazado = saida.getByRole('button', { name: 'Eixo vazado' });
   await vazado.click();
   await expect(vazado).toHaveAttribute('aria-pressed', 'true');
@@ -254,7 +288,7 @@ test('app aberto em duas janelas: uma não apaga a medida da outra', async ({ pa
   await expect(campo(reaberta, 'TAPETE', 'Lonas')).toHaveValue('2');
 });
 
-test('"Não tem", índice de itens, nome do item preso no topo e volta onde parou', async ({
+test('"Não tem", linha do PCM leva ao item, nome do item preso no topo e volta onde parou', async ({
   page,
 }) => {
   await page.goto('./');
@@ -262,7 +296,7 @@ test('"Não tem", índice de itens, nome do item preso no topo e volta onde paro
   await abrirFicha(page, 'XA-TC-01');
 
   // Campo sem valor no PCM: "Não tem" no lugar de ✓/✗, e conta como feito.
-  const tambor = cartao(page, 'TAMBOR 1');
+  const tambor = await noItem(page, 'TAMBOR 1');
   await expect(
     tambor.getByRole('button', { name: 'Ø ponta (redutor ou acoplamento): confere' }),
   ).toHaveCount(0);
@@ -270,16 +304,18 @@ test('"Não tem", índice de itens, nome do item preso no topo e volta onde paro
   const naoTem = tambor.getByRole('button', { name: 'Ø ponta (redutor ou acoplamento): não tem' });
   await naoTem.click();
   await expect(naoTem).toHaveAttribute('aria-pressed', 'true');
-  await expect(tambor.locator('.item-estado')).toHaveText('1/7');
+  await expect(tambor.locator('.item-estado')).toHaveText('1/10');
 
-  // Índice: pula direto para o motor.
-  await page.getByText('Ir para item…').click();
-  await page.locator('.indice-item', { hasText: /^MOTOR/ }).click();
+  // Guia PCM: tocar na linha do motor abre a guia Acionamento já no motor.
+  await abrirGuia(page, 'PCM');
+  await page.locator('.pcm-linha', { hasText: /^MOTOR/ }).click();
+  await expect(page.getByRole('tab', { selected: true })).toHaveText('Acionamento');
   const motor = cartao(page, 'MOTOR').getByRole('heading');
   await expect(motor).toBeInViewport();
-  expect((await motor.boundingBox())!.y).toBeLessThan(160);
+  expect((await motor.boundingBox())!.y).toBeLessThan(220);
 
-  // Teclado "próximo" entrando no rolete de retorno: o nome dele fica visível sob a barra.
+  // Teclado "próximo" entrando no rolete de retorno: o nome dele fica visível sob as barras.
+  await abrirGuia(page, 'Roletes');
   await campo(page, 'ROLETE DE CARGA', 'Quantidade').fill('39');
   await campo(page, 'ROLETE DE CARGA', 'Quantidade').press('Enter'); // → observação
   await cartao(page, 'ROLETE DE CARGA')
@@ -287,16 +323,18 @@ test('"Não tem", índice de itens, nome do item preso no topo e volta onde paro
     .press('Enter'); // → A do rolete de retorno
   await expect(campo(page, 'ROLETE DE RETORNO', 'A —')).toBeFocused();
   const titulo = cartao(page, 'ROLETE DE RETORNO').getByRole('heading');
-  const barra = (await page.locator('.topo').boundingBox())!;
+  const barra = (await page.locator('.guias').boundingBox())!;
   expect((await titulo.boundingBox())!.y).toBeGreaterThanOrEqual(barra.y + barra.height - 1);
   await expect(titulo).toBeInViewport();
 
-  // Sai para a lista com o "voltar" do Android e volta: a ficha abre onde parou, não no topo.
+  // Sai para a lista com o "voltar" do Android e volta: a ficha abre na mesma guia e onde
+  // parou, não no topo. Trocar de guia não empilhou histórico: um "voltar" basta.
   // (Não clica no "‹ Lista": o click do Playwright num elemento sticky rola a página antes.)
   const parou = await page.evaluate(() => window.scrollY);
-  expect(parou).toBeGreaterThan(1000);
+  expect(parou).toBeGreaterThan(700);
   await page.goBack();
   await expect(linhas(page)).toHaveCount(9);
   await abrirFicha(page, 'XA-TC-01');
+  await expect(page.getByRole('tab', { selected: true })).toHaveText('Roletes');
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(parou - 50);
 });
