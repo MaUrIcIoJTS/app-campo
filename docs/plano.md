@@ -9,21 +9,21 @@ Site: https://mauriciojts.github.io/app-campo/ (deploy automático a cada push n
 2. Importa o PCM real e mostra todos os equipamentos das 6 abas (84 equipamentos, 717 itens).
 3. Preencher 20 medidas, tirar 5 fotos, fechar o navegador à força, reabrir offline: tudo lá.
 4. Exportar o `.xlsx` atualizado e o backup `.json` sem internet e compartilhar pelo WhatsApp.
-5. Restaurar o backup em outro aparelho e os dados aparecem iguais.
+5. Restaurar o backup em outro aparelho e os dados aparecem iguais. ✅ validado em 26/10.
 
 ## Estado das fases
 
-| Fase                                            | Situação                                                                                                                                               |
-| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 0. Repositório, CI, Pages                       | ✅ feito                                                                                                                                               |
-| 1. Banco, importação, lista, ficha (só leitura) | ✅ feito e **validado no celular em 24/10** (critérios 1 e 2)                                                                                          |
-| 2. Ficha com medição                            | ✅ feito e **validado no celular em 24/10**                                                                                                            |
-| 3. Fotos e desenhos SVG                         | ✅ desenhos validados (24/10); fotos feitas (24/10), **testar no celular**                                                                             |
-| 4. Exportar, backup, restaurar, compartilhar    | ✅ feito (25/10); exportar e enviar pelo WhatsApp **validado no celular em 25/10** (critério 4); falta restaurar em outro aparelho (critério 5)        |
-| Aparência e usabilidade em campo                | ✅ feito (25/10): telas de backup e restaurar, estado do aparelho, toast, letras pequenas, `.xlsx` formatado; **conferir no celular**                  |
-| Visual novo (Material 3) e ficha em guias       | ✅ feito, publicado (26/10, `58d01ce`) e **validado no celular em 26/10** ("funcionou corretamente")                                                   |
-| Mancal dos tambores nas linhas do PCM           | ✅ feito e publicado (26/10, `c1b2539`): a planilha preenche MANCAL/ROLAMENTO/BUCHA com o anotado nos tambores; **conferir uma exportação no celular** |
-| 5. Ensaio geral (critérios 1–5 no Android)      | a fazer                                                                                                                                                |
+| Fase                                            | Situação                                                                                                                                                        |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0. Repositório, CI, Pages                       | ✅ feito                                                                                                                                                        |
+| 1. Banco, importação, lista, ficha (só leitura) | ✅ feito e **validado no celular em 24/10** (critérios 1 e 2)                                                                                                   |
+| 2. Ficha com medição                            | ✅ feito e **validado no celular em 24/10**                                                                                                                     |
+| 3. Fotos e desenhos SVG                         | ✅ desenhos validados (24/10); fotos feitas (24/10), **testar no celular**                                                                                      |
+| 4. Exportar, backup, restaurar, compartilhar    | ✅ feito (25/10); exportar e enviar pelo WhatsApp **validado no celular em 25/10** (critério 4); restaurar em outro aparelho **validado em 26/10** (critério 5) |
+| Aparência e usabilidade em campo                | ✅ feito (25/10): telas de backup e restaurar, estado do aparelho, toast, letras pequenas, `.xlsx` formatado; **conferir no celular**                           |
+| Visual novo (Material 3) e ficha em guias       | ✅ feito, publicado (26/10, `58d01ce`) e **validado no celular em 26/10** ("funcionou corretamente")                                                            |
+| Mancal dos tambores nas linhas do PCM           | ✅ feito e publicado (26/10, `c1b2539`): a planilha preenche MANCAL/ROLAMENTO/BUCHA com o anotado nos tambores; exportação **conferida no celular em 26/10**    |
+| 5. Ensaio geral (critérios 1–5 no Android)      | a fazer                                                                                                                                                         |
 
 Se atrasar: os desenhos SVG (fase 3) e o `.zip` de fotos (fase 4) podem ficar para depois, porque
 o backup `.json` já leva as fotos. **Nunca cortar:** gravação automática, backup e restauração.
