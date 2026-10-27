@@ -12,6 +12,7 @@ import {
 import type { Medicao } from '../db/esquema.ts';
 import {
   carregarDados,
+  completarCroquis,
   marcarUltimoBackup,
   type Dados,
   type UltimoBackup,
@@ -76,6 +77,12 @@ export function ProvedorDados({ children }: { children: ComponentChildren }) {
   const recarregar = useCallback(async () => {
     try {
       await filaDeGravacao.descarregar(); // o banco tem que ter o que está na tela
+      try {
+        // Ao abrir e depois de restaurar: croqui que falta (PCM ou backup de antes dele).
+        await completarCroquis();
+      } catch (e) {
+        console.error('Croquis não completados (fica para a próxima abertura)', e);
+      }
       setDados(comPendentesDoDiario(await carregarDados()));
       setErro(null);
     } catch (e) {

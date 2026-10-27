@@ -70,6 +70,7 @@ export function RodapeAparelho({ status, tema, trocarTema }: Props) {
           Tema: {NOME_TEMA[tema]}
         </button>
       </div>
+      <p class="suave">{__VERSAO__}</p>
     </section>
   );
 }

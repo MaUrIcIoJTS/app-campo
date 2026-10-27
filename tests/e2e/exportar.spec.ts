@@ -415,6 +415,47 @@ test('restaurar: backup inválido não apaga nada; o válido guarda antes uma c�
   await semRolagemLateral(page);
 });
 
+test('backup feito antes do croqui: depois de restaurar, os croquis aparecem sem trocar o PCM', async ({
+  page,
+  context,
+}) => {
+  // Campo, 27/10: o backup guarda a lista de itens. Restaurar um backup sem "MEDIDAS
+  // EXTERNAS" (feito antes de trocar o PCM na versão nova) tirava os croquis do celular.
+  await fichaOffline(page, context);
+  const largura = () => cartao(page, 'TAPETE').getByRole('textbox', { name: 'Largura' });
+  await largura().fill('660');
+  await expect(page.getByText('Salvo no aparelho', { exact: true })).toBeVisible();
+  await irParaBackup(page);
+  await page.getByRole('button', { name: 'Preparar backup' }).click();
+  const caminho = test.info().outputPath('backup.json');
+  await (await baixar(page)).saveAs(caminho);
+
+  const json = JSON.parse(readFileSync(caminho, 'utf8'));
+  const itens = (json.itens as { nome: string }[]).filter((i) => i.nome !== 'MEDIDAS EXTERNAS');
+  expect(json.itens.length - itens.length).toBe(9);
+  json.itens = itens;
+  json.resumo.itens = itens.length;
+  const semCroqui = test.info().outputPath('backup-sem-croqui.json');
+  writeFileSync(semCroqui, JSON.stringify(json));
+
+  await page.getByRole('link', { name: 'Restaurar um backup' }).click();
+  await page.locator('input[type=file]').setInputFiles(semCroqui);
+  await page.getByRole('button', { name: 'Restaurar este backup' }).click();
+  // Backup no mesmo segundo da medida: o celular parece "mais novo" e pede a 2ª confirmação.
+  const sim = page.getByRole('button', { name: 'Sim, trocar tudo pelo backup' });
+  const restaurado = page.getByText(/Backup restaurado/);
+  await expect(restaurado.or(sim)).toBeVisible();
+  if (await sim.isVisible()) await sim.click();
+  await expect(restaurado).toBeVisible();
+  await page.getByRole('link', { name: 'Ir para a lista' }).click();
+  await abrirFicha(page, 'XB-AS-01');
+  await expect(page.getByRole('tab', { selected: true })).toHaveText(/^Exterior/);
+  await expect(page.getByRole('img', { name: 'Aeroseparador: cotas A a F' })).toBeVisible();
+  await page.getByRole('link', { name: 'Lista', exact: true }).click();
+  await abrirFicha(page, 'XA-TC-01');
+  await expect(largura()).toHaveValue('660');
+});
+
 test('preparar o backup mostra a barra de progresso com as fotos feitas', async ({
   page,
   context,

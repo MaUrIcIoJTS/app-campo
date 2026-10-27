@@ -29,8 +29,18 @@ está em `prototipo/croqui/`: rode `npm run dev` e acesse `/prototipo/croqui/?fo
   hidratada (tipo Raymond): corpo cilíndrico, acionamento e alimentação em cima, finos embaixo do
   cone e retorno de grossos de lado. O PCM real combina com isso (motor, polia, correia em V e
   duas "rodas" por aero). Se no campo as saídas forem outras, ajustamos D, E e F.
-- **No celular que já tem o PCM:** depois de publicar, é preciso "Trocar o PCM" com o mesmo
-  arquivo para os croquis aparecerem. A prévia diz "Nada será apagado".
+- **Conferido no celular em 27/10**, depois de "Trocar o PCM". No campo apareceu um problema:
+  restaurar um backup feito antes da troca tirava os croquis, porque o backup guarda a lista de
+  itens. As medidas não se perderam.
+- **Correção (27/10, sem push):**
+  - O app completa sozinho o "MEDIDAS EXTERNAS" que faltar. Isso vale para o PCM importado
+    por uma versão sem croqui e para um backup de antes dele.
+  - A correção roda ao abrir o app e depois de restaurar (`completarCroquis`, chamado no
+    `recarregar`). O app só acrescenta o item, com o mesmo id da importação; o "Fora do PCM
+    atual" não ganha croqui.
+  - Não é mais preciso "Trocar o PCM" depois de atualizar.
+  - O app procura versão nova também ao voltar do segundo plano (antes, só ao abrir do zero).
+  - O rodapé da lista mostra a versão ("Versão de 27/10 · abc1234").
 
 ## Como fica (protótipo)
 

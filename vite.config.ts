@@ -1,3 +1,4 @@
+import { execSync } from 'node:child_process';
 import { defineConfig } from 'vite';
 import preact from '@preact/preset-vite';
 import { VitePWA } from 'vite-plugin-pwa';
@@ -6,8 +7,27 @@ import { VitePWA } from 'vite-plugin-pwa';
 // O workflow de deploy define BASE_PATH=/<repo>/; localmente fica "/".
 const base = process.env.BASE_PATH ?? '/';
 
+/** "Versão de 27/10 · c6b26a2" (data e commit do build), para conferir no celular. */
+function versao(): string {
+  try {
+    const [commit, data] = execSync('git log -1 --format="%h %cd" --date=format:%d/%m', {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    })
+      .trim()
+      .split(' ');
+    if (commit && data) return `Versão de ${data} · ${commit}`;
+  } catch {
+    // fora de um repositório git
+  }
+  return 'Versão local';
+}
+
 export default defineConfig({
   base,
+  define: {
+    __VERSAO__: JSON.stringify(versao()),
+  },
   plugins: [
     preact(),
     VitePWA({

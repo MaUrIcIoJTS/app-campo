@@ -6,7 +6,7 @@
  * "Sem acesso" e "estimado" ficam no próprio texto digitado ("sem acesso", "≈ 1800"): nada muda
  * no banco nem no backup, e a planilha sai legível.
  */
-import type { Conferencia } from '../db/esquema.ts';
+import type { Conferencia, EquipamentoDb, ItemDb } from '../db/esquema.ts';
 import { parseMedida } from './numeros.ts';
 import { normalizar } from './texto.ts';
 import type { EquipamentoPcm, ItemPcm, TipoItem } from './tipos.ts';
@@ -49,6 +49,33 @@ export function deduzirCroqui(eq: Pick<EquipamentoPcm, 'id' | 'nome'>): ItemPcm[
       tipo,
     },
   ];
+}
+
+/**
+ * Croquis que faltam no banco: PCM importado por uma versão sem croqui, ou backup feito antes
+ * dele (o backup guarda a lista de itens). O item é o mesmo que a importação criaria (mesmo id:
+ * as cotas acompanham numa troca de PCM) e fica no fim da ficha. "Fora do PCM atual" não ganha.
+ */
+export function croquisQueFaltam(
+  equipamentos: readonly EquipamentoDb[],
+  itens: readonly ItemDb[],
+): ItemDb[] {
+  const ids = new Set(itens.map((i) => i.id));
+  const temCroqui = new Set<string>();
+  const ultimaOrdem = new Map<string, number>();
+  for (const i of itens) {
+    if (i.nome === NOME_DO_CROQUI) temCroqui.add(i.equipamentoId);
+    const o = ultimaOrdem.get(i.equipamentoId);
+    if (!i.orfao && (o === undefined || i.ordem > o)) ultimaOrdem.set(i.equipamentoId, i.ordem);
+  }
+  const faltam: ItemDb[] = [];
+  for (const e of equipamentos) {
+    if (e.orfao || temCroqui.has(e.id)) continue;
+    for (const i of deduzirCroqui(e))
+      if (!ids.has(i.id))
+        faltam.push({ ...i, equipamentoId: e.id, ordem: (ultimaOrdem.get(e.id) ?? 0) + 0.5 });
+  }
+  return faltam;
 }
 
 export const SEM_ACESSO = 'sem acesso';

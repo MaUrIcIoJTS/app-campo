@@ -8,6 +8,7 @@ import type {
   Medicao,
   NotaEquipamento,
 } from './esquema.ts';
+import { croquisQueFaltam } from '../dominio/croqui.ts';
 import type { Pcm } from '../dominio/tipos.ts';
 import {
   planejarReimportacao,
@@ -197,6 +198,26 @@ export async function gravarImportacao(
     await tx.objectStore('importacoes').put(importacao);
     await meta.put({ chave: CHAVE_IMPORTACAO_ATUAL, valor: importacao.id });
   });
+}
+
+/**
+ * Acrescenta os croquis ("MEDIDAS EXTERNAS") que faltam: PCM importado por uma versão sem
+ * croqui, ou backup restaurado que foi feito antes dele. Só acrescenta itens: medições, fotos
+ * e o resto ficam como estão. Devolve quantos entraram.
+ */
+export async function completarCroquis(): Promise<number> {
+  const tx = (await banco()).transaction(['equipamentos', 'itens'], 'readwrite');
+  let acrescentados = 0;
+  await tudoOuNada(tx, async () => {
+    const itens = tx.objectStore('itens');
+    const faltam = croquisQueFaltam(
+      await tx.objectStore('equipamentos').getAll(),
+      await itens.getAll(),
+    );
+    for (const i of faltam) await itens.put(i);
+    acrescentados = faltam.length;
+  });
+  return acrescentados;
 }
 
 /** Carrega tudo que as telas precisam (sem os blobs de fotos e do arquivo). */

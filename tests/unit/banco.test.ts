@@ -7,6 +7,7 @@ import { abrirBanco, banco, fecharBanco } from '../../src/db/banco.ts';
 import { MIGRACOES, VERSAO_BANCO, type Importacao, type Medicao } from '../../src/db/esquema.ts';
 import {
   carregarDados,
+  completarCroquis,
   DadosMudaramDuranteImportacao,
   gravarImportacao,
   previaImportacao,
@@ -61,6 +62,17 @@ function abaQueCruzaALinha100(): Linha[] {
   l.push(['OBSERVAÇÕES']);
   return l;
 }
+
+/** O PCM como uma versão do app sem croqui o importava: sem os itens "MEDIDAS EXTERNAS". */
+const semCroqui = (pcm: Pcm): Pcm => ({
+  abas: pcm.abas.map((a) => ({
+    ...a,
+    equipamentos: a.equipamentos.map((e) => ({
+      ...e,
+      itens: e.itens.filter((i) => !i.tipo.startsWith('corpo-')),
+    })),
+  })),
+});
 
 async function importar(pcm: Pcm, id: string) {
   const previa = await previaImportacao(pcm, id);
@@ -301,18 +313,8 @@ describe('importação', () => {
   });
 
   it('croqui: celular com PCM de antes do croqui ganha "MEDIDAS EXTERNAS" ao reimportar', async () => {
-    // Importação feita por uma versão do app sem croqui: sem o item deduzido.
     const pcm = lerPcm(readFileSync(FIXTURE));
-    const semCroqui: Pcm = {
-      abas: pcm.abas.map((a) => ({
-        ...a,
-        equipamentos: a.equipamentos.map((e) => ({
-          ...e,
-          itens: e.itens.filter((i) => !i.tipo.startsWith('corpo-')),
-        })),
-      })),
-    };
-    await importar(semCroqui, 'imp-1');
+    await importar(semCroqui(pcm), 'imp-1');
     const motor = await itemPorNome('XB-AS-01', 'MOTOR');
     await salvarMedicao(medicao(motor.item.id, '20'));
     expect(motor.dados.itensPorEquipamento.get(motor.eq.id)?.map((i) => i.tipo)).not.toContain(
@@ -324,6 +326,34 @@ describe('importação', () => {
     const croqui = await itemPorNome('XB-AS-01', 'MEDIDAS EXTERNAS');
     expect(croqui.item).toMatchObject({ tipo: 'corpo-aeroseparador', origem: 'deduzido' });
     expect(croqui.dados.medicoes.get(motor.item.id)?.valores).toEqual({ largura: '20' });
+  });
+
+  it('croqui: banco de antes do croqui ganha os croquis ao abrir, sem trocar o PCM', async () => {
+    // Campo, 27/10: restaurar um backup feito antes de trocar o PCM tirava os croquis.
+    const pcm = lerPcm(readFileSync(FIXTURE));
+    await importar(semCroqui(pcm), 'imp-1');
+    const motor = await itemPorNome('XB-AS-01', 'MOTOR');
+    await salvarMedicao(medicao(motor.item.id, '20'));
+
+    expect(await completarCroquis()).toBe(9);
+    expect(await completarCroquis()).toBe(0);
+    const croqui = await itemPorNome('XB-AS-01', 'MEDIDAS EXTERNAS');
+    expect(croqui.item).toMatchObject({
+      id: `${croqui.eq.id}:exterior`,
+      tipo: 'corpo-aeroseparador',
+      origem: 'deduzido',
+    });
+    expect(croqui.dados.itensPorEquipamento.get(croqui.eq.id)?.at(-1)?.id).toBe(croqui.item.id);
+    expect([...croqui.dados.medicoes.keys()]).toEqual([motor.item.id]);
+
+    // A cota anotada no croqui completado vai junto numa troca de PCM.
+    await salvarMedicao({ ...medicao(croqui.item.id, ''), valores: { diametro: '1900' } });
+    const { plano } = await importar(pcm, 'imp-2');
+    expect(plano.resumo).toMatchObject({ orfaosItens: 0, orfaosEquipamentos: 0 });
+    const depois = await itemPorNome('XB-AS-01', 'MEDIDAS EXTERNAS');
+    expect(depois.dados.medicoes.get(depois.item.id)?.valores).toEqual({ diametro: '1900' });
+    expect(depois.dados.medicoes.get(motor.item.id)?.valores).toEqual({ largura: '20' });
+    expect(await completarCroquis()).toBe(0);
   });
 
   it('croqui: as cotas acompanham o item quando linhas são inseridas na aba', async () => {

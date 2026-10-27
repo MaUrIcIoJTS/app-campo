@@ -1,8 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import type { Medicao } from '../../src/db/esquema.ts';
+import type { ItemDb, Medicao } from '../../src/db/esquema.ts';
 import {
   comEstimado,
+  croquisQueFaltam,
   deduzirCroqui,
   diametroDoPerimetro,
   ehEstimado,
@@ -15,6 +16,7 @@ import { numeroAmbiguo, numeroInvalido } from '../../src/dominio/medicao.ts';
 import { parseMedida } from '../../src/dominio/numeros.ts';
 import { lerPcm } from '../../src/dominio/pcm/parser.ts';
 import { progressoItem } from '../../src/dominio/progresso.ts';
+import { registrosDoPcm } from '../../src/dominio/reimportacao.ts';
 import { TEMPLATES } from '../../src/dominio/templates/registro.ts';
 import type { ItemPcm } from '../../src/dominio/tipos.ts';
 import { textoMedido } from '../../src/exportar/textos.ts';
@@ -97,6 +99,30 @@ describe('categoria do equipamento → croqui', () => {
       'fotos',
       'notas',
     ]);
+  });
+
+  it('banco sem croqui (PCM ou backup de antes dele): faltam os da importação, no fim da ficha', () => {
+    const pcm = lerPcm(readFileSync('tests/fixtures/pcm-ficticio.xls'));
+    const { equipamentos, itens } = registrosDoPcm(pcm, 'imp-1');
+    const ehCroqui = (i: ItemDb) => i.nome === 'MEDIDAS EXTERNAS';
+    const semCroqui = itens.filter((i) => !ehCroqui(i));
+    const semOrdem = ({ ordem: _ordem, ...i }: ItemDb) => i;
+
+    const faltam = croquisQueFaltam(equipamentos, semCroqui);
+    expect(faltam).toHaveLength(9);
+    expect(faltam.map(semOrdem)).toEqual(itens.filter(ehCroqui).map(semOrdem));
+    for (const c of faltam) {
+      const doEq = semCroqui.filter((i) => i.equipamentoId === c.equipamentoId);
+      expect(c.ordem).toBeGreaterThan(Math.max(...doEq.map((i) => i.ordem)));
+    }
+
+    // Completo: nada falta. Equipamento "Fora do PCM atual" não ganha croqui.
+    expect(croquisQueFaltam(equipamentos, [...semCroqui, ...faltam])).toEqual([]);
+    expect(croquisQueFaltam(equipamentos, itens)).toEqual([]);
+    const silo = equipamentos.find((e) => e.tag === 'XB-SL-01')!;
+    expect(croquisQueFaltam([{ ...silo, id: `orfao:imp-2:${silo.id}`, orfao: true }], [])).toEqual(
+      [],
+    );
   });
 });
 

@@ -11,6 +11,7 @@ import { TelaExportar } from './ui/TelaExportar.tsx';
 import { TelaImportar } from './ui/TelaImportar.tsx';
 import { TelaRestaurar } from './ui/TelaRestaurar.tsx';
 import { useRestaurando } from './exportar/restaurar.ts';
+import { procurarAtualizacaoAoVoltar } from './ui/atualizacao.ts';
 import { TelaLista, type Filtros } from './ui/TelaLista.tsx';
 import { useTema } from './ui/tema.ts';
 
@@ -19,7 +20,11 @@ export function App() {
     offlineReady: [offlinePronto],
     needRefresh: [temAtualizacao],
     updateServiceWorker,
-  } = useRegisterSW();
+  } = useRegisterSW({
+    onRegisteredSW: (_url, registro) => {
+      if (registro) procurarAtualizacaoAoVoltar(registro);
+    },
+  });
   const rota = useRota();
   // Restaurando: só a tela de restaurar (sair e medir agora seria apagado pela restauração).
   const restaurando = useRestaurando();

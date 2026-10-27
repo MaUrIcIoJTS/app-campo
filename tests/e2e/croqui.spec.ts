@@ -1,5 +1,12 @@
 import { expect, test } from '@playwright/test';
-import { abrirFicha, cartao, esperarServiceWorker, importarFixture, linhas } from './apoio.ts';
+import {
+  abrirFicha,
+  cartao,
+  esperarServiceWorker,
+  importarFixture,
+  linhas,
+  noItem,
+} from './apoio.ts';
 
 test('croqui do aeroseparador: a letra leva ao campo; ≈, perímetro, sem acesso e não tem; reabre offline com tudo', async ({
   page,
@@ -59,4 +66,59 @@ test('croqui do aeroseparador: a letra leva ao campo; ≈, perímetro, sem acess
   ).toHaveAttribute('aria-pressed', 'true');
   await expect(reaberta.getByRole('button', { name: 'Cota D: falta medir' })).toBeVisible();
   await expect(depois.getByText('5/6')).toBeVisible();
+});
+
+test('PCM importado por uma versão sem croqui: ao abrir o app, os croquis aparecem sem trocar o PCM', async ({
+  page,
+  context,
+}) => {
+  await page.goto('./');
+  await esperarServiceWorker(page);
+  await context.setOffline(true);
+  await page.reload();
+  await importarFixture(page);
+  await abrirFicha(page, 'XB-AS-01');
+  const motor = await noItem(page, 'MOTOR');
+  await motor.getByRole('textbox', { name: 'Potência' }).fill('7,5');
+  await expect(page.getByText('Salvo no aparelho', { exact: true })).toBeVisible();
+
+  // O banco como a versão anterior deixou: sem os itens "MEDIDAS EXTERNAS".
+  const apagados = await page.evaluate(
+    () =>
+      new Promise<number>((ok, falha) => {
+        const req = indexedDB.open('levantamento-pcm');
+        req.onerror = () => falha(req.error);
+        req.onsuccess = () => {
+          const tx = req.result.transaction('itens', 'readwrite');
+          const store = tx.objectStore('itens');
+          let n = 0;
+          store.openCursor().onsuccess = (e) => {
+            const c = (e.target as IDBRequest<IDBCursorWithValue | null>).result;
+            if (!c) return;
+            if ((c.value as { nome: string }).nome === 'MEDIDAS EXTERNAS') {
+              c.delete();
+              n++;
+            }
+            c.continue();
+          };
+          tx.oncomplete = () => {
+            req.result.close();
+            ok(n);
+          };
+          tx.onerror = () => falha(tx.error);
+        };
+      }),
+  );
+  expect(apagados).toBe(9);
+
+  const reaberta = await context.newPage();
+  await page.close();
+  await reaberta.goto('./');
+  await expect(linhas(reaberta)).toHaveCount(15);
+  await abrirFicha(reaberta, 'XB-AS-01');
+  await expect(reaberta.getByRole('tab', { selected: true })).toHaveText(/^Exterior/);
+  await expect(reaberta.getByRole('img', { name: 'Aeroseparador: cotas A a F' })).toBeVisible();
+  await expect(
+    (await noItem(reaberta, 'MOTOR')).getByRole('textbox', { name: 'Potência' }),
+  ).toHaveValue('7,5');
 });
