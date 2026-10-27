@@ -10,6 +10,8 @@ import {
 } from '../dominio/medicao.ts';
 import { progressoItem } from '../dominio/progresso.ts';
 import { TEMPLATES, type IdDesenho } from '../dominio/templates/registro.ts';
+import { chavePerimetro } from '../dominio/croqui.ts';
+import { CampoCroqui } from './CampoCroqui.tsx';
 import { CampoMedicao } from './CampoMedicao.tsx';
 import { DesenhosDoItem } from './DesenhosDoItem.tsx';
 import { irAoProximoCampo } from './foco.ts';
@@ -129,7 +131,11 @@ export function CartaoItem({
         </p>
       )}
       {item.origem === 'deduzido' && (
-        <span class="selo">Não está no PCM — deduzido dos mancais</span>
+        <span class="selo">
+          {item.tipo === 'tambor'
+            ? 'Não está no PCM — deduzido dos mancais'
+            : 'Não está no PCM — medidas do corpo'}
+        </span>
       )}
       {item.orfao && <span class="selo selo--alerta">Fora do PCM atual</span>}
       <DesenhosDoItem ids={template.desenhos.filter((d) => d !== desenhoNoTopo)} />
@@ -145,15 +151,28 @@ export function CartaoItem({
             {c.grupo && c.grupo !== template.campos[k - 1]?.grupo && (
               <h3 class="campos-grupo">{c.grupo}</h3>
             )}
-            <CampoMedicao
-              campo={c}
-              item={item}
-              irmaos={irmaos}
-              valor={medicao?.valores[c.id]}
-              conferencia={medicao?.conferencia[c.id]}
-              onValor={(v) => onMedicao((m) => comValor(m, item.id, c.id, v))}
-              onConferencia={(marca) => onMedicao((m) => comConferencia(m, item.id, c.id, marca))}
-            />
+            {c.letra ? (
+              <CampoCroqui
+                campo={c}
+                item={item}
+                valor={medicao?.valores[c.id]}
+                perimetro={medicao?.valores[chavePerimetro(c.id)]}
+                conferencia={medicao?.conferencia[c.id]}
+                onValor={(v) => onMedicao((m) => comValor(m, item.id, c.id, v))}
+                onPerimetro={(v) => onMedicao((m) => comValor(m, item.id, chavePerimetro(c.id), v))}
+                onConferencia={(marca) => onMedicao((m) => comConferencia(m, item.id, c.id, marca))}
+              />
+            ) : (
+              <CampoMedicao
+                campo={c}
+                item={item}
+                irmaos={irmaos}
+                valor={medicao?.valores[c.id]}
+                conferencia={medicao?.conferencia[c.id]}
+                onValor={(v) => onMedicao((m) => comValor(m, item.id, c.id, v))}
+                onConferencia={(marca) => onMedicao((m) => comConferencia(m, item.id, c.id, marca))}
+              />
+            )}
           </Fragment>
         ))}
       </div>

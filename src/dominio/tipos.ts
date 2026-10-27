@@ -22,7 +22,10 @@ export type TipoItem =
   | 'sensor'
   | 'painel'
   | 'iluminacao'
-  | 'generico';
+  | 'generico'
+  // Croqui das medidas externas (item deduzido pela categoria do equipamento, ver `croqui.ts`).
+  | 'corpo-aeroseparador'
+  | 'corpo-silo';
 
 /** De onde veio o item: linha do PCM, deduzido pelo app (ex.: tambores) ou criado em campo. */
 export type OrigemItem = 'pcm' | 'deduzido' | 'manual';

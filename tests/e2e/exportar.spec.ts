@@ -101,7 +101,7 @@ async function baixar(page: Page, onde = page.locator('main')): Promise<Download
 
 async function irParaBackup(page: Page) {
   await page.getByRole('link', { name: 'Lista', exact: true }).click();
-  await expect(linhas(page)).toHaveCount(9);
+  await expect(linhas(page)).toHaveCount(10);
   await page.getByRole('link', { name: /Último backup|Nenhum backup/ }).click();
   await expect(page.getByRole('heading', { name: 'Backup e exportar' })).toBeVisible();
 }
@@ -169,7 +169,7 @@ test('backup offline → outro aparelho limpo → restaurar: medidas, observaç�
   await download.saveAs(caminho);
   const json = JSON.parse(readFileSync(caminho, 'utf8'));
   expect(json).toMatchObject({ formato: 'levantamento-pcm-backup', versao: 1 });
-  expect(json.resumo).toMatchObject({ equipamentos: 9, medicoes: 2, notas: 1, fotos: 2 });
+  expect(json.resumo).toMatchObject({ equipamentos: 10, medicoes: 2, notas: 1, fotos: 2 });
   await semRolagemLateral(page);
 
   // "Último backup" na tela inicial.
@@ -200,7 +200,7 @@ test('backup offline → outro aparelho limpo → restaurar: medidas, observaç�
   await p2.locator('input[type=file]').setInputFiles(caminho);
   // Prévia em tabela: o que o backup traz (o celular está vazio: só a coluna do backup).
   const linha = (rotulo: string) => p2.getByRole('row', { name: new RegExp(`^${rotulo}`) });
-  await expect(linha('Equipamentos')).toHaveText(/Equipamentos\s*9$/);
+  await expect(linha('Equipamentos')).toHaveText(/Equipamentos\s*10$/);
   await expect(linha('Itens medidos')).toHaveText(/Itens medidos\s*2$/);
   await expect(linha('Obs. de equipamento')).toHaveText(/Obs. de equipamento\s*1$/);
   await expect(linha('Fotos')).toHaveText(/Fotos\s*2$/);
@@ -214,7 +214,7 @@ test('backup offline → outro aparelho limpo → restaurar: medidas, observaç�
   await expect(p2.getByText(/Backup restaurado/)).toBeVisible();
   await expect(p2.getByText('Cópia de antes da restauração')).toHaveCount(0); // estava vazio
   await p2.getByRole('link', { name: 'Ir para a lista' }).click();
-  await expect(linhas(p2)).toHaveCount(9);
+  await expect(linhas(p2)).toHaveCount(10);
 
   expect(await estadoDoBanco(p2)).toEqual(antes);
   await abrirFicha(p2, 'XA-TC-01');
@@ -315,14 +315,14 @@ test('PCM atualizado (.xlsx) offline: colunas na linha de cada item e reimporta 
   ]);
   expect(lerPcm(bytes)).toEqual(lerPcm(readFileSync(FIXTURE)));
 
-  // Subir o PCM atualizado no app: mesmos 9 equipamentos e as medidas continuam.
+  // Subir o PCM atualizado no app: mesmos 10 equipamentos e as medidas continuam.
   await page.getByRole('link', { name: 'Lista', exact: true }).click();
   await page.getByRole('link', { name: 'Trocar o PCM' }).click();
   await page.locator('input[type=file]').setInputFiles(caminho);
   await expect(page.getByText(/Nada será apagado/)).toBeVisible();
   await expect(page.getByText(/mudou de linha|mudaram de linha|Fora do PCM atual/)).toHaveCount(0);
-  await page.getByRole('button', { name: 'Trocar o PCM (9 equipamentos)' }).click();
-  await expect(linhas(page)).toHaveCount(9);
+  await page.getByRole('button', { name: 'Trocar o PCM (10 equipamentos)' }).click();
+  await expect(linhas(page)).toHaveCount(10);
   await expect(page.getByText('Fora do PCM atual')).toHaveCount(0);
   await abrirFicha(page, 'XA-TC-01');
   await expect(

@@ -1,5 +1,6 @@
 /** Regras puras de edição da medição de um item (a UI só chama estas funções). */
 import type { Conferencia, Medicao, NotaEquipamento } from '../db/esquema.ts';
+import { ehSemAcesso } from './croqui.ts';
 import { arredondar, formatarNumero, medidaAmbigua, parseMedida, parseNumero } from './numeros.ts';
 import { TEMPLATES, type CampoTemplate } from './templates/registro.ts';
 import type { ItemPcm } from './tipos.ts';
@@ -81,9 +82,14 @@ export function deltaDoCampo(
   return medido === null || pcm === null ? null : arredondar(medido - pcm, 3);
 }
 
-/** Campo numérico com texto que não é número: avisa, mas guarda o texto mesmo assim. */
+/**
+ * Campo numérico com texto que não é número: avisa, mas guarda o texto mesmo assim.
+ * "sem acesso" (botão do croqui) não é erro.
+ */
 export function numeroInvalido(campo: CampoTemplate, valor: string | undefined): boolean {
-  return campo.tipo === 'numero' && !!valor?.trim() && parseMedida(valor) === null;
+  return (
+    campo.tipo === 'numero' && !!valor?.trim() && parseMedida(valor) === null && !ehSemAcesso(valor)
+  );
 }
 
 /** "12.450" em campo numérico: perguntar se é 12450 ou 12,45. */

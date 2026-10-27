@@ -2083,6 +2083,86 @@ html:has(.ficha [data-campo-ficha]:focus) {
   stroke: none;
 }
 
+/* Croqui: letra da cota. Vazia = falta, cheia = medida, cinza = sem acesso / não tem. */
+.desenho-svg .letra {
+  cursor: pointer;
+}
+
+.desenho-svg .letra-toque {
+  fill: transparent;
+}
+
+.desenho-svg .letra-fundo {
+  fill: var(--superficie);
+  stroke: var(--desenho);
+  stroke-width: 2.5;
+}
+
+.desenho-svg .letra text {
+  fill: var(--desenho);
+  font-weight: 700;
+  stroke: none;
+}
+
+.desenho-svg .letra--medida .letra-fundo {
+  fill: var(--desenho);
+}
+
+.desenho-svg .letra--medida text {
+  fill: var(--desenho-texto);
+}
+
+.desenho-svg .letra--cinza .letra-fundo {
+  fill: var(--texto-suave);
+  stroke: var(--texto-suave);
+}
+
+.desenho-svg .letra--cinza text {
+  fill: var(--superficie);
+}
+
+/* A mesma letra ao lado do nome do campo. */
+.letra-campo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  margin-inline-end: 0.5rem;
+  border: 2.5px solid var(--desenho);
+  border-radius: 50%;
+  color: var(--desenho);
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+.letra-campo--medida {
+  background: var(--desenho);
+  color: var(--desenho-texto);
+}
+
+.letra-campo--cinza {
+  background: var(--texto-suave);
+  border-color: var(--texto-suave);
+  color: var(--superficie);
+}
+
+/* "Não tem" e "Medi o perímetro": do tamanho do texto, não da linha inteira. */
+.croqui-extras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.croqui-extras .opcao--chip {
+  flex: 0 0 auto;
+}
+
+.croqui-perimetro {
+  margin-top: 12px;
+}
+
 /* ---- Fotos -------------------------------------------------------------------------- */
 
 .fotos {

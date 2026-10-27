@@ -1,3 +1,4 @@
+import type { ComponentChildren } from 'preact';
 import { useState } from 'preact/hooks';
 import type { IdGuia } from '../dominio/guias.ts';
 import type { IdDesenho } from '../dominio/templates/registro.ts';
@@ -36,7 +37,7 @@ function ocultos(): string[] {
   }
 }
 
-function lembrar(id: IdDesenho, aberto: boolean): void {
+function lembrar(id: string, aberto: boolean): void {
   const lista = ocultos().filter((x) => x !== id);
   try {
     localStorage.setItem(CHAVE, JSON.stringify(aberto ? lista : [...lista, id]));
@@ -47,8 +48,29 @@ function lembrar(id: IdDesenho, aberto: boolean): void {
 
 /** Desenho no alto da guia, aberto (como no protótipo de campo); "Ocultar" recolhe. */
 export function DesenhoDaGuia({ id, titulo }: { id: IdDesenho; titulo: string }) {
-  const [aberto, setAberto] = useState(() => !ocultos().includes(id));
   const { Svg, legenda } = DESENHOS[id];
+  return (
+    <DesenhoNoAlto chave={id} titulo={titulo}>
+      <Svg />
+      <figcaption>{legenda}</figcaption>
+    </DesenhoNoAlto>
+  );
+}
+
+/**
+ * O cartão recolhível do alto da guia. `chave`: quem ocultou não vê de novo nos próximos
+ * equipamentos (o desenho da guia, ou "croqui" para todos os croquis).
+ */
+export function DesenhoNoAlto({
+  chave,
+  titulo,
+  children,
+}: {
+  chave: string;
+  titulo: string;
+  children: ComponentChildren;
+}) {
+  const [aberto, setAberto] = useState(() => !ocultos().includes(chave));
   return (
     <details
       class="cartao desenho-guia"
@@ -57,19 +79,14 @@ export function DesenhoDaGuia({ id, titulo }: { id: IdDesenho; titulo: string })
         const agora = e.currentTarget.open;
         if (agora === aberto) return;
         setAberto(agora);
-        lembrar(id, agora);
+        lembrar(chave, agora);
       }}
     >
       <summary>
         <span class="desenho-guia-titulo">{titulo}</span>
         <span class="desenho-guia-acao">{aberto ? 'Ocultar' : 'Ver desenho'}</span>
       </summary>
-      {aberto && (
-        <figure class="desenho">
-          <Svg />
-          <figcaption>{legenda}</figcaption>
-        </figure>
-      )}
+      {aberto && <figure class="desenho">{children}</figure>}
     </details>
   );
 }

@@ -46,15 +46,18 @@ export function polegadasParaMm(polegadas: number): number {
  * Diferente de `parseNumero` (tolerante, para o texto do PCM): "65O" aqui é inválido.
  */
 export function parseMedida(texto: string | null | undefined): number | null {
-  const s = (texto ?? '').trim();
+  const s = semEstimado(texto);
   if (!/^[-+]?(\d+([.,]\d+)?|[.,]\d+)$/.test(s)) return null;
   return Number(s.replace(',', '.'));
 }
 
 /** "12.450": ponto + 3 casas pode ser milhar (12450) ou decimal (12,45). Avisar, não adivinhar. */
 export function medidaAmbigua(texto: string | null | undefined): boolean {
-  return /^[-+]?[1-9]\d{0,2}\.\d{3}$/.test((texto ?? '').trim());
+  return /^[-+]?[1-9]\d{0,2}\.\d{3}$/.test(semEstimado(texto));
 }
+
+/** "≈ 1800" (medida estimada, no croqui) vale como 1800. */
+const semEstimado = (texto: string | null | undefined) => (texto ?? '').trim().replace(/^≈\s*/, '');
 
 /** Δ = medido − PCM. Só existe quando os dois lados são números. */
 export function calcularDelta(

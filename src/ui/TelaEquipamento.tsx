@@ -15,6 +15,7 @@ import { avisosDoItem, itemDiverge } from '../dominio/medicao.ts';
 import { percentual, progressoItem, somarProgresso } from '../dominio/progresso.ts';
 import { CartaoItem, estadoDoItem, irParaItem, SeloDoItem } from './CartaoItem.tsx';
 import { useDados } from './dados.tsx';
+import { CroquiDaGuia } from './CroquiDaGuia.tsx';
 import { DesenhoDaGuia, desenhoDaGuia } from './DesenhoDaGuia.tsx';
 import { LinhaBackup } from './LinhaBackup.tsx';
 import { irAoProximoCampo } from './foco.ts';
@@ -55,6 +56,7 @@ const SEM_ITENS: readonly ItemDb[] = [];
 /** Título de cada guia, no alto do painel (como no protótipo de campo). */
 const TITULOS: Partial<Record<IdGuia, string>> = {
   pcm: 'Dados do PCM',
+  exterior: 'Medidas externas',
   correia: 'Correia e centro a centro',
   notas: 'Observações',
 };
@@ -355,7 +357,14 @@ function ItensDaGuia({
   const tambores = guia.id === 'tambores' ? guia.itens.filter((i) => i.tipo === 'tambor') : [];
   const desenho = desenhoDaGuia(guia.id, tambores.length > 0);
   const linhasPcm = tambores.length > 0 ? guia.itens.filter((i) => i.tipo !== 'tambor') : [];
-  const topo = desenho && <DesenhoDaGuia key={desenho.id} {...desenho} />;
+  // Exterior: o croqui com as letras (o estado de cada cota vem da medição do item).
+  const croqui =
+    guia.id === 'exterior' ? guia.itens.find((i) => i.tipo.startsWith('corpo-')) : undefined;
+  const topo = croqui ? (
+    <CroquiDaGuia key={croqui.id} item={croqui} medicao={medicoes.get(croqui.id)} />
+  ) : (
+    desenho && <DesenhoDaGuia key={desenho.id} {...desenho} />
+  );
   if (linhasPcm.length === 0)
     return (
       <>

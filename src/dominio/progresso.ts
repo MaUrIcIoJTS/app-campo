@@ -1,5 +1,6 @@
 import type { Medicao } from '../db/esquema.ts';
-import { TEMPLATES } from './templates/registro.ts';
+import { chavePerimetro } from './croqui.ts';
+import { TEMPLATES, type CampoTemplate } from './templates/registro.ts';
 import type { TipoItem } from './tipos.ts';
 
 export interface Progresso {
@@ -10,14 +11,20 @@ export interface Progresso {
 
 const VAZIO: Progresso = { preenchidos: 0, total: 0, divergencias: 0 };
 
-/** Campo conta como feito se tem valor OU foi marcado ✓/✗ (conferido sem digitar). */
+/**
+ * Campo conta como feito se tem valor OU foi marcado ✓/✗/"não tem" (conferido sem digitar).
+ * No croqui, o Ø medido pelo perímetro também conta.
+ */
 export function progressoItem(item: { tipo: TipoItem }, medicao?: Medicao): Progresso {
   const campos = TEMPLATES[item.tipo].campos;
   if (!medicao) return { ...VAZIO, total: campos.length };
-  const feito = (id: string) =>
-    (medicao.valores[id] ?? '').trim() !== '' || medicao.conferencia[id] !== undefined;
+  const temTexto = (chave: string) => (medicao.valores[chave] ?? '').trim() !== '';
+  const feito = (c: CampoTemplate) =>
+    temTexto(c.id) ||
+    medicao.conferencia[c.id] !== undefined ||
+    (!!c.perimetro && temTexto(chavePerimetro(c.id)));
   return {
-    preenchidos: campos.filter((c) => feito(c.id)).length,
+    preenchidos: campos.filter(feito).length,
     total: campos.length,
     divergencias: campos.filter((c) => medicao.conferencia[c.id] === 'diverge').length,
   };

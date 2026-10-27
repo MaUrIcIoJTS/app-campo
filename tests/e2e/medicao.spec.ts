@@ -214,7 +214,7 @@ test('"Próximo equipamento" troca a ficha sem empilhar histórico', async ({ pa
 
   await abrirGuia(page, 'Notas');
   await page.getByRole('link', { name: 'Voltar para a lista' }).click();
-  await expect(linhas(page)).toHaveCount(9);
+  await expect(linhas(page)).toHaveCount(10);
   expect(await page.evaluate(() => history.length)).toBe(naFicha); // voltou, não empilhou
 });
 
@@ -333,7 +333,7 @@ test('"Não tem", linha do PCM leva ao item, nome do item preso no topo e volta 
   const parou = await page.evaluate(() => window.scrollY);
   expect(parou).toBeGreaterThan(700);
   await page.goBack();
-  await expect(linhas(page)).toHaveCount(9);
+  await expect(linhas(page)).toHaveCount(10);
   await abrirFicha(page, 'XA-TC-01');
   await expect(page.getByRole('tab', { selected: true })).toHaveText('Roletes');
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(parou - 50);

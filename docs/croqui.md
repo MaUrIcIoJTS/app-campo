@@ -1,8 +1,31 @@
-# Croqui: medidas externas dos equipamentos (etapa 1, análise)
+# Croqui: medidas externas dos equipamentos
 
-Pedido em 26/10. Ponto de partida: `docs/prompts/sessao-croqui.md`. Nada disto está no app
-ainda; o esboço visual está em `prototipo/croqui/`. Para abrir, rode `npm run dev` e acesse
-`/prototipo/croqui/?forma=aero` (ou `peneira`, com `&tema=escuro`).
+Pedido em 26/10. Ponto de partida: `docs/prompts/sessao-croqui.md`. O esboço visual da etapa 1
+está em `prototipo/croqui/`: rode `npm run dev` e acesse `/prototipo/croqui/?forma=aero` (ou
+`peneira`, com `&tema=escuro`).
+
+## Situação
+
+- **Etapa 1 (análise e esboço):** aprovada pelo usuário em 26/10, com todas as recomendações
+  abaixo.
+- **Etapa 2 (cilindro + cone no app):** feita em 26/10 no branch `croqui`, **sem publicar**.
+  - Aeroseparador e silo ganham o item "MEDIDAS EXTERNAS" (tipos `corpo-aeroseparador` e
+    `corpo-silo`) na guia "Exterior".
+  - O croqui tem letras tocáveis. Os campos têm "Sem acesso", "Não tem", "≈ Estimado" e
+    perímetro → Ø.
+  - Na planilha, sai na aba "Fora do PCM".
+  - Código: `src/dominio/croqui.ts`, `src/ui/CampoCroqui.tsx`, `src/ui/CroquiDaGuia.tsx`,
+    `src/ui/desenhos/croqui.tsx`.
+  - Com o PCM real (só contagens): 4 croquis (2 aeroseparadores, 2 silos); 0 de 3.073 células
+    alteradas; a planilha reimporta igual.
+  - Chunk principal: 52,6 kB gzip (antes 49,9). Na etapa 3, os 7 desenhos novos vão num chunk
+    sob demanda.
+- **Aeroseparador, a conferir em campo.** O desenho segue o separador mecânico usado em cal
+  hidratada (tipo Raymond): corpo cilíndrico, acionamento e alimentação em cima, finos embaixo do
+  cone e retorno de grossos de lado. O PCM real combina com isso (motor, polia, correia em V e
+  duas "rodas" por aero). Se no campo as saídas forem outras, ajustamos D, E e F.
+- **No celular que já tem o PCM:** depois de publicar, é preciso "Trocar o PCM" com o mesmo
+  arquivo para os croquis aparecerem. A prévia diz "Nada será apagado".
 
 ## Como fica (protótipo)
 
@@ -14,7 +37,7 @@ ainda; o esboço visual está em `prototipo/croqui/`. Para abrir, rode `npm run 
   - cheio: medida;
   - cinza: sem acesso.
 
-  Tocar na letra leva ao campo. A área de toque tem cerca de 58 px em 360 px.
+  Tocar na letra leva ao campo. A área de toque tem cerca de 48 px em 360 px.
 
 - **Campos** com a mesma letra ao lado do nome. Cada campo tem "Sem acesso" no lugar do
   "Não tem". O chip "≈ Estimado" só aparece depois de digitar o valor. No Ø do corpo há o chip

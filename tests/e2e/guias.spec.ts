@@ -109,7 +109,7 @@ test('Android recarregou (câmera): volta na mesma guia e no mesmo lugar; o "vol
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(y - 50);
 
   await page.goBack();
-  await expect(linhas(page)).toHaveCount(9);
+  await expect(linhas(page)).toHaveCount(10);
 
   // A guia lembrada é a que estava aberta, mesmo quando o app trocou de guia sozinho (ex.:
   // "Foto não salva" no topo leva à guia do item).

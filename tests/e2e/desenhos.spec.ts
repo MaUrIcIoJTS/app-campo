@@ -37,14 +37,14 @@ const guiasDeMedida = (page: Page) =>
         .filter((id) => !['pcm', 'fotos', 'notas'].includes(id)),
     );
 
-test('desenhos "onde medir": os 15 abrem, legíveis em 360 px (texto ≥ 14 px, traço ≥ 2 px, nada cortado)', async ({
+test('desenhos "onde medir" e croqui: os 16 abrem, legíveis em 360 px (texto ≥ 14 px, traço ≥ 2 px, nada cortado)', async ({
   page,
 }) => {
   await page.goto('./');
   await importarFixture(page);
   const vistos = new Set<string>();
 
-  for (const tag of ['XA-TC-01', 'XA-EC-01', 'XB-PV-01']) {
+  for (const tag of ['XA-TC-01', 'XA-EC-01', 'XB-PV-01', 'XB-AS-01']) {
     await page.goto('./#/');
     await abrirFicha(page, tag);
     for (const id of await guiasDeMedida(page)) {
@@ -79,7 +79,7 @@ test('desenhos "onde medir": os 15 abrem, legíveis em 360 px (texto ≥ 14 px, 
     }
   }
 
-  expect(vistos.size).toBe(15);
+  expect(vistos.size).toBe(16);
 });
 
 test('desenho da guia aberto no alto ("Ocultar" lembra); os do cartão abrem com um toque grande', async ({

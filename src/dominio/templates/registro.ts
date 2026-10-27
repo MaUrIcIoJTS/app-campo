@@ -36,6 +36,10 @@ export interface CampoTemplate {
   dica?: string;
   /** Título de um bloco dentro do cartão: aparece antes do primeiro campo do grupo. */
   grupo?: string;
+  /** Croqui: letra da cota no desenho (A, B, C…). Campo com letra tem "Sem acesso" e "≈". */
+  letra?: string;
+  /** Croqui: Ø que também se mede pelo perímetro (trena em volta); ver `chavePerimetro`. */
+  perimetro?: boolean;
 }
 
 export interface TemplateItem {
@@ -72,6 +76,12 @@ const dosMancais = (nome: RegExp) => (_: ItemPcm, irmaos: readonly ItemPcm[]) =>
   return specs.length > 0 ? [...new Set(specs)].join(' / ') : null;
 };
 const MANCAL_DO_TAMBOR = 'Mancal e rolamento';
+/** Cotas A–C comuns aos croquis de cilindro + cone (aeroseparador, silo). */
+const corpoCilindroCone = [
+  num('diametro', 'Ø do corpo', 'mm', { letra: 'A', perimetro: true }),
+  num('alturaCilindro', 'Altura do cilindro', 'mm', { letra: 'B' }),
+  num('alturaCone', 'Altura do cone', 'mm', { letra: 'C' }),
+];
 const qtd = num('quantidade', 'Quantidade', 'un', { pcm: (i) => x.quantidade(i.quantidade) });
 const ESTADO = ['Bom', 'Folga', 'Ruído', 'Aquecido', 'Vazando', 'Danificado'] as const;
 
@@ -297,6 +307,37 @@ export const TEMPLATES: Readonly<Record<TipoItem, TemplateItem>> = {
     nome: 'Genérico',
     desenhos: [],
     campos: [txt('anotado', 'Medido / anotado', { pcm: espec })],
+  },
+  // Croquis: o desenho com as letras fica no alto da guia "Exterior" (`ui/desenhos/croqui.tsx`).
+  'corpo-aeroseparador': {
+    tipo: 'corpo-aeroseparador',
+    nome: 'Croqui do corpo · aeroseparador',
+    desenhos: [],
+    campos: [
+      ...corpoCilindroCone,
+      num('saidaFinos', 'Ø da saída de finos', 'mm', { letra: 'D', dica: 'Embaixo do cone.' }),
+      num('saidaGrossos', 'Ø do retorno de grossos', 'mm', {
+        letra: 'E',
+        dica: 'Bica do lado do cone, que volta ao moinho.',
+      }),
+      txt('alimentacao', 'Alimentação (em cima)', {
+        letra: 'F',
+        dica: 'L × C ou Ø. Ex.: 300 × 300',
+      }),
+    ],
+  },
+  'corpo-silo': {
+    tipo: 'corpo-silo',
+    nome: 'Croqui do corpo · silo',
+    desenhos: [],
+    campos: [
+      ...corpoCilindroCone,
+      num('saida', 'Ø da saída de baixo', 'mm', { letra: 'D' }),
+      num('bocaCarga', 'Ø da boca de carga', 'mm', {
+        letra: 'E',
+        dica: 'Em cima: o tubo que enche.',
+      }),
+    ],
   },
 };
 

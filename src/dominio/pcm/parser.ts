@@ -12,6 +12,7 @@ import * as XLSX from 'xlsx';
 import type { AbaPcm, EquipamentoPcm, ItemPcm, Pcm } from '../tipos.ts';
 import { limpar, normalizar, slug } from '../texto.ts';
 import { parseNumero } from '../numeros.ts';
+import { deduzirCroqui } from '../croqui.ts';
 import { detectarTipo } from '../templates/detectar.ts';
 import { extrairTag } from './tag.ts';
 import { MARCA_ABA_DO_APP } from './exportado.ts';
@@ -110,7 +111,7 @@ export function parseAba(nomeAba: string, linhas: readonly Linha[]): AbaPcm {
   }
 
   if (!achouFim) avisos.push('Linha "OBSERVAÇÕES" não encontrada; li até o fim da aba.');
-  for (const eq of equipamentos) eq.itens.push(...deduzirTambores(eq));
+  for (const eq of equipamentos) eq.itens.push(...deduzirTambores(eq), ...deduzirCroqui(eq));
   return { nome: nomeAba, equipamentos, avisos };
 }
 

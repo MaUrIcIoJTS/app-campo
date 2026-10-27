@@ -1,16 +1,37 @@
 /** Textos das colunas que o app acrescenta ao PCM (puro: sem DOM, sem banco). */
 import type { Medicao } from '../db/esquema.ts';
+import {
+  chavePerimetro,
+  diametroDoPerimetro,
+  ehEstimado,
+  ehSemAcesso,
+  SEM_ACESSO,
+} from '../dominio/croqui.ts';
 import { campoDoTambor, rotuloDoTambor } from '../dominio/guias.ts';
 import { deltaDoCampo } from '../dominio/medicao.ts';
-import { formatarDelta } from '../dominio/numeros.ts';
+import { formatarDelta, formatarNumero } from '../dominio/numeros.ts';
 import { TEMPLATES, type CampoTemplate } from '../dominio/templates/registro.ts';
 import type { ItemPcm } from '../dominio/tipos.ts';
 
-/** Valor de um campo: como digitado (com unidade e Δ), "não se aplica" ou "conforme PCM". */
+/**
+ * Valor de um campo: como digitado (com unidade e Δ), "não se aplica" ou "conforme PCM".
+ * Croqui: "sem acesso" sai sem unidade; o Ø medido pelo perímetro sai com a conta.
+ */
 function valorDoCampo(c: CampoTemplate, item: ItemPcm, m: Medicao): string | null {
   const marca = m.conferencia[c.id];
   const valor = (m.valores[c.id] ?? '').trim();
   if (marca === 'naoTem') return 'não se aplica';
+  if (ehSemAcesso(valor)) return SEM_ACESSO;
+  const comUnidade = (v: string) => (c.unidade ? `${v} ${c.unidade}` : v);
+  const perimetro = c.perimetro ? (m.valores[chavePerimetro(c.id)] ?? '').trim() : '';
+  if (perimetro) {
+    const textoPerimetro = `perímetro ${comUnidade(perimetro)}`;
+    if (valor) return `${comUnidade(valor)} (${textoPerimetro})`;
+    const d = diametroDoPerimetro(perimetro);
+    if (d === null) return textoPerimetro;
+    const aprox = ehEstimado(perimetro) ? '≈ ' : '';
+    return `${comUnidade(`${aprox}${formatarNumero(d)}`)} (${textoPerimetro} ÷ π)`;
+  }
   if (valor) {
     let t = valor;
     if (c.tipo === 'numero' && c.unidade) t += ` ${c.unidade}`;
@@ -88,9 +109,11 @@ export function textoMedido(
     const campos = TEMPLATES[item.tipo].campos;
     for (const c of campos) {
       const valor = valorDoCampo(c, item, m);
-      if (valor !== null) partes.push(`${c.rotulo}: ${valor}`);
+      if (valor !== null) partes.push(`${c.letra ? `${c.letra} — ` : ''}${c.rotulo}: ${valor}`);
     }
-    const conhecidos = new Set(campos.map((c) => c.id));
+    const conhecidos = new Set(
+      campos.flatMap((c) => (c.perimetro ? [c.id, chavePerimetro(c.id)] : [c.id])),
+    );
     for (const [id, valor] of Object.entries(m.valores)) {
       if (!conhecidos.has(id) && valor.trim()) partes.push(`${id}: ${valor.trim()}`);
     }

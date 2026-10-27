@@ -236,7 +236,7 @@ describe('importação', () => {
     const dados = await carregarDados();
     expect(dados.importacao).toMatchObject({ id: 'imp-1', nomeArquivo: 'pcm-ficticio.xls' });
     expect(dados.importacao).not.toHaveProperty('arquivo');
-    expect(dados.equipamentos).toHaveLength(9);
+    expect(dados.equipamentos).toHaveLength(10);
     expect(dados.equipamentos.map((e) => e.tag).slice(2, 5)).toEqual([
       'XA-TC-01',
       'XA-TC-02',
@@ -298,6 +298,55 @@ describe('importação', () => {
     expect(depois.dados.notas.get(depois.eq.id)?.observacao).toBe('proteção solta');
     expect(depois.dados.fotosPorAlvo.get(depois.item.id)).toBe(1);
     expect(depois.dados.medicoes.size).toBe(2);
+  });
+
+  it('croqui: celular com PCM de antes do croqui ganha "MEDIDAS EXTERNAS" ao reimportar', async () => {
+    // Importação feita por uma versão do app sem croqui: sem o item deduzido.
+    const pcm = lerPcm(readFileSync(FIXTURE));
+    const semCroqui: Pcm = {
+      abas: pcm.abas.map((a) => ({
+        ...a,
+        equipamentos: a.equipamentos.map((e) => ({
+          ...e,
+          itens: e.itens.filter((i) => !i.tipo.startsWith('corpo-')),
+        })),
+      })),
+    };
+    await importar(semCroqui, 'imp-1');
+    const motor = await itemPorNome('XB-AS-01', 'MOTOR');
+    await salvarMedicao(medicao(motor.item.id, '20'));
+    expect(motor.dados.itensPorEquipamento.get(motor.eq.id)?.map((i) => i.tipo)).not.toContain(
+      'corpo-aeroseparador',
+    );
+
+    const { plano } = await importar(pcm, 'imp-2');
+    expect(plano.resumo).toMatchObject({ orfaosItens: 0, orfaosEquipamentos: 0 });
+    const croqui = await itemPorNome('XB-AS-01', 'MEDIDAS EXTERNAS');
+    expect(croqui.item).toMatchObject({ tipo: 'corpo-aeroseparador', origem: 'deduzido' });
+    expect(croqui.dados.medicoes.get(motor.item.id)?.valores).toEqual({ largura: '20' });
+  });
+
+  it('croqui: as cotas acompanham o item quando linhas são inseridas na aba', async () => {
+    await importar(lerPcm(readFileSync(FIXTURE)), 'imp-1');
+    const antes = await itemPorNome('XB-AS-01', 'MEDIDAS EXTERNAS');
+    await salvarMedicao({
+      ...medicao(antes.item.id, ''),
+      valores: { diametroPerimetro: '6000', alturaCilindro: '≈ 2400', bocaCarga: 'sem acesso' },
+    });
+
+    const abas = linhasDaFixture();
+    const area2 = abas.get('SECAGEM E CLASSIFICAÇÃO')!;
+    area2.splice(6, 0, ['EQUIPAMENTO NOVO XB-ZZ-99', 'MOTOR', '1CV', '1 UNIDADE'], [], []);
+    const { plano } = await importar(pcmDe(abas), 'imp-2');
+    expect(plano.resumo).toMatchObject({ orfaosItens: 0, orfaosEquipamentos: 0 });
+
+    const depois = await itemPorNome('XB-AS-01', 'MEDIDAS EXTERNAS');
+    expect(depois.item.id).not.toBe(antes.item.id);
+    expect(depois.dados.medicoes.get(depois.item.id)?.valores).toEqual({
+      diametroPerimetro: '6000',
+      alturaCilindro: '≈ 2400',
+      bocaCarga: 'sem acesso',
+    });
   });
 
   it('item que sumiu do PCM novo vira órfão com a medição — nada é apagado', async () => {

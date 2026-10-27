@@ -7,7 +7,15 @@ import { normalizar } from './texto.ts';
 import type { ItemPcm, TipoItem } from './tipos.ts';
 
 export type IdGuia =
-  'pcm' | 'correia' | 'tambores' | 'roletes' | 'acionamento' | 'outros' | 'fotos' | 'notas';
+  | 'pcm'
+  | 'exterior'
+  | 'correia'
+  | 'tambores'
+  | 'roletes'
+  | 'acionamento'
+  | 'outros'
+  | 'fotos'
+  | 'notas';
 
 const GUIA_DO_TIPO: Readonly<Record<TipoItem, IdGuia>> = {
   tapete: 'correia',
@@ -28,12 +36,16 @@ const GUIA_DO_TIPO: Readonly<Record<TipoItem, IdGuia>> = {
   painel: 'outros',
   iluminacao: 'outros',
   generico: 'outros',
+  'corpo-aeroseparador': 'exterior',
+  'corpo-silo': 'exterior',
 };
 
-const DE_MEDIDA = ['correia', 'tambores', 'roletes', 'acionamento', 'outros'] as const;
+// O croqui do corpo vem primeiro: é a visão geral do equipamento.
+const DE_MEDIDA = ['exterior', 'correia', 'tambores', 'roletes', 'acionamento', 'outros'] as const;
 
 const ROTULOS: Readonly<Record<IdGuia, string>> = {
   pcm: 'PCM',
+  exterior: 'Exterior',
   correia: 'Correia',
   tambores: 'Tambores',
   roletes: 'Roletes',

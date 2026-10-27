@@ -4,9 +4,9 @@ import { abrirGuia, esperarServiceWorker, importarFixture, linhas } from './apoi
 test('importa o PCM, lista, busca e filtra por aba', async ({ page }) => {
   await page.goto('./');
   await importarFixture(page);
-  const aviso = page.getByText('PCM importado: 9 equipamentos.');
+  const aviso = page.getByText('PCM importado: 10 equipamentos.');
   await expect(aviso).toBeVisible();
-  await expect(linhas(page)).toHaveCount(9);
+  await expect(linhas(page)).toHaveCount(10);
   // O aviso fica no topo (logo abaixo da barra): não cobre os botões do fim da tela.
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   const caixa = (await aviso.boundingBox())!;
@@ -19,13 +19,13 @@ test('importa o PCM, lista, busca e filtra por aba', async ({ page }) => {
   await expect(linhas(page)).toHaveCount(1);
   await expect(linhas(page).first()).toContainText('XA-TC-02');
   await page.getByRole('button', { name: 'Limpar busca' }).click();
-  await expect(linhas(page)).toHaveCount(9);
+  await expect(linhas(page)).toHaveCount(10);
 
   await page
     .getByRole('combobox', { name: 'Filtrar por aba' })
     .selectOption('SECAGEM E CLASSIFICAÇÃO');
-  await expect(linhas(page)).toHaveCount(4);
-  await expect(page.getByText('4 de 9 equipamentos')).toBeVisible();
+  await expect(linhas(page)).toHaveCount(5);
+  await expect(page.getByText('5 de 10 equipamentos')).toBeVisible();
 });
 
 test('em modo avião: importa, recarrega, fecha e reabre — tudo continua lá', async ({
@@ -39,12 +39,12 @@ test('em modo avião: importa, recarrega, fecha e reabre — tudo continua lá',
 
   await importarFixture(page); // o chunk do SheetJS tem que vir do cache
   await page.reload();
-  await expect(linhas(page)).toHaveCount(9);
+  await expect(linhas(page)).toHaveCount(10);
 
   await page.close(); // "fechar o app"
   const reaberta = await context.newPage();
   await reaberta.goto('./');
-  await expect(linhas(reaberta)).toHaveCount(9);
+  await expect(linhas(reaberta)).toHaveCount(10);
   await expect(reaberta.getByText('PCM: pcm-ficticio.xls')).toBeVisible();
 });
 
@@ -108,7 +108,7 @@ test('"‹ Lista" volta sem empilhar histórico (o voltar do Android não reabre
   await expect(page.getByRole('heading', { level: 1, name: 'XA-TC-01' })).toBeVisible();
   const naFicha = await page.evaluate(() => history.length);
   await page.getByRole('link', { name: /Lista/ }).click();
-  await expect(linhas(page)).toHaveCount(9);
+  await expect(linhas(page)).toHaveCount(10);
   expect(await page.evaluate(() => history.length)).toBe(naFicha); // nada empilhado
   await page.goForward(); // usou history.back(): a ficha ficou "à frente"
   await expect(page.getByRole('heading', { level: 1, name: 'XA-TC-01' })).toBeVisible();

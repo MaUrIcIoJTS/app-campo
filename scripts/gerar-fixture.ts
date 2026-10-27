@@ -134,6 +134,16 @@ const area2: Bloco[] = [
       ['GRELHAS', 'INDEFINIDO', '?'],
     ],
   },
+  // Categoria com croqui das medidas externas (o app deduz o item "MEDIDAS EXTERNAS").
+  {
+    equipamento: 'AEROSEPARADOR 01 - XB-AS-01',
+    itens: [
+      ['MOTOR', '20 CV 1750RPM', '1 UNIDADE'],
+      ['POLIA DO MOTOR', '200 4 GORNES B', '1 UNIDADE'],
+      ['CORREIA EM V', 'B 60', '4 UNIDADES'],
+      ['RODA DO AERO', 'ROTOR 12 PÁS RETAS', '1 UNIDADE'],
+    ],
+  },
   // Bloco de uma linha só, sem coluna B (existe no real).
   { equipamento: 'VALVULA PENDULAR - DESCARGA - XB-VV-04', itens: [['', '', '1 UNIDADE']] },
   {

@@ -335,7 +335,8 @@ export function gerarPlanilha(d: DadosDaPlanilha): ResultadoPlanilha {
   const fora: string[][] = [
     [marca],
     [
-      'Itens medidos que não estão nas linhas do PCM (tambores e itens que saíram do PCM). ' +
+      'Itens medidos que não estão nas linhas do PCM (tambores, medidas externas e itens que ' +
+        'saíram do PCM). ' +
         'O mancal, o rolamento e a bucha dos tambores também vão para as linhas MANCAL, ' +
         'ROLAMENTO e BUCHA do PCM.',
     ],

@@ -28,7 +28,7 @@ describe.each(FIXTURES)('lerPcm(%s)', (arquivo) => {
       'XA-TC-02',
       'XA-EC-01',
     ]);
-    expect(a2?.equipamentos).toHaveLength(4);
+    expect(a2?.equipamentos).toHaveLength(5);
   });
 
   it('para no "OBSERVAÇÕES" e ignora o rodapé', () => {
