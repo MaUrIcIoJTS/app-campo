@@ -591,3 +591,16 @@ sol** e **de luva**.
    aparece no topo e não cobre "Trocar o PCM"/"Tema".
 
 Anote o que ficou pequeno, apagado ao sol, difícil de achar ou de tocar de luva (tela e tema).
+
+## Modelos 3D no AutoCAD (proposta, 27/10)
+
+Projeto separado, no notebook do AutoCAD: prompt da sessão em `docs/modelos-3d/sessao.md` e
+arquitetura em `docs/modelos-3d/arquitetura.md`. As lacunas do app para o 3D (lado do
+acionamento, altura, inclinação…) voltam de lá como proposta (`docs/lacunas-do-app.md` do
+projeto novo).
+
+Pendente do backup de campo de 27/10 (app):
+
+- Centro a centro LD/LE digitado **em metros** (`9,80`) num campo em mm — o comprimento do
+  tapete, logo acima, é em m. Avisar no campo (ou aceitar metros) e corrigir o valor na planilha.
+- Ø do rolete emborrachado e um "rolete guia" anotados na observação: avaliar campos próprios.
