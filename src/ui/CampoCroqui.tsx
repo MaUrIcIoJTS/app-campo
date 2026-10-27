@@ -60,60 +60,109 @@ export function CampoCroqui({
   const invalido = numeroInvalido(campo, valor);
   const ambiguo = numeroAmbiguo(campo, valor);
   const unidade = campo.unidade && campo.unidade !== 'un' ? campo.unidade : null;
+  const opcoes = campo.tipo === 'opcoes';
+  const idRotulo = `${idInput}-rotulo`;
   const chips = {
-    naoTem: !temValor && !semAcesso && !temPerimetro,
+    naoTem: !opcoes && !temValor && !semAcesso && !temPerimetro,
+    semAcesso: opcoes && !temValor,
     perimetro: !!campo.perimetro && !temValor && !semAcesso && !naoTem && !temPerimetro,
   };
+  const letraERotulo = (
+    <>
+      <span class={`letra-campo letra-campo--${estado}`} aria-hidden="true">
+        {campo.letra}
+      </span>
+      {campo.rotulo}
+      {unidade && <span class="unidade"> ({unidade})</span>}
+    </>
+  );
 
   return (
     <div class="campo-med campo-croqui" data-conferencia={naoTem ? 'naoTem' : undefined}>
       <div class="campo-med-topo">
-        <label class="campo-med-rotulo" for={idInput}>
-          <span class={`letra-campo letra-campo--${estado}`} aria-hidden="true">
-            {campo.letra}
+        {opcoes ? (
+          <span class="campo-med-rotulo" id={idRotulo}>
+            {letraERotulo}
           </span>
-          {campo.rotulo}
-          {unidade && <span class="unidade"> ({unidade})</span>}
-        </label>
+        ) : (
+          <label class="campo-med-rotulo" for={idInput}>
+            {letraERotulo}
+          </label>
+        )}
       </div>
 
-      <div class="campo-med-linha">
-        <input
-          id={idInput}
-          class="campo campo-med-input"
-          type="text"
-          inputMode={campo.tipo === 'numero' ? 'decimal' : 'text'}
-          autoComplete="off"
-          autoCapitalize="off"
-          spellcheck={false}
-          enterKeyHint="next"
-          value={semAcesso ? '' : (valor ?? '')}
-          placeholder={
-            semAcesso ? '—' : diametro !== null ? `${formatarNumero(diametro)}` : undefined
-          }
-          disabled={semAcesso || naoTem}
-          aria-invalid={invalido || ambiguo}
-          onInput={(e) => onValor(e.currentTarget.value)}
-          onKeyDown={irAoProximoCampo}
-          data-campo-ficha
-        />
-        {temValor ? (
-          <button
-            type="button"
-            class="nao-tem"
-            aria-pressed={estimado}
-            aria-label={`${campo.rotulo}: estimado`}
-            onClick={() => onValor(comEstimado(valor ?? '', !estimado))}
-          >
-            {estimado && <IconeConfere />}≈ Estimado
-          </button>
-        ) : (
-          // Ø já medido pelo perímetro: nada de "Sem acesso" escondendo a medida.
-          !naoTem &&
-          !temPerimetro && (
+      {opcoes ? (
+        <div class="opcoes" role="group" id={idInput} aria-labelledby={idRotulo}>
+          {campo.opcoes?.map((o) => (
+            <button
+              key={o}
+              type="button"
+              class="opcao"
+              aria-pressed={valor === o}
+              disabled={semAcesso}
+              onClick={() => onValor(valor === o ? '' : o)}
+            >
+              {valor === o && <IconeConfere />}
+              {o}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div class="campo-med-linha">
+          <input
+            id={idInput}
+            class="campo campo-med-input"
+            type="text"
+            inputMode={campo.tipo === 'numero' ? 'decimal' : 'text'}
+            autoComplete="off"
+            autoCapitalize="off"
+            spellcheck={false}
+            enterKeyHint="next"
+            value={semAcesso ? '' : (valor ?? '')}
+            placeholder={
+              semAcesso ? '—' : diametro !== null ? `${formatarNumero(diametro)}` : undefined
+            }
+            disabled={semAcesso || naoTem}
+            aria-invalid={invalido || ambiguo}
+            onInput={(e) => onValor(e.currentTarget.value)}
+            onKeyDown={irAoProximoCampo}
+            data-campo-ficha
+          />
+          {temValor ? (
             <button
               type="button"
               class="nao-tem"
+              aria-pressed={estimado}
+              aria-label={`${campo.rotulo}: estimado`}
+              onClick={() => onValor(comEstimado(valor ?? '', !estimado))}
+            >
+              {estimado && <IconeConfere />}≈ Estimado
+            </button>
+          ) : (
+            // Ø já medido pelo perímetro: nada de "Sem acesso" escondendo a medida.
+            !naoTem &&
+            !temPerimetro && (
+              <button
+                type="button"
+                class="nao-tem"
+                aria-pressed={semAcesso}
+                aria-label={`${campo.rotulo}: sem acesso`}
+                onClick={() => onValor(semAcesso ? '' : SEM_ACESSO)}
+              >
+                {semAcesso && <IconeConfere />}
+                Sem acesso
+              </button>
+            )
+          )}
+        </div>
+      )}
+
+      {(chips.naoTem || chips.semAcesso || chips.perimetro) && (
+        <div class="croqui-extras">
+          {chips.semAcesso && (
+            <button
+              type="button"
+              class="opcao opcao--chip"
               aria-pressed={semAcesso}
               aria-label={`${campo.rotulo}: sem acesso`}
               onClick={() => onValor(semAcesso ? '' : SEM_ACESSO)}
@@ -121,12 +170,7 @@ export function CampoCroqui({
               {semAcesso && <IconeConfere />}
               Sem acesso
             </button>
-          )
-        )}
-      </div>
-
-      {(chips.naoTem || chips.perimetro) && (
-        <div class="croqui-extras">
+          )}
           {chips.naoTem && (
             <button
               type="button"

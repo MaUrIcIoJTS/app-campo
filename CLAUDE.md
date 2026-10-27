@@ -175,7 +175,8 @@ Fotos: máx. ~1600 px no maior lado, JPEG ~0,8, como `Blob` (nunca base64 no ban
   diverge se qualquer campo divergir. O app não usa tolerância automática.
 - **Croqui** — desenho do corpo do equipamento com as cotas por letra (A, B, C…), na guia
   "Exterior". O item "MEDIDAS EXTERNAS" é deduzido pela 1ª palavra do nome do equipamento
-  (`src/dominio/croqui.ts`; hoje AEROSEPARADOR e SILO). "Sem acesso" e "≈" (estimado) ficam no
+  (`src/dominio/croqui.ts`: aeroseparador, silo, peneira, filtro, moinho/britador,
+  exaustor/recirculador, rosca, elevador, válvula). "Sem acesso" e "≈" (estimado) ficam no
   próprio texto digitado; o Ø pode vir do perímetro (trena em volta). Ver `docs/croqui.md`.
 - **Rotor / roda** — rotor de exaustor, moinho, filtro ou roda do aeroseparador: Ø × largura
   (`1700X170`, `Ø1300X345L`), Ø do eixo, nº de pás. Grelhas e mangas ficam no genérico.

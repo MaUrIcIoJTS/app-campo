@@ -236,7 +236,7 @@ describe('importação', () => {
     const dados = await carregarDados();
     expect(dados.importacao).toMatchObject({ id: 'imp-1', nomeArquivo: 'pcm-ficticio.xls' });
     expect(dados.importacao).not.toHaveProperty('arquivo');
-    expect(dados.equipamentos).toHaveLength(10);
+    expect(dados.equipamentos).toHaveLength(15);
     expect(dados.equipamentos.map((e) => e.tag).slice(2, 5)).toEqual([
       'XA-TC-01',
       'XA-TC-02',

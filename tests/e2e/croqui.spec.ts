@@ -45,7 +45,7 @@ test('croqui do aeroseparador: a letra leva ao campo; ≈, perímetro, sem acess
 
   const reaberta = await context.newPage();
   await reaberta.goto('./');
-  await expect(linhas(reaberta)).toHaveCount(10);
+  await expect(linhas(reaberta)).toHaveCount(15);
   await abrirFicha(reaberta, 'XB-AS-01');
   const depois = cartao(reaberta, 'MEDIDAS EXTERNAS');
   await expect(depois.getByRole('textbox', { name: /^Altura do cone/ })).toHaveValue('≈ 1800');

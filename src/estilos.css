@@ -2639,3 +2639,10 @@ html:has(.foto-dialogo[open]) {
     transition: none;
   }
 }
+
+/* Croqui ainda carregando (chunk à parte): reserva o lugar do desenho, sem pular a tela. */
+.croqui-carregando {
+  aspect-ratio: 300 / 300;
+  max-width: 420px;
+  margin: 0 auto;
+}

@@ -27,11 +27,33 @@ describe('categoria do equipamento → croqui', () => {
     expect(formatoDoEquipamento('SILO DE CAL HIDRATADA')).toBe('corpo-silo');
   });
 
-  it('a palavra no meio do nome não conta ("válvula do silo" é válvula)', () => {
-    expect(formatoDoEquipamento('VALVULA ROTATIVA DO SILO')).toBeNull();
-    expect(formatoDoEquipamento('ROSCA DO CICLONE')).toBeNull();
+  it('as outras categorias, pela 1ª palavra', () => {
+    expect(formatoDoEquipamento('PENEIRA VIBRATÓRIA')).toBe('corpo-peneira');
+    expect(formatoDoEquipamento('FILTRO DE MANGAS 02')).toBe('corpo-filtro');
+    expect(formatoDoEquipamento('MOINHO DE MARTELOS')).toBe('corpo-caixa');
+    expect(formatoDoEquipamento('BRITADOR DE MANDÍBULAS')).toBe('corpo-caixa');
+    expect(formatoDoEquipamento('EXAUSTOR DO FILTRO')).toBe('corpo-voluta');
+    expect(formatoDoEquipamento('RECIRCULADOR DE AR')).toBe('corpo-voluta');
+    expect(formatoDoEquipamento('ROSCA TRANSPORTADORA')).toBe('corpo-rosca');
+    expect(formatoDoEquipamento('ELEVADOR DE CANECAS')).toBe('corpo-elevador');
+    expect(formatoDoEquipamento('VÁLVULA ROTATIVA')).toBe('corpo-valvula');
+  });
+
+  it('a palavra no meio do nome não conta: "válvula do silo" é válvula', () => {
+    expect(formatoDoEquipamento('VALVULA ROTATIVA DO SILO')).toBe('corpo-valvula');
+    expect(formatoDoEquipamento('ROSCA DO CICLONE')).toBe('corpo-rosca');
     expect(formatoDoEquipamento('TRANSPORTADORA PARA O SILO')).toBeNull();
+    expect(formatoDoEquipamento('SALA DE PAINÉIS DO MOINHO')).toBeNull();
     expect(formatoDoEquipamento('SILOS')).toBeNull();
+  });
+
+  it('todo croqui tem letras A, B, C… em ordem, uma por campo', () => {
+    const tipos = Object.keys(TEMPLATES).filter((t) => t.startsWith('corpo-'));
+    expect(tipos).toHaveLength(9);
+    for (const t of tipos) {
+      const letras = TEMPLATES[t as keyof typeof TEMPLATES].campos.map((c) => c.letra);
+      expect([t, letras.join('')]).toEqual([t, 'ABCDEF'.slice(0, letras.length)]);
+    }
   });
 
   it('deduz um item "MEDIDAS EXTERNAS" com id estável, na guia Exterior', () => {
@@ -50,13 +72,31 @@ describe('categoria do equipamento → croqui', () => {
     expect(guiaDoItem({ tipo: 'corpo-silo' })).toBe('exterior');
   });
 
-  it('na fixture: só o aeroseparador ganha o croqui, e a ficha abre na guia Exterior', () => {
+  it('na fixture: um croqui por equipamento das categorias, e a ficha abre na guia Exterior', () => {
     const pcm = lerPcm(readFileSync('tests/fixtures/pcm-ficticio.xls'));
     const eqs = pcm.abas.flatMap((a) => a.equipamentos);
-    const comCroqui = eqs.filter((e) => e.itens.some((i) => i.tipo.startsWith('corpo-')));
-    expect(comCroqui.map((e) => e.tag)).toEqual(['XB-AS-01']);
-    const guias = guiasDaFicha(comCroqui[0]!.itens).map((g) => g.id);
-    expect(guias).toEqual(['pcm', 'exterior', 'acionamento', 'outros', 'fotos', 'notas']);
+    const croqui = (e: (typeof eqs)[number]) => e.itens.filter((i) => i.tipo.startsWith('corpo-'));
+    expect(eqs.filter((e) => croqui(e).length > 1)).toEqual([]);
+    expect(Object.fromEntries(eqs.flatMap((e) => croqui(e).map((i) => [e.tag, i.tipo])))).toEqual({
+      'XA-EC-01': 'corpo-elevador',
+      'XB-PV-01': 'corpo-peneira',
+      'XB-AS-01': 'corpo-aeroseparador',
+      'XB-VV-04': 'corpo-valvula',
+      'XB-SL-01': 'corpo-silo',
+      'XB-FM-01': 'corpo-filtro',
+      'XB-MO-01': 'corpo-caixa',
+      'XB-EX-01': 'corpo-voluta',
+      'XB-RT-01': 'corpo-rosca',
+    });
+    const aero = eqs.find((e) => e.tag === 'XB-AS-01')!;
+    expect(guiasDaFicha(aero.itens).map((g) => g.id)).toEqual([
+      'pcm',
+      'exterior',
+      'acionamento',
+      'outros',
+      'fotos',
+      'notas',
+    ]);
   });
 });
 

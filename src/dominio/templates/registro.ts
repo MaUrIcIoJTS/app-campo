@@ -76,6 +76,8 @@ const dosMancais = (nome: RegExp) => (_: ItemPcm, irmaos: readonly ItemPcm[]) =>
   return specs.length > 0 ? [...new Set(specs)].join(' / ') : null;
 };
 const MANCAL_DO_TAMBOR = 'Mancal e rolamento';
+const ABERTURA = 'L × C. Ex.: 400 × 300';
+const ABERTURA_OU_DIAMETRO = 'L × C ou Ø. Ex.: 300 × 300';
 /** Cotas A–C comuns aos croquis de cilindro + cone (aeroseparador, silo). */
 const corpoCilindroCone = [
   num('diametro', 'Ø do corpo', 'mm', { letra: 'A', perimetro: true }),
@@ -336,6 +338,104 @@ export const TEMPLATES: Readonly<Record<TipoItem, TemplateItem>> = {
       num('bocaCarga', 'Ø da boca de carga', 'mm', {
         letra: 'E',
         dica: 'Em cima: o tubo que enche.',
+      }),
+    ],
+  },
+  'corpo-peneira': {
+    tipo: 'corpo-peneira',
+    nome: 'Croqui do corpo · peneira',
+    desenhos: [],
+    campos: [
+      num('comprimento', 'Comprimento da caixa', 'mm', { letra: 'A' }),
+      num('largura', 'Largura da caixa', 'mm', { letra: 'B' }),
+      num('altura', 'Altura da caixa', 'mm', { letra: 'C' }),
+      num('inclinacao', 'Inclinação', '°', {
+        letra: 'D',
+        dica: 'Celular sobre a caixa, com um app de nível.',
+      }),
+      opc('decks', 'Nº de decks', ['1', '2', '3', '4'], { letra: 'E' }),
+    ],
+  },
+  'corpo-filtro': {
+    tipo: 'corpo-filtro',
+    nome: 'Croqui do corpo · filtro de mangas',
+    desenhos: [],
+    campos: [
+      num('comprimento', 'Comprimento da caixa', 'mm', { letra: 'A' }),
+      num('largura', 'Largura da caixa', 'mm', { letra: 'B' }),
+      num('alturaReta', 'Altura da parte reta', 'mm', { letra: 'C' }),
+      num('alturaTremonha', 'Altura da tremonha', 'mm', { letra: 'D' }),
+      txt('saida', 'Saída da tremonha', { letra: 'E', dica: ABERTURA_OU_DIAMETRO }),
+    ],
+  },
+  'corpo-caixa': {
+    tipo: 'corpo-caixa',
+    nome: 'Croqui do corpo · moinho / britador',
+    desenhos: [],
+    campos: [
+      num('comprimento', 'Comprimento', 'mm', { letra: 'A' }),
+      num('largura', 'Largura', 'mm', { letra: 'B' }),
+      num('altura', 'Altura', 'mm', { letra: 'C' }),
+      txt('alimentacao', 'Boca de alimentação', { letra: 'D', dica: ABERTURA }),
+      txt('saida', 'Saída', { letra: 'E', dica: ABERTURA }),
+    ],
+  },
+  'corpo-voluta': {
+    tipo: 'corpo-voluta',
+    nome: 'Croqui do corpo · exaustor',
+    desenhos: [],
+    campos: [
+      num('largura', 'Largura da carcaça', 'mm', { letra: 'A', dica: 'No sentido do eixo.' }),
+      num('altura', 'Altura total', 'mm', { letra: 'B' }),
+      num('comprimento', 'Comprimento total', 'mm', { letra: 'C' }),
+      num('entrada', 'Ø da boca de entrada', 'mm', { letra: 'D' }),
+      txt('saida', 'Boca de saída', { letra: 'E', dica: 'L × A. Ex.: 500 × 400' }),
+    ],
+  },
+  'corpo-rosca': {
+    tipo: 'corpo-rosca',
+    nome: 'Croqui do corpo · rosca',
+    desenhos: [],
+    campos: [
+      num('comprimento', 'Comprimento entre cabeceiras', 'mm', { letra: 'A' }),
+      opc('forma', 'Tubo ou calha', ['Tubo', 'Calha'], { letra: 'B' }),
+      num('diametro', 'Ø do tubo ou largura da calha', 'mm', { letra: 'C', perimetro: true }),
+      num('alturaCalha', 'Altura da calha', 'mm', {
+        letra: 'D',
+        dica: 'Só na calha. No tubo, toque em "Não tem".',
+      }),
+      num('entreMancais', 'Entre centros dos mancais', 'mm', { letra: 'E' }),
+    ],
+  },
+  'corpo-elevador': {
+    tipo: 'corpo-elevador',
+    nome: 'Croqui do corpo · elevador',
+    desenhos: [],
+    campos: [
+      num('largura', 'Largura da coluna', 'mm', { letra: 'A', dica: 'De frente.' }),
+      num('profundidade', 'Profundidade da coluna', 'mm', { letra: 'B' }),
+      num('entreEixos', 'Altura entre eixos', 'mm', {
+        letra: 'C',
+        dica: 'Do eixo do pé ao eixo da cabeça.',
+      }),
+      txt('alimentacao', 'Boca de alimentação', {
+        letra: 'D',
+        dica: 'No pé. L × A. Ex.: 300 × 200',
+      }),
+      txt('descarga', 'Boca de descarga', { letra: 'E', dica: 'Na cabeça. L × A. Ex.: 300 × 200' }),
+    ],
+  },
+  'corpo-valvula': {
+    tipo: 'corpo-valvula',
+    nome: 'Croqui do corpo · válvula',
+    desenhos: [],
+    campos: [
+      txt('flange', 'Flange de entrada', { letra: 'A', dica: ABERTURA_OU_DIAMETRO }),
+      num('entreFlanges', 'Altura entre flanges', 'mm', { letra: 'B' }),
+      num('largura', 'Largura do corpo', 'mm', { letra: 'C' }),
+      num('comprimento', 'Comprimento do corpo', 'mm', {
+        letra: 'D',
+        dica: 'No sentido do eixo, sem o motor.',
       }),
     ],
   },

@@ -38,6 +38,13 @@ const GUIA_DO_TIPO: Readonly<Record<TipoItem, IdGuia>> = {
   generico: 'outros',
   'corpo-aeroseparador': 'exterior',
   'corpo-silo': 'exterior',
+  'corpo-peneira': 'exterior',
+  'corpo-filtro': 'exterior',
+  'corpo-caixa': 'exterior',
+  'corpo-voluta': 'exterior',
+  'corpo-rosca': 'exterior',
+  'corpo-elevador': 'exterior',
+  'corpo-valvula': 'exterior',
 };
 
 // O croqui do corpo vem primeiro: é a visão geral do equipamento.

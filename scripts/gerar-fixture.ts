@@ -153,6 +153,27 @@ const area2: Bloco[] = [
       ['TERMOPAR XB-TE-01', 'TERMOPAR TIPO K', '1 UNIDADE'],
     ],
   },
+  // Uma de cada categoria com croqui que ainda não está acima (o E2E abre todos os desenhos).
+  { equipamento: 'SILO DE CAL - XB-SL-01', itens: [['MOTOR', '3 CV 1720RPM', '1 UNIDADE']] },
+  {
+    equipamento: 'FILTRO DE MANGAS - XB-FM-01',
+    itens: [
+      ['MANGAS', 'MANGA POLIESTER 130X3000', '96 UNIDADES'],
+      ['MOTOR', '1 CV 1720RPM', '1 UNIDADE'],
+    ],
+  },
+  {
+    equipamento: 'MOINHO DE MARTELOS - XB-MO-01',
+    itens: [['MOTOR', '50 CV 1780RPM', '1 UNIDADE']],
+  },
+  {
+    equipamento: 'EXAUSTOR DO FILTRO - XB-EX-01',
+    itens: [['MOTOR', '15 CV 3500RPM', '1 UNIDADE']],
+  },
+  {
+    equipamento: 'ROSCA TRANSPORTADORA - XB-RT-01',
+    itens: [['MOTORREDUTOR', 'GD40 1:20 3CV 4P', '1 UNIDADE']],
+  },
 ];
 
 const wb = XLSX.utils.book_new();

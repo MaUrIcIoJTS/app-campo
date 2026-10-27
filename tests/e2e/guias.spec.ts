@@ -55,8 +55,16 @@ test('guias da ficha: só as que têm item, ≥ 48 px; só a barra rola de lado,
   // Peneira: sem correia, tambor nem rolete.
   await page.goto('./#/');
   await abrirFicha(page, 'XB-PV-01');
-  expect(await nomesDasGuias(page)).toEqual(['pcm', 'acionamento', 'outros', 'fotos', 'notas']);
-  await expect(page.getByRole('tab', { selected: true })).toHaveText('Acionamento');
+  expect(await nomesDasGuias(page)).toEqual([
+    'pcm',
+    'exterior',
+    'acionamento',
+    'outros',
+    'fotos',
+    'notas',
+  ]);
+  // O croqui do corpo (Exterior) vem primeiro.
+  await expect(page.getByRole('tab', { selected: true })).toHaveText('Exterior');
 });
 
 test('digitou e trocou de guia na hora (antes da gravação): fecha o app e o valor está lá', async ({
@@ -109,7 +117,7 @@ test('Android recarregou (câmera): volta na mesma guia e no mesmo lugar; o "vol
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(y - 50);
 
   await page.goBack();
-  await expect(linhas(page)).toHaveCount(10);
+  await expect(linhas(page)).toHaveCount(15);
 
   // A guia lembrada é a que estava aberta, mesmo quando o app trocou de guia sozinho (ex.:
   // "Foto não salva" no topo leva à guia do item).

@@ -17,6 +17,13 @@ export const NOME_DO_CROQUI = 'MEDIDAS EXTERNAS';
 const FORMATO_DA_CATEGORIA: ReadonlyArray<readonly [RegExp, TipoItem]> = [
   [/^(AERO ?SEPARADOR|SEPARADOR)\b/, 'corpo-aeroseparador'],
   [/^SILO\b/, 'corpo-silo'],
+  [/^PENEIRA\b/, 'corpo-peneira'],
+  [/^FILTRO\b/, 'corpo-filtro'],
+  [/^(MOINHO|BRITADOR)\b/, 'corpo-caixa'],
+  [/^(EXAUSTOR|RECIRCULADOR)\b/, 'corpo-voluta'],
+  [/^ROSCA\b/, 'corpo-rosca'],
+  [/^ELEVADOR\b/, 'corpo-elevador'],
+  [/^VALVULA\b/, 'corpo-valvula'],
 ];
 
 /** Formato do croqui do equipamento, ou null se a categoria não tem croqui. */

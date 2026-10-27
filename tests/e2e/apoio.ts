@@ -71,8 +71,8 @@ export async function importarFixture(page: Page) {
   await page.getByRole('link', { name: 'Importar PCM' }).first().click();
   await page.locator('input[type=file]').setInputFiles(FIXTURE);
   await expect(page.getByRole('heading', { name: 'pcm-ficticio.xls' })).toBeVisible();
-  await page.getByRole('button', { name: 'Importar (10 equipamentos)' }).click();
-  await expect(page.getByText('10 equipamentos', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Importar (15 equipamentos)' }).click();
+  await expect(page.getByText('15 equipamentos', { exact: true })).toBeVisible();
 }
 
 export async function abrirFicha(page: Page, tag: string) {
@@ -94,7 +94,7 @@ export async function fichaOffline(page: Page, context: BrowserContext) {
 export async function reabrir(context: BrowserContext): Promise<Page> {
   const page = await context.newPage();
   await page.goto('./');
-  await expect(linhas(page)).toHaveCount(10);
+  await expect(linhas(page)).toHaveCount(15);
   await abrirFicha(page, 'XA-TC-01');
   return page;
 }

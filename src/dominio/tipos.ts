@@ -25,7 +25,14 @@ export type TipoItem =
   | 'generico'
   // Croqui das medidas externas (item deduzido pela categoria do equipamento, ver `croqui.ts`).
   | 'corpo-aeroseparador'
-  | 'corpo-silo';
+  | 'corpo-silo'
+  | 'corpo-peneira'
+  | 'corpo-filtro'
+  | 'corpo-caixa'
+  | 'corpo-voluta'
+  | 'corpo-rosca'
+  | 'corpo-elevador'
+  | 'corpo-valvula';
 
 /** De onde veio o item: linha do PCM, deduzido pelo app (ex.: tambores) ou criado em campo. */
 export type OrigemItem = 'pcm' | 'deduzido' | 'manual';

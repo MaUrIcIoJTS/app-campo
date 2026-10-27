@@ -8,18 +8,22 @@ está em `prototipo/croqui/`: rode `npm run dev` e acesse `/prototipo/croqui/?fo
 
 - **Etapa 1 (análise e esboço):** aprovada pelo usuário em 26/10, com todas as recomendações
   abaixo.
-- **Etapa 2 (cilindro + cone no app):** feita em 26/10 no branch `croqui`, **sem publicar**.
-  - Aeroseparador e silo ganham o item "MEDIDAS EXTERNAS" (tipos `corpo-aeroseparador` e
-    `corpo-silo`) na guia "Exterior".
-  - O croqui tem letras tocáveis. Os campos têm "Sem acesso", "Não tem", "≈ Estimado" e
-    perímetro → Ø.
+- **Etapa 2 (cilindro + cone no app):** aeroseparador e silo, publicada em 26/10 (`a42e522`).
+  - Ganham o item "MEDIDAS EXTERNAS" na guia "Exterior". O croqui tem letras tocáveis.
+  - Os campos têm "Sem acesso", "Não tem", "≈ Estimado" e perímetro → Ø.
   - Na planilha, sai na aba "Fora do PCM".
   - Código: `src/dominio/croqui.ts`, `src/ui/CampoCroqui.tsx`, `src/ui/CroquiDaGuia.tsx`,
     `src/ui/desenhos/croqui.tsx`.
-  - Com o PCM real (só contagens): 4 croquis (2 aeroseparadores, 2 silos); 0 de 3.073 células
-    alteradas; a planilha reimporta igual.
-  - Chunk principal: 52,6 kB gzip (antes 49,9). Na etapa 3, os 7 desenhos novos vão num chunk
-    sob demanda.
+- **Etapa 3 (os outros 7 formatos):** feita em 26/10 no branch `croqui`, **sem publicar**.
+  - Peneira, filtro de mangas, moinho/britador, exaustor/recirculador, rosca, elevador e válvula,
+    com as cotas da tabela abaixo. O nº de decks da peneira e o "tubo ou calha" da rosca são
+    opções, com "Sem acesso".
+  - Os desenhos vão num chunk sob demanda (`croqui-*.js`, 3,6 kB gzip, no precache). O chunk
+    principal ficou em 53,0 kB gzip.
+  - A fixture ganhou um equipamento fictício de cada categoria; o E2E abre os 24 desenhos e
+    confere a legibilidade em 360 px.
+  - Com o PCM real (só contagens): 39 croquis; 0 de 3.073 células alteradas; a planilha
+    reimporta igual.
 - **Aeroseparador, a conferir em campo.** O desenho segue o separador mecânico usado em cal
   hidratada (tipo Raymond): corpo cilíndrico, acionamento e alimentação em cima, finos embaixo do
   cone e retorno de grossos de lado. O PCM real combina com isso (motor, polia, correia em V e

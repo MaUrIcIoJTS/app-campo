@@ -28,7 +28,7 @@ describe.each(FIXTURES)('lerPcm(%s)', (arquivo) => {
       'XA-TC-02',
       'XA-EC-01',
     ]);
-    expect(a2?.equipamentos).toHaveLength(5);
+    expect(a2?.equipamentos).toHaveLength(10);
   });
 
   it('para no "OBSERVAÇÕES" e ignora o rodapé', () => {
@@ -83,7 +83,7 @@ describe.each(FIXTURES)('lerPcm(%s)', (arquivo) => {
 
   it('bloco de uma linha sem coluna B vira item "(sem descrição)"', () => {
     const vv = porTag(pcm, 'XB-VV-04');
-    expect(vv.itens).toEqual([
+    expect(vv.itens.filter((i) => i.origem === 'pcm')).toEqual([
       expect.objectContaining({
         nome: '(sem descrição)',
         quantidade: '1 UNIDADE',
