@@ -23,7 +23,7 @@ Site: https://mauriciojts.github.io/app-campo/ (deploy automático a cada push n
 | Aparência e usabilidade em campo                | ✅ feito (25/10): telas de backup e restaurar, estado do aparelho, toast, letras pequenas, `.xlsx` formatado; **conferir no celular**                           |
 | Visual novo (Material 3) e ficha em guias       | ✅ feito, publicado (26/10, `58d01ce`) e **validado no celular em 26/10** ("funcionou corretamente")                                                            |
 | Mancal dos tambores nas linhas do PCM           | ✅ feito e publicado (26/10, `c1b2539`): a planilha preenche MANCAL/ROLAMENTO/BUCHA com o anotado nos tambores; exportação **conferida no celular em 26/10**    |
-| Croqui das medidas externas                     | aero e silo publicados (26/10, `a42e522`); os outros 7 formatos feitos no branch `croqui`, **não publicados**; ver `docs/croqui.md`                             |
+| Croqui das medidas externas                     | 9 formatos publicados (26/10, `a42e522` e `c6b26a2`); **conferir no celular** (Trocar o PCM com o mesmo arquivo); ver `docs/croqui.md`                          |
 | 5. Ensaio geral (critérios 1–5 no Android)      | a fazer                                                                                                                                                         |
 
 Se atrasar: os desenhos SVG (fase 3) e o `.zip` de fotos (fase 4) podem ficar para depois, porque

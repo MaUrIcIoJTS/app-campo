@@ -14,7 +14,8 @@ está em `prototipo/croqui/`: rode `npm run dev` e acesse `/prototipo/croqui/?fo
   - Na planilha, sai na aba "Fora do PCM".
   - Código: `src/dominio/croqui.ts`, `src/ui/CampoCroqui.tsx`, `src/ui/CroquiDaGuia.tsx`,
     `src/ui/desenhos/croqui.tsx`.
-- **Etapa 3 (os outros 7 formatos):** feita em 26/10 no branch `croqui`, **sem publicar**.
+- **Etapa 3 (os outros 7 formatos):** publicada em 26/10 (`c6b26a2`); o deploy passou e os
+  croquis abrem offline no site.
   - Peneira, filtro de mangas, moinho/britador, exaustor/recirculador, rosca, elevador e válvula,
     com as cotas da tabela abaixo. O nº de decks da peneira e o "tubo ou calha" da rosca são
     opções, com "Sem acesso".
